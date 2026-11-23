@@ -787,18 +787,27 @@ export class Player {
     if (this.sideForm) {
       this.sideTimer -= dt;
       if (this.sideTimer <= 0) {
-        const tgt = this.game.enemies.nearest(this.pos, 15) || this.game.structures?.gateTarget?.(this.pos, 15) || null;
+        // The second arm picks its own target — one the firing hand is not
+        // already shooting when there is a choice — and aims at it itself, so
+        // the two weapons cover different sides of the crowd.
+        const tgt = this.game.enemies.nearest(this.pos, 15, e => e !== target)
+          || this.game.enemies.nearest(this.pos, 15)
+          || this.game.structures?.gateTarget?.(this.pos, 15) || null;
         if (tgt) {
           // A second-arm rank buys rate and reach as well as damage (fireVolley
           // pays the damage), so growing it competes with growing the firing hand.
           const sideRank = Math.max(1, this.sideWeaponRank || 1);
           const tempo = Math.max(0.5, 1 - WEAPON_RANK.sidearmRankTempo * (sideRank - 1));
           const reach = 1 + WEAPON_RANK.sidearmRankReach * (sideRank - 1);
+          const ax = tgt.pos.x - this.pos.x, az = tgt.pos.z - this.pos.z;
+          const dist = Math.hypot(ax, az);
+          const lead = Math.min(0.5, dist / Math.max(6, this.sideForm.stats.projSpeed || 15));
+          const aim = new THREE.Vector3(ax + (tgt.vx || 0) * lead, 0, az + (tgt.vz || 0) * lead).normalize();
           this.fireVolley(this.sideForm, {
             rank: this.sideWeaponRank, rarity: this.sideWeaponRarity, boost: this.sideWeaponBoost,
             damageScale: WEAPON_RANK.sidearmDamage, rangeMult: WEAPON_RANK.sidearmRange * reach,
-            angleOffset: 0.13, small: true,
-            close: Math.hypot(tgt.pos.x - this.pos.x, tgt.pos.z - this.pos.z) <= WEAPON_RANK.closeRange,
+            angleOffset: 0.13, small: true, aim,
+            close: dist <= WEAPON_RANK.closeRange,
           });
           this.sideTimer = Math.max(0.1, this.sideForm.stats.interval * this.stats.intervalMult
             * WEAPON_RANK.sidearmInterval * tempo / (1 + (rb.interval || 0)));
@@ -909,7 +918,9 @@ export class Player {
       : /fan|squall|well|riptide/.test(wkey) ? 'needle'
       : /lance|edge|whip/.test(wkey) ? 'blade' : 'bolt';
     const shotSize = (f.key === 'stone' ? 1.35 : 1) * (shape === 'boulder' ? 1.25 : 1) * (cfg.small ? 0.78 : 1);
-    const baseAngle = Math.atan2(this.aim.x, this.aim.z) + (cfg.angleOffset || 0);
+    const aimX = cfg.aim ? cfg.aim.x : this.aim.x;
+    const aimZ = cfg.aim ? cfg.aim.z : this.aim.z;
+    const baseAngle = Math.atan2(aimX, aimZ) + (cfg.angleOffset || 0);
     const spread = count > 1 ? 0.085 : 0;
     for (let i = 0; i < count; i++) {
       const a = baseAngle + (i - (count - 1) / 2) * spread;
@@ -928,7 +939,7 @@ export class Player {
       });
       this.game.fx.trail(start, f.glow, 0.22, 0.2);
     }
-    const muzzle = new THREE.Vector3(this.pos.x + this.aim.x * 0.8, 1.02, this.pos.z + this.aim.z * 0.8);
+    const muzzle = new THREE.Vector3(this.pos.x + aimX * 0.8, 1.02, this.pos.z + aimZ * 0.8);
     this.recoil = Math.max(this.recoil, cfg.small ? 0.45 : 1);
     if (!cfg.small) this.game.audio.shoot(f.key);
     this.game.fx.burst(muzzle, f.glow, { count: cfg.small ? 6 : 10, speed: 4.6, size: cfg.small ? 0.18 : 0.24, life: 0.3, up: 1 });
