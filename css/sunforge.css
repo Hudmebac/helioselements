@@ -427,6 +427,20 @@
     display: block; height: 100%; width: 0%; background: var(--gold);
     box-shadow: 0 0 10px currentColor; transition: width .2s linear;
   }
+  /* Solar Caravan wayfinder: points at the next waystone (then the rift) */
+  .wayfinder {
+    display: none; align-items: center; justify-content: center; gap: 7px; width: 100%;
+    font-size: 7px; letter-spacing: .18em; text-transform: uppercase; color: #8dffc0;
+  }
+  .wayfinder.on { display: flex; }
+  .wayfinder .wf-arrow {
+    display: inline-block; font-size: 12px; line-height: 1; color: #8dffc0;
+    text-shadow: 0 0 10px rgba(141,255,192,.75); transition: transform .14s linear;
+    transform-origin: 50% 50%;
+  }
+  .wayfinder .wf-text { color: var(--faint); letter-spacing: .16em; }
+  .wayfinder.hot .wf-arrow { color: #ffb066; text-shadow: 0 0 10px rgba(255,140,60,.8); }
+  .wayfinder.hot .wf-text { color: rgba(255,176,102,.85); }
 }
 
 @layer screens {

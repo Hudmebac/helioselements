@@ -283,7 +283,7 @@ export const GUIDE = {
         `Kill the Spitters first. Everything else has to walk to you.`,
         `Bank a level-up before a warden wave and open it after the first volley.`,
         `Do not spend every shard on new towers; a rank-2 tower you repair beats two rank-1 towers you do not.`,
-        `In the Caravan, clear the road *ahead* of the reliquary, never behind it.`,
+        `In the Caravan, the wayfinder under the objective bar always points at the next checkpoint — the next unlit waystone, then the eastern rift — with the distance. Clear the road it points down, never the road behind the reliquary.`,
         `In the Ritual, one sealed circle stays sealed — trade ground for time.`,
         `In the Blitz, the clock is fed by kills, so the last three enemies of a wave are worth more than the first ten.`,
         `A fusion at level three is worth more than four damage boons. Plan the draft around it.`,
@@ -397,6 +397,7 @@ export const CHANGELOG = [
       'Kindling: kills can shed a burning mote. Eight motes summon a Dawn Gift — +35% damage for 18 seconds, shown in the HUD meter beside the shard count. Elites drop three, wardens four.',
       'Dawn Gifts answer the mission: two shards and a mended core in Sunforge Siege, four seconds back on the clock in Eclipse Blitz, reliquary repair in Solar Caravan, a circle charge in Blind Ritual — and every second gift calls a wisp to fight beside you.',
       'Fallen enemies now dissolve in seconds instead of lingering: a puff of ash at the moment of death, then a shrink and sink that clears the arena in seven seconds (ten for elites, sixteen for wardens).',
+      'Solar Caravan has a wayfinder: an arrow under the objective bar that points at the next checkpoint — the next unlit waystone, then the eastern rift — with the distance in metres, turning hot when the reliquary is held or contested.',
     ],
   },
   {

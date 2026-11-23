@@ -97,6 +97,7 @@ export class UI {
               <span class="objective-note" id="objective-note"></span>
             </div>
             <div class="bar objective" id="objective-bar"><i id="objective-fill"></i></div>
+            <div class="wayfinder" id="wayfinder"><span class="wf-arrow" id="wf-arrow">➤</span><span class="wf-text" id="wf-text"></span></div>
           </div>
           <div class="combo" id="hud-combo">×1 <span id="hud-combo-count">0 chain</span></div>
         </div>
@@ -598,6 +599,9 @@ export class UI {
       objectiveNote: document.getElementById('objective-note'),
       objectiveBar: document.getElementById('objective-bar'),
       objectiveFill: document.getElementById('objective-fill'),
+      wayfinder: document.getElementById('wayfinder'),
+      wfArrow: document.getElementById('wf-arrow'),
+      wfText: document.getElementById('wf-text'),
       relics: document.getElementById('hud-relics'),
       levelUpBtn: document.getElementById('levelup-btn'),
       levelUpCount: document.getElementById('levelup-count'),
@@ -2279,6 +2283,31 @@ export class UI {
         this.el.objectiveFill.style.width = Math.max(0, Math.min(100, pct)) + '%';
         this.el.objectiveFill.style.background = color;
         this.el.objectiveBar.style.borderColor = color + '55';
+      }
+    }
+
+    // Caravan wayfinder — an arrow that always points at the next checkpoint,
+    // measured on screen so it stays honest whatever the camera does.
+    if (this.el.wayfinder) {
+      const c = game.caravan;
+      const show = game.mode === 'escort' && game.state === 'playing' && !!c && !c.arrived && !!game.player;
+      this.el.wayfinder.classList.toggle('on', show);
+      if (show) {
+        const t = c.target;
+        const p = game.player.pos;
+        const dx = t.pos.x - p.x;
+        const dz = t.pos.z - p.z;
+        const dist = Math.hypot(dx, dz);
+        let ang = Math.atan2(-dz, dx) * 180 / Math.PI;
+        const cam = game.engine?.camera;
+        if (cam && cam.isCamera) {
+          const a = t.pos.clone().setY(0.6).project(cam);
+          const b = p.clone().setY(0.8).project(cam);
+          ang = Math.atan2(-(a.y - b.y), a.x - b.x) * 180 / Math.PI;
+        }
+        this.el.wfArrow.style.transform = 'rotate(' + ang.toFixed(0) + 'deg)';
+        this.el.wfText.textContent = t.label + ' · ' + Math.round(dist) + ' m';
+        this.el.wayfinder.classList.toggle('hot', !!c.contested || !!c.atWaystone);
       }
     }
 

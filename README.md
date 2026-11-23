@@ -288,6 +288,7 @@ The **Play** button at the top of this README already points there; the canonica
 - **Kindling**: kills can shed a burning mote. Eight of them summon a **Dawn Gift** — +35% damage for 18 seconds, tracked by a HUD meter next to the shard count. Elites drop three, wardens four.
 - **Gifts answer the mission**: two shards and a mended core in Sunforge Siege, +4s on the clock in Eclipse Blitz, reliquary repair in Solar Caravan, a circle charge in Blind Ritual — and every second gift sends a wisp to fight beside you.
 - **Fallen bodies dissolve**: an ash puff at the moment of death, then a shrink and sink that clears the arena in 7 seconds (10 for elites, 16 for wardens) instead of lingering.
+- **Caravan wayfinder**: an arrow under the objective bar points at the next checkpoint — the next unlit waystone, then the eastern rift — with the live distance in metres.
 
 </details>
 

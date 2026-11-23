@@ -1085,6 +1085,14 @@ export class Caravan {
     return new THREE.Vector3(end.x, 0, end.z);
   }
 
+  /* The checkpoint the wayfinder should point at: the next unlit waystone,
+     and the eastern rift once every stone is behind the reliquary. */
+  get target() {
+    const ws = this.waystones.find((w) => !w.reached);
+    if (ws) return { pos: ws.pos, label: 'WAYSTONE ' + (ws.index + 1) + '/' + this.waystones.length };
+    return { pos: this.goalPos, label: 'THE RIFT' };
+  }
+
   update(dt, game) {
     if (!this.alive) return;
     this._t += dt;
