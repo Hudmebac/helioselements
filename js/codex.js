@@ -5,7 +5,7 @@
 
    It is read by two things:
      • the in-game Dawn Codex  (js/ui.js, Lore + How to Play tabs)
-     • the public website      (index.html via site/site.js)
+     • the public website      (lore/index.html via lore/lore.js)
 
    UPDATING: when the game changes, edit this file first.
    – new mechanic or mode  -> add to GUIDE and LORE
@@ -39,7 +39,7 @@ export const META = {
     'WebGL game', 'Three.js game', 'free browser game', 'roguelite with meta progression',
     'Helios Elements',
   ],
-  playPath: 'play/',
+  playPath: '../',
 };
 
 /* ------------------------------------------------------------
@@ -336,12 +336,12 @@ export const MARKETING = {
     ['Language', 'English'],
   ],
   assets: [
-    { label: 'Storyboard sheet', path: 'marketing/helios-elements-storyboard.png', note: 'Five 1080p panels with captions' },
-    { label: 'Sunfall Lanes', path: 'marketing/storyboard/01-sunfall-lanes.png', note: '1920×1080' },
-    { label: 'Rift Warden', path: 'marketing/storyboard/02-warden.png', note: '1920×1080' },
-    { label: 'Solar Caravan', path: 'marketing/storyboard/03-solar-caravan.png', note: '1920×1080' },
-    { label: 'Eclipse Blitz', path: 'marketing/storyboard/04-eclipse-blitz.png', note: '1920×1080' },
-    { label: 'Dawn Restored', path: 'marketing/storyboard/05-dawn-restored.png', note: '1920×1080' },
+    { label: 'Storyboard sheet', path: '../marketing/helios-elements-storyboard.png', note: 'Five 1080p panels with captions' },
+    { label: 'Sunfall Lanes', path: '../marketing/storyboard/01-sunfall-lanes.png', note: '1920×1080' },
+    { label: 'Rift Warden', path: '../marketing/storyboard/02-warden.png', note: '1920×1080' },
+    { label: 'Solar Caravan', path: '../marketing/storyboard/03-solar-caravan.png', note: '1920×1080' },
+    { label: 'Eclipse Blitz', path: '../marketing/storyboard/04-eclipse-blitz.png', note: '1920×1080' },
+    { label: 'Dawn Restored', path: '../marketing/storyboard/05-dawn-restored.png', note: '1920×1080' },
   ],
   // Add a real address before publishing; the site hides the row while this is null.
   contact: null,

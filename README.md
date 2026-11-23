@@ -9,7 +9,7 @@
 Six sigils. Five fusions. Eight arenas that want you dead.<br/>
 One tab, no install, no account — a 3D roguelite that runs where you already are.
 
-<a href="https://hudmebac.github.io/helioselements/play/"><img src="https://img.shields.io/badge/%E2%96%B6%20PLAY%20IT-now-ff8a3d?style=for-the-badge&labelColor=0b0d17" alt="Play Helios Elements" height="38"></a>
+<a href="https://hudmebac.github.io/helioselements/"><img src="https://img.shields.io/badge/%E2%96%B6%20PLAY%20IT-now-ff8a3d?style=for-the-badge&labelColor=0b0d17" alt="Play Helios Elements" height="38"></a>
 <a href="#how-to-play"><img src="https://img.shields.io/badge/HOW%20TO%20PLAY-9%20keys-f5c26b?style=for-the-badge&labelColor=0b0d17" alt="How to play" height="38"></a>
 <a href="#the-codex"><img src="https://img.shields.io/badge/THE%20CODEX-13%20chapters-8a5cff?style=for-the-badge&labelColor=0b0d17" alt="The Codex" height="38"></a>
 
@@ -196,7 +196,7 @@ All twelve actions are rebindable in **Settings → Controls**. **Settings → I
 </tr>
 <tr>
 <td align="center"><b>The Dawn Codex</b><br/><sub><i>The account</i></sub></td>
-<td align="center"><sub>read it in game, or on the <a href="index.html">marketing site</a></sub></td>
+<td align="center"><sub>read it in game, or on the <a href="lore/index.html">lore site</a></sub></td>
 </tr>
 </table>
 
@@ -225,9 +225,11 @@ A run is closed: waves feed the results screen, the dusk pays out on the rank yo
 
 ```text
 helioselements/
-├── index.html            the public site: lore, press, Play
-├── play/
-│   └── index.html        the game
+├── index.html            the game
+├── lore/
+│   ├── index.html        lore, press, Play — the public site
+│   ├── lore.css
+│   └── lore.js           renders that page from js/codex.js
 ├── server.js             static server, directory → index.html
 ├── css/
 │   ├── style.css         shell, HUD, menus
@@ -249,13 +251,13 @@ helioselements/
 │   ├── ui.js             every screen
 │   ├── codex.js          all copy: lore, guide, FAQ, changelog
 │   └── lib/three.min.js  vendored
-├── site/                 marketing site, reads js/codex.js
+├── site/                 redirect to /lore/ for old links
 └── marketing/            storyboard, screenshots, capture
 ```
 
 </details>
 
-The Codex is a single source of truth: `js/codex.js` feeds the in-game Codex **and** the marketing site, so lore, changelogs and FAQ answers never drift apart. The game's balance lives entirely in `js/data.js` — no logic is hidden in magic numbers.
+The Codex is a single source of truth: `js/codex.js` feeds the in-game Codex **and** the lore site, so lore, changelogs and FAQ answers never drift apart. The game's balance lives entirely in `js/data.js` — no logic is hidden in magic numbers.
 
 ---
 
@@ -269,14 +271,14 @@ cd helioselements
 npm start          # or: node server.js
 ```
 
-Then open **http://localhost:8091** for the site and **http://localhost:8091/play/** for the game (the site's Play buttons go straight there). Set `PORT` to move it.
+Then open **http://localhost:8091** for the game and **http://localhost:8091/lore/** for the lore site (the game menu links to it, and the site's Play buttons come back). Set `PORT` to move it.
 
 <details>
 <summary><b>Deploying to GitHub Pages</b></summary>
 
-The repo root is already a working static site, so **Settings → Pages → Deploy from a branch → `main` / `/ (root)`** serves the site at <https://hudmebac.github.io/helioselements/> and the game at `/play/`.
+The repo root is already a working static site, so **Settings → Pages → Deploy from a branch → `main` / `/ (root)`** serves the game at <https://hudmebac.github.io/helioselements/> and the lore site at `/lore/`.
 
-The **Play** button at the top of this README points at the game URL, and `/site/` redirects to the front page for anyone holding an old link.
+The **Play** button at the top of this README points at the game, and `/site/` redirects to `/lore/` for anyone holding an old link.
 
 </details>
 
