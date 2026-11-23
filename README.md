@@ -15,7 +15,7 @@ One tab, no install, no account — a 3D roguelite that runs where you already a
 
 <br/>
 
-<img src="https://img.shields.io/badge/version-1.7.4-f5c26b?style=flat-square&labelColor=141726" alt="version 1.7.4">
+<img src="https://img.shields.io/badge/version-1.7.5-f5c26b?style=flat-square&labelColor=141726" alt="version 1.7.5">
 <img src="https://img.shields.io/badge/modes-8-67ecff?style=flat-square&labelColor=141726" alt="8 modes">
 <img src="https://img.shields.io/badge/engine-Three.js-8a5cff?style=flat-square&labelColor=141726" alt="Three.js">
 <img src="https://img.shields.io/badge/dependencies-0-73e698?style=flat-square&labelColor=141726" alt="no dependencies">
@@ -283,13 +283,15 @@ The **Play** button at the top of this README already points there; the canonica
 ## Changelog
 
 <details open>
-<summary><b>v1.7.4 — The Descent pays, and progress is portable</b></summary>
+<summary><b>v1.7.5 — Three depths of menu</b></summary>
 
-- The Descent now multiplies every sunmark earned: **+15% per rank**, up to ×1.75, paid on the rank *played* and shown on the results screen.
-- **Settings → Save**: export your save as text or a file, and import it back on any browser.
-- Earlier: the Descent itself, Solar Caravan rebuilt on an eight-point road, level boons, Eclipse Pacts, Skill Runs, Warden Duel, the Codex.
+- **Settings → Interface → Menus**: *Simple* (four missions, one difficulty, no pacts or skill runs), *Default* (six missions, all four tiers, the Descent and weapon choice) and *Complex* (all eight missions, Eclipse Pacts, Skill Runs and the full Codex).
+- A hidden system is switched off at run start instead of silently applying, so a lean menu can never run a hardcore pact build underneath.
+- Runs open on an empty arena: wave 1 no longer counts down — it waits for <kbd>Enter</kbd> or the **Begin** button, and objectives can't be drained or pre-charged before it starts.
 
 </details>
+
+**Earlier — v1.7.4:** the Descent multiplies every sunmark earned (+15% per rank, up to ×1.75, paid on the rank *played*), and **Settings → Save** exports or imports your progress. Before that: the Descent itself, Solar Caravan's eight-point road, level boons, Eclipse Pacts, Skill Runs, Warden Duel, and the Codex.
 
 ---
 
@@ -306,6 +308,6 @@ The **Play** button at the top of this README already points there; the canonica
 <br/>
 
 **Built with** Three.js (MIT) · Cinzel & Inter (OFL) · everything else hand-built — renderer, audio synthesis, UI and lore.<br/>
-<sub>Helios Elements v1.7.4 · no install, no account, no telemetry.</sub>
+<sub>Helios Elements v1.7.5 · no install, no account, no telemetry.</sub>
 
 </div>

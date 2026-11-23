@@ -311,6 +311,7 @@ export const MARKETING = {
     ['Price', 'Free to play'],
     ['Players', 'Single player'],
     ['Missions', '8 modes, 4 difficulty tiers, 5 descent ranks'],
+    ['Menus', 'Simple, Default or Complex depth'],
     ['Session', '10–25 minutes per mission'],
     ['Controls', 'Keyboard and mouse, fully rebindable'],
     ['Engine', 'Three.js / WebGL, no install'],
@@ -360,6 +361,10 @@ export const FAQ = [
   {
     q: 'What are sunmarks?',
     a: 'The permanent currency. Runs pay them out when they end; the Dawn Codex spends them on rewards like extra relic choices, rerolls, starting shards and a second wind.',
+  },
+  {
+    q: 'Why can’t I see every mission?',
+    a: 'Settings → Interface → Menus sets how much the game shows you. Simple offers four missions on one difficulty, Default offers six with every tier and the Descent, and Complex opens all eight missions plus Eclipse Pacts, Skill Runs and the full Codex. Nothing is removed — change the depth whenever you like.',
   },
   {
     q: 'Can I lose my progress?',
