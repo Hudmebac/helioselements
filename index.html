@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Helios Elements — Forge the Sun</title>
+  <meta name="description" content="Helios Elements is a 3D elemental survival roguelite. Choose your sigil, fuse the elements, and hold the arena against the dark.">
+  <meta name="theme-color" content="#06070f">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cdefs%3E%3CradialGradient id='g'%3E%3Cstop offset='0' stop-color='%23fff3cf'/%3E%3Cstop offset='.55' stop-color='%23f5c26b'/%3E%3Cstop offset='1' stop-color='%23ff6a3d'/%3E%3C/radialGradient%3E%3C/defs%3E%3Ccircle cx='32' cy='32' r='16' fill='url(%23g)'/%3E%3Cg stroke='%23f5c26b' stroke-width='2.4' stroke-linecap='round'%3E%3Cpath d='M32 4v8M32 52v8M4 32h8M52 32h8M12 12l6 6M46 46l6 6M52 12l-6 6M18 46l-6 6'/%3E%3C/g%3E%3C/svg%3E">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700;900&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/sunforge.css">
+  <link rel="stylesheet" href="css/eclipse.css">
+</head>
+<body>
+  <div id="app">
+    <div id="stage">
+      <canvas id="game-canvas"></canvas>
+      <div id="vignette" aria-hidden="true"></div>
+      <div id="grain" aria-hidden="true"></div>
+    </div>
+
+    <div id="ui" aria-live="polite"></div>
+
+    <div id="boot" role="status">
+      <div class="boot-sun"></div>
+      <div class="boot-word">HELIOS</div>
+      <div class="boot-sub">IGNITING THE ARENA</div>
+    </div>
+
+    <div id="fatal" hidden></div>
+  </div>
+
+  <script src="js/lib/three.min.js"></script>
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>

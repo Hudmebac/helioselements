@@ -1,0 +1,10 @@
+{
+  "name": "helios-elements",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "An elemental survival roguelite. Forge the sun. Hold the dark.",
+  "scripts": {
+    "start": "node server.js"
+  }
+}

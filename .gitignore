@@ -1,0 +1,22 @@
+# OS and editor noise
+.DS_Store
+Thumbs.db
+desktop.ini
+*.log
+
+# Dependencies (the game has none; this is for anything you add later)
+node_modules/
+npm-debug.log*
+
+# Secrets / local env
+.env
+.env.local
+.dev.vars
+
+# Tooling state
+.freebuff/
+.vscode/
+.idea/
+
+# Large source capture — kept locally, not in history
+marketing/*.webm
