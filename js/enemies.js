@@ -106,6 +106,7 @@ export class Enemy {
       ? (BOSSES[this.bossIndex % BOSSES.length].element || null)
       : (type.element || null);
     this.flying = !!type.flying;
+    this.miniBoss = !!type.miniBoss;
     this.laneAngle = opts.laneAngle ?? null;
     this.dead = false;
     this._corpse = false;
@@ -144,7 +145,7 @@ export class Enemy {
   _buildMesh() {
     const t = this.type;
     const group = new THREE.Group();
-    const scale = this.isBoss ? 1.35 : 1;
+    const scale = this.isBoss ? 1.35 : this.miniBoss ? 1.14 : 1;
     this.baseY = this.flying ? 1.55 : 0.7;
     this.scale = scale;
 
@@ -271,6 +272,22 @@ export class Enemy {
       halo.position.y = 1.4;
       group.add(halo);
       this.halo = halo;
+    }
+
+    if (this.miniBoss) {
+      // Crowned: a mini-boss should never be mistaken for the horde around it.
+      const crownMat = new THREE.MeshBasicMaterial({ color: 0xffe6a8, toneMapped: false });
+      for (let i = 0; i < 4; i++) {
+        const a = (i / 4) * Math.PI * 2;
+        const spike = new THREE.Mesh(geo('miniSpike', () => new THREE.ConeGeometry(0.11, 0.55, 4)), crownMat);
+        spike.position.set(Math.cos(a) * 0.45, this.baseY * 0.9 + 0.35, Math.sin(a) * 0.45);
+        spike.rotation.z = Math.cos(a) * -0.3;
+        group.add(spike);
+      }
+      const crown = new THREE.Mesh(new THREE.TorusGeometry(0.5, 0.035, 6, 26), crownMat);
+      crown.rotation.x = Math.PI / 2;
+      crown.position.y = this.baseY * 0.9 + 0.55;
+      group.add(crown);
     }
 
     if (this.elite) {

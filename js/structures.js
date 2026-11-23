@@ -1021,6 +1021,41 @@ export class Caravan {
     this.groundMat = groundMat;
     this.light = light;
 
+    // A soft zone on the ground: this is the ground you have to stand on for the
+    // reliquary to move. It tints green when it is clear and red when contested.
+    this.zoneMat = new THREE.MeshBasicMaterial({
+      color: 0x7dffb4, transparent: true, opacity: 0.08, side: THREE.DoubleSide,
+      blending: THREE.AdditiveBlending, depthWrite: false, toneMapped: false,
+    });
+    const zone = new THREE.Mesh(new THREE.CircleGeometry(ESCORT.escortRadius, 64), this.zoneMat);
+    zone.rotation.x = -Math.PI / 2;
+    zone.position.y = 0.025;
+    group.add(zone);
+    this.edgeMat = new THREE.MeshBasicMaterial({
+      color: 0x7dffb4, transparent: true, opacity: 0.3, side: THREE.DoubleSide,
+      blending: THREE.AdditiveBlending, depthWrite: false, toneMapped: false,
+    });
+    const edge = new THREE.Mesh(
+      new THREE.RingGeometry(ESCORT.escortRadius - 0.22, ESCORT.escortRadius, 64), this.edgeMat
+    );
+    edge.rotation.x = -Math.PI / 2;
+    edge.position.y = 0.03;
+    group.add(edge);
+
+    // The wayfinder lives on the reliquary itself, not in a corner of the HUD.
+    this.arrowMat = new THREE.MeshBasicMaterial({ color: 0x8dffc0, toneMapped: false, transparent: true, opacity: 0.92 });
+    const arrow = new THREE.Group();
+    const shaft = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.12, 1.0), this.arrowMat);
+    shaft.position.z = 0.55;
+    arrow.add(shaft);
+    const tip = new THREE.Mesh(new THREE.ConeGeometry(0.34, 0.78, 4), this.arrowMat);
+    tip.rotation.x = Math.PI / 2;
+    tip.position.z = 1.32;
+    arrow.add(tip);
+    arrow.position.y = 3.35;
+    group.add(arrow);
+    this.arrow = arrow;
+
     // Destination marker at the eastern rift.
     const goalPos = this.posAt(this.totalDist);
     const markerMat = new THREE.MeshBasicMaterial({
@@ -1109,6 +1144,19 @@ export class Caravan {
     }
     this.contested = foes > 0;
     this.foes = foes;
+
+    // Zone + arrow read the same state the reliquary does.
+    const zc = this.contested ? 0xff6a4a : this.escorted ? 0x7dffb4 : 0x8fb8a4;
+    this.zoneMat.color.setHex(zc);
+    this.zoneMat.opacity = this.contested ? 0.12 : this.escorted ? 0.09 : 0.055;
+    this.edgeMat.color.setHex(zc);
+    this.edgeMat.opacity = this.contested ? 0.5 : this.escorted ? 0.34 : 0.2;
+    const goal = this.target;
+    const bearing = Math.atan2(goal.pos.x - this.pos.x, goal.pos.z - this.pos.z);
+    this.arrow.rotation.y = bearing;
+    this.arrow.position.y = 3.35 + Math.sin(this._t * 2.2) * 0.12;
+    this.arrowMat.opacity = 0.75 + Math.sin(this._t * 4.1) * 0.2;
+    this.arrow.visible = !this.arrived;
 
     // Waystones — the reliquary halts until the ground around the stone is clear.
     this.atWaystone = null;

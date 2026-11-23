@@ -290,7 +290,10 @@ The **Play** button at the top of this README already points there; the canonica
 - **Fallen bodies dissolve**: an ash puff at the moment of death, then a shrink and sink that clears the arena in 7 seconds (10 for elites, 16 for wardens) instead of lingering.
 - **Runs begin on their own**: wave 1 starts three seconds after the arena opens, with the countdown on the HUD — <kbd>Enter</kbd> still starts it immediately.
 - **Characters read their element**: the guardian carries its sigil and element name overhead, every enemy wears its element's sigil and a red hostile ring underfoot, and weapons fire their own silhouette (bolt, blade, needle, boulder) from a crystal focus that kicks with every shot.
-- **Caravan wayfinder**: an arrow under the objective bar points at the next checkpoint — the next unlit waystone, then the eastern rift — with the live distance in metres.
+- **Caravan wayfinder**: an arrow now floats above the reliquary and points at the next checkpoint — the next unlit waystone, then the eastern rift — with a soft ground ring marking exactly where you must stand (green clear, red contested).
+- **Two new wardens and mini-bosses**: Cinder Tyrant and Stormglass Seraph join the rotation, deeper tiers meet them sooner, and every third wave sends a crowned Cinder Herald or Glass Revenant ahead of the horde.
+- **Essence buys less**: the level curve is roughly 60% longer, and a draft earned mid-wave is stored and opened when the wave clears.
+- **Weapons have a path**: rank every four levels, rarity following the rank, +10%/+15% percentage drafts, and at levels 5, 9 and 13 a replacement weapon that restarts at rank 1 with the rarity your level has earned. Base range is about a third shorter, with Long Shot and Far Sight to buy it back.
 
 </details>
 

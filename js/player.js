@@ -4,7 +4,7 @@
    ============================================================ */
 
 import { arenaClamp, glowTexture, shadowTexture, sigilTexture } from './engine.js';
-import { relicById, SIEGE, elementMult } from './data.js';
+import { relicById, SIEGE, elementMult, WEAPON_RANK } from './data.js';
 
 export class Player {
   constructor(game, form) {
@@ -35,6 +35,9 @@ export class Player {
     this._relicMaxShieldApplied = 0;
     this.companion = null;
     this.dustT = 0;
+    this.weaponRank = 1;
+    this.weaponRarity = 'common';
+    this.weaponBoost = 1;
 
     this.stats = {
       maxHp: 120, hp: 120, maxShield: 0, shield: 0,
@@ -42,7 +45,7 @@ export class Player {
       crit: 0, critMult: 1.8, moveMult: 1, magnet: 4.8,
       lifesteal: 0, thorns: 0, cdr: 1, regen: 0, essenceGain: 1,
       execute: 0, aoeBonus: 0, auraSlow: 0, dashCd: 2.2, dashBurst: 0,
-      ultGain: 1, ultPower: 1, revive: 0, damageTaken: 1,
+      ultGain: 1, ultPower: 1, revive: 0, damageTaken: 1, range: 1,
     };
     if (form.bonus?.maxHpPct) this.stats.maxHp = Math.round(120 * (1 + form.bonus.maxHpPct));
     if (this.game.save?.rewards?.hardened) this.stats.maxHp += 12;
@@ -199,13 +202,14 @@ export class Player {
     }
   }
 
-  setForm(form) {
+  setForm(form, quiet = false) {
     this.form = form;
     this.sigils = [...form.sigils];
     if (form.bonus?.maxHpPct) this.stats.maxHp = Math.max(this.stats.maxHp, Math.round(120 * (1 + form.bonus.maxHpPct)));
     if (form.regen) this.stats.regen = Math.max(this.stats.regen, form.regen);
     this.updateColors();
     this.game.engine.setAccent(form.color);
+    if (quiet) return;
     this.heal(this.stats.maxHp * 0.2);
     this.game.fx.ring(this.pos, form.color, { r0: 1, r1: 9, life: 0.9, opacity: 0.8 });
     this.game.fx.burst(new THREE.Vector3(this.pos.x, 1, this.pos.z), form.color, { count: 40, speed: 9, size: 0.3, life: 1.1, up: 3 });
@@ -742,7 +746,10 @@ export class Player {
     const crown = this.relicCrown();
     const ce = crown?.effect || {};
     const cr = crown?.rank || 1;
-    const base = f.stats.damage * s.damageMult * (1 + (rb.damage || 0)) * (1 + (this.game.giftBoost || 0));
+    const rankMult = 1 + WEAPON_RANK.perRank * (this.weaponRank - 1);
+    const rarityMult = WEAPON_RANK.rarityMult[this.weaponRarity] || 1;
+    const base = f.stats.damage * s.damageMult * (1 + (rb.damage || 0)) * (1 + (this.game.giftBoost || 0))
+      * rankMult * rarityMult * (this.weaponBoost || 1);
     const count = Math.max(1, (f.stats.projectiles || 1) + s.extraProjectiles + (rb.projectiles || 0) + (ce.projectiles || 0) * cr);
     const critChance = (f.stats.crit || 0) + s.crit + (rb.crit || 0) + (ce.crit || 0) * cr;
     const pierce = (f.stats.pierce || 0) + s.extraPierce + (rb.pierce || 0) + (ce.pierce || 0) * cr;
@@ -776,7 +783,7 @@ export class Player {
         stretch: f.stats.aoe ? 1 : 1.8,
         pierce, homing, aoe, chain, knockback: knock,
         ignite, slow: f.slow || null,
-        lifesteal, healOnHit, crit, life: 2.4,
+        lifesteal, healOnHit, crit, life: 1.6 * (s.range || 1),
       });
       this.game.fx.trail(start, f.glow, 0.22, 0.2);
     }

@@ -6,6 +6,7 @@
 import {
   ELEMENTS, FUSIONS, resolveForm, fusionFor, buildWave, buildLaneWave, buildHuntWave, buildDuelWave, xpToNext,
   ARENAS, WEAPONS, weaponFor, applyWeapon, bestElementMult, ELEMENT_MATCH,
+  weaponRankFor, weaponRarityFor, WEAPON_RANK,
   BOONS, RARITY, BOSSES, MODES, DEFENSES, SIEGE, LANE, HUNT, ESCORT, RITUAL, BLITZ, DUEL,
   WAVE_BONUSES, rollWaveBonus, SKILL_RUN,
   RELICS, RELIC_SLOTS, RELIC_MAX_RANK, relicById,
@@ -304,6 +305,7 @@ export class Game {
     this.ritual = this.mode === 'ritual' ? new Ritual(this.engine.scene, this.fx, this.audio, this.objMods) : null;
     const form = resolveForm([formKey]);
     this.weapon = weaponFor(formKey, depth.weapons ? this.save.weapons?.[formKey] : undefined);
+    this.baseForm = form;
     const armed = applyWeapon(form, this.weapon);
     this.player = new Player(this, armed);
     this.engine.setAccent(armed.color);
@@ -682,6 +684,8 @@ export class Game {
       this.ui.banner('WAVE CLEARED', '+' + reward + ' ESSENCE', this.wave % 5 === 0 ? 'A warden approaches' : 'Breathe. Then continue');
     }
     if (this.wave % 5 === 0 && !['hunt', 'duel'].includes(this.mode)) this.ui.toast('BOSS WAVE INCOMING', '#ff9be0');
+    // Anything stored during the wave is opened here, when nothing is firing.
+    if (this.pendingLevels > 0 && this.state === 'playing') this.openLevelUp();
   }
 
   /* The first time the guardian walks up to a gate, say plainly how it dies. */
@@ -918,7 +922,7 @@ export class Game {
 
     this.corpses.add(enemy);
 
-    const shardChance = enemy.isBoss ? 1 : enemy.elite ? 0.35 : enemy.key === 'brute' ? 0.2 : 0.055;
+    const shardChance = enemy.isBoss || enemy.miniBoss ? 1 : enemy.elite ? 0.35 : enemy.key === 'brute' ? 0.2 : 0.055;
     if (Math.random() < shardChance) {
       this.pickups.spawnShard(enemy.pos);
       if (enemy.isBoss) this.pickups.spawnShard(enemy.pos);
@@ -1291,12 +1295,20 @@ export class Game {
       this.xp -= this.xpNeed;
       this.level++;
       this.xpNeed = xpToNext(this.level);
+      const p = this.player;
+      if (p) {
+        p.weaponRank = weaponRankFor(this.level);
+        p.weaponRarity = weaponRarityFor(p.weaponRank);
+      }
       if (this.skillRun) this.applyMastery();
       else this.pendingLevels++;
       leveled = true;
     }
     if (!leveled || this.state !== 'playing') return;
-    if (this.save.settings.storeLevels) {
+    // "Store till non-firing": while a wave is live, bank the draft instead of
+    // freezing the fight mid-volley. The wave clear opens what was banked.
+    const hot = this.phase === 'active' && (this.activeEnemyCount() > 0 || this.spawnQueue.length > 0);
+    if (this.save.settings.storeLevels || hot) {
       if (this.time - this._storedToastAt > 2) {
         this._storedToastAt = this.time;
         this.ui.toast('LEVEL UP STORED · PRESS L WHEN READY', '#ffd98a');
@@ -1369,6 +1381,37 @@ export class Game {
       }
     }
 
+    // The weapon path: a percentage boost to choose between, and at swap levels a
+    // replacement weapon that starts again at rank 1.
+    const wlist = WEAPONS[p.sigils[0]] || [];
+    const current = p.form.weapon || wlist[0];
+    const others = wlist.filter(w => w.key !== current?.key);
+    if (current && wlist.length > 1) {
+      const swap = WEAPON_RANK.swapLevels.includes(this.level) && others.length > 0;
+      if (swap) {
+        const pick = others[Math.floor(Math.random() * others.length)];
+        cards.push({
+          kind: 'weaponswap', weaponKey: pick.key,
+          name: 'Take ' + pick.name,
+          desc: 'Replaces ' + current.name + '. Its rank starts again at 1, but it arrives at ' +
+            weaponRarityFor(weaponRankFor(this.level)).toUpperCase() + ' rarity for your level.',
+          icon: pick.icon, rarity: 'epic', css: pick.css,
+        });
+      } else {
+        const useOther = others.length > 0 && Math.random() < 0.45;
+        const w = useOther ? others[Math.floor(Math.random() * others.length)] : current;
+        const pct = useOther ? 0.15 : 0.10;
+        cards.push({
+          kind: 'weaponboost', weaponKey: w.key, pct,
+          name: '+' + Math.round(pct * 100) + '% · ' + w.name,
+          desc: useOther
+            ? 'A rival pattern. Your own weapon gains ' + Math.round(pct * 100) + '% damage for this run.'
+            : 'Your weapon hits ' + Math.round(pct * 100) + '% harder for the rest of the run.',
+          icon: w.icon, rarity: useOther ? 'epic' : 'rare', css: w.css,
+        });
+      }
+    }
+
     const pool = BOONS.filter(b => (this.boonStacks[b.id] || 0) < b.max && !(this.isHardcore && b.id === 'second_wind'));
     while (cards.length < 3 && pool.length) {
       const total = pool.reduce((s, b) => s + RARITY[b.rarity].weight * (b.weight / 100), 0);
@@ -1402,6 +1445,29 @@ export class Game {
     return [first, ...rest];
   }
 
+  /* Swap the weapon in hand: full rank reset, rarity from the level you reached. */
+  equipWeapon(key) {
+    const p = this.player;
+    const w = weaponFor(p.sigils[0], key);
+    if (!w) return false;
+    this.weapon = w;
+    this.save.weapons = this.save.weapons || {};
+    this.save.weapons[p.sigils[0]] = w.key;
+    p.setForm(applyWeapon(this.baseForm, w), true);
+    p.weaponRank = 1;
+    p.weaponRarity = weaponRarityFor(weaponRankFor(this.level));
+    p.weaponBoost = 1;
+    this.audio.fusion();
+    this.fx.ring(p.pos, w.css ? p.form.color : p.form.glow, { r0: 0.5, r1: 5, life: 0.6, opacity: 0.7 });
+    this.fx.burst(new THREE.Vector3(p.pos.x, 1.1, p.pos.z), p.form.glow, { count: 22, speed: 5, size: 0.24, life: 0.6, up: 2 });
+    this.ui.toast(
+      'ARMED · ' + w.name.toUpperCase() + ' · RANK 1 · ' + p.weaponRarity.toUpperCase(),
+      w.css || '#ffd98a'
+    );
+    this.ui.updateHud(this);
+    return true;
+  }
+
   _fusionPartners() {
     const own = this.player.sigils[0];
     const partners = [];
@@ -1421,6 +1487,12 @@ export class Game {
 
     if (card.kind === 'sigil') {
       this.applySigil(card.elementKey);
+    } else if (card.kind === 'weaponboost') {
+      this.player.weaponBoost *= 1 + card.pct;
+      this.ui.toast('+' + Math.round(card.pct * 100) + '% WEAPON DAMAGE · ' + (this.player.form.weapon?.name || 'WEAPON').toUpperCase(), card.css || '#ffd98a');
+      this.fx.ring(this.player.pos, this.player.form.glow, { r0: 0.4, r1: 3, life: 0.45, opacity: 0.55 });
+    } else if (card.kind === 'weaponswap') {
+      this.equipWeapon(card.weaponKey);
     } else {
       this.applyBoon(card);
     }
@@ -1461,6 +1533,7 @@ export class Game {
     this.player.sigils.push(elementKey);
     if (fusion) {
       const form = resolveForm([this.player.sigils[0], elementKey]);
+      this.baseForm = form;
       this.player.setForm(applyWeapon(form, this.weapon));
       this.player.sigils = [this.player.sigils[0], elementKey];
       this.audio.setMood({ theme: this.arenaElement, element: form.sigils[0] });

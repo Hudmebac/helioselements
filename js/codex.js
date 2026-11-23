@@ -18,7 +18,7 @@
 import {
   VERSION, MODES, ELEMENTS, FUSIONS, BOSSES, PACTS, DIFFICULTIES, DESCENT,
   SIEGE, LANE, ESCORT, RITUAL, BLITZ, DUEL, CONTROL_ACTIONS, keyLabel,
-  RELIC_SLOTS, RARITY, KEYBINDS, KINDLING,
+  RELIC_SLOTS, RARITY, KEYBINDS, KINDLING, WEAPON_RANK,
 } from './data.js';
 
 export const META = {
@@ -232,6 +232,16 @@ export const GUIDE = {
       ],
     },
     {
+      id: 'weapons',
+      kicker: 'In hand',
+      title: 'One weapon, grown',
+      body: [
+        `You carry one weapon, and it grows with you: a rank every four levels up to ${WEAPON_RANK.max}, each rank worth +${Math.round(WEAPON_RANK.perRank * 100)}% damage, with rarity following the rank — common, rare, epic, then legendary.`,
+        `Drafts can offer a percentage: +10% to the weapon in hand, or +15% to a rival pattern. At levels ${WEAPON_RANK.swapLevels.join(', ')} a different weapon is offered outright — it replaces what you hold, starts again at rank 1, and arrives at the rarity your level has earned.`,
+        `Range is deliberately short. Long Shot (+15%) and Far Sight (+25%) are the boons that buy it back, and the HUD always shows the weapon, its rank and its rarity.`,
+      ],
+    },
+    {
       id: 'relics',
       kicker: 'The hoard',
       title: 'Relics',
@@ -255,7 +265,8 @@ export const GUIDE = {
       kicker: 'Pressure',
       title: 'Waves, wardens and bonuses',
       body: [
-        `Every fifth wave is a warden: ${BOSSES.map(b => b.name).join(', ')} in that order. Wardens are the run's real checkpoints — if you cannot kill one, the wave after it will finish you.`,
+        `Every fifth wave is a warden: ${BOSSES.map(b => b.name).join(', ')}. Deeper difficulty tiers start further along that list, so a Hardcore run meets different wardens than a Solar one.`,
+        `Every third wave sends a crowned mini-boss ahead of the horde — a Cinder Herald or a Glass Revenant. They hit like elites, carry far more health, and always drop a shard.`,
         `Kills can shed kindling — a burning mote that drifts to you if you are close and pulls itself in if you are not. Elites drop three and wardens drop four. Collect ${KINDLING.need} and the dawn answers with a Dawn Gift: +${Math.round(KINDLING.boostDamage * 100)}% damage for ${KINDLING.boostTime} seconds, plus what the mission actually needs — two shards and a mended core in Sunforge, four seconds on the clock in Blitz, reliquary repairs in Caravan, a circle charge in Ritual. Every second gift sends a wisp to fight beside you.`,
         `Bodies no longer carpet the arena. Fallen enemies ash out in a few seconds — a puff of ash, a sink, and they are gone.`,
         `From wave two, a wave can arrive blessed: more enemies for more shards, faster enemies for more marks, or a thinner horde with a smaller purse. The bonus is shown in the wave pill before the wave starts.`,
@@ -284,7 +295,7 @@ export const GUIDE = {
         `Kill the Spitters first. Everything else has to walk to you.`,
         `Bank a level-up before a warden wave and open it after the first volley.`,
         `Do not spend every shard on new towers; a rank-2 tower you repair beats two rank-1 towers you do not.`,
-        `In the Caravan, the wayfinder under the objective bar always points at the next checkpoint — the next unlit waystone, then the eastern rift — with the distance. Clear the road it points down, never the road behind the reliquary.`,
+        `In the Caravan, the arrow above the reliquary points at the next checkpoint — the next unlit waystone, then the eastern rift — and the soft ground ring marks exactly where you have to stand. It tints red when the road is contested. Clear the road it points down, never the road behind the reliquary.`,
         `In the Ritual, one sealed circle stays sealed — trade ground for time.`,
         `In the Blitz, the clock is fed by kills, so the last three enemies of a wave are worth more than the first ten.`,
         `A fusion at level three is worth more than four damage boons. Plan the draft around it.`,
@@ -400,7 +411,10 @@ export const CHANGELOG = [
       'Fallen enemies now dissolve in seconds instead of lingering: a puff of ash at the moment of death, then a shrink and sink that clears the arena in seven seconds (ten for elites, sixteen for wardens).',
       'Runs begin on their own: wave one starts three seconds after the arena opens, with the countdown in the HUD — Enter starts it immediately.',
       'Characters and weapons read better: the guardian carries its sigil and element name overhead, enemies wear their element sigil and a red hostile ring, and each weapon class fires its own projectile silhouette from a crystal focus that recoils.',
-      'Solar Caravan has a wayfinder: an arrow under the objective bar that points at the next checkpoint — the next unlit waystone, then the eastern rift — with the distance in metres, turning hot when the reliquary is held or contested.',
+      'Two new wardens (Cinder Tyrant, Stormglass Seraph) and two crowned mini-bosses: every third wave sends a Cinder Herald or Glass Revenant ahead of the horde, and deeper tiers meet the newer wardens.',
+      'Essence buys less: the level curve is roughly 60% longer, and drafts earned during a live wave are stored and opened when the wave clears instead of freezing the fight.',
+      'Weapons have a path: a rank every four levels, rarity that follows the rank, +10%/+15% percentage drafts, and at levels 5, 9 and 13 a replacement weapon that starts again at rank 1 with rarity from your level — all shown in the HUD. Base range is about a third shorter, with Long Shot and Far Sight to win it back.',
+      'Solar Caravan has a wayfinder: an arrow that floats above the reliquary and points at the next checkpoint — the next unlit waystone, then the eastern rift — with a soft ground zone showing exactly where you must stand, green when clear and red when contested.',
     ],
   },
   {

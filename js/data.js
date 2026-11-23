@@ -294,6 +294,16 @@ export const ENEMIES = {
     xp: 3, color: 0xffc14d, glow: 0xfff0b0, css: '#ffd166', shape: 'spitter', ranged: true, element: 'lumen',
     desc: 'Keeps its distance and spits gouts of scalding light. Close the gap or eat it.',
   },
+  mini_warden: {
+    key: 'mini_warden', name: 'Cinder Herald', hp: 205, speed: 3.1, damage: 18, radius: 1.05,
+    xp: 12, color: 0xff6a3a, glow: 0xffd08a, css: '#ff9a5a', shape: 'brute', element: 'ember', miniBoss: true,
+    desc: 'A herald of the ember court. Hits like a brute, and carries a brute’s health.',
+  },
+  mini_shade: {
+    key: 'mini_shade', name: 'Glass Revenant', hp: 165, speed: 4.3, damage: 14, radius: 0.95,
+    xp: 11, color: 0x6f8cff, glow: 0xcbd6ff, css: '#93a8ff', shape: 'spitter', element: 'umbra', miniBoss: true,
+    desc: 'A revenant of the long night. Keeps its distance and spits glass.',
+  },
   boss: {
     key: 'boss', name: 'Rift Warden', hp: 560, speed: 3.0, damage: 22, radius: 1.9,
     xp: 30, color: 0xb44dff, glow: 0xff8af0, css: '#c879ff', shape: 'boss', boss: true, element: 'umbra',
@@ -306,6 +316,8 @@ export const BOSSES = [
   { name: 'Ashen Colossus', color: 0xff5a2a, glow: 0xffc06a, css: '#ff8a4a', title: 'The Grief of Mountains', element: 'ember' },
   { name: 'Void Herald', color: 0x6c7bff, glow: 0xc9d2ff, css: '#8f9bff', title: 'The Quiet Between Stars', element: 'umbra' },
   { name: 'Helios Unbound', color: 0xffd166, glow: 0xfff3c4, css: '#ffdc85', title: 'The Sun That Remembers', element: 'lumen' },
+  { name: 'Cinder Tyrant', color: 0xff7a2a, glow: 0xffd08a, css: '#ffb066', title: 'The Last Ember King', element: 'ember' },
+  { name: 'Stormglass Seraph', color: 0x7de8ff, glow: 0xd8fbff, css: '#a9e9ff', title: 'The Sky That Broke', element: 'gale' },
 ];
 
 /* ------------------------------------------------------------
@@ -337,6 +349,8 @@ export const BOONS = [
   { id: 'solar_wind', name: 'Solar Wind', rarity: 'epic', icon: '❂', max: 3, weight: 24, desc: 'Nearby enemies are slowed by 20%.', apply: p => { p.stats.auraSlow = Math.min(0.5, p.stats.auraSlow + 0.2); } },
   { id: 'focused_lens', name: 'Focused Lens', rarity: 'epic', icon: '◉', max: 3, weight: 24, desc: '+25% damage but attacks 8% slower.', apply: p => { p.stats.damageMult *= 1.25; p.stats.intervalMult *= 1.08; } },
   { id: 'essence_bloom', name: 'Essence Bloom', rarity: 'common', icon: '✺', max: 4, weight: 66, desc: '+25% essence gained.', apply: p => { p.stats.essenceGain *= 1.25; } },
+  { id: 'long_shot', name: 'Long Shot', rarity: 'common', icon: '➹', max: 3, weight: 54, desc: '+15% weapon range.', apply: p => { p.stats.range += 0.15; } },
+  { id: 'far_sight', name: 'Far Sight', rarity: 'rare', icon: '◎', max: 2, weight: 28, desc: '+25% weapon range.', apply: p => { p.stats.range += 0.25; } },
   { id: 'warmth', name: 'Warmth', rarity: 'common', icon: '☀', max: 6, weight: 70, desc: 'Heal 40 health and gain 8 max health.', apply: p => { p.stats.maxHp += 8; p.stats.hp = Math.min(p.stats.maxHp, p.stats.hp + 40); } },
   { id: 'wide_angle', name: 'Wide Angle', rarity: 'rare', icon: '∠', max: 3, weight: 34, desc: 'Shots gain +45% explosion radius.', apply: p => { p.stats.aoeBonus += 0.45; } },
   { id: 'glass_edge', name: 'Glass Edge', rarity: 'legendary', icon: '🗡', max: 1, weight: 8, desc: '+60% damage. You take 15% more damage.', apply: p => { p.stats.damageMult *= 1.6; p.stats.damageTaken *= 1.15; } },
@@ -500,7 +514,9 @@ export function buildWave(wave, pacts = {}, difficulty = null, bonus = null, the
   const entries = [];
 
   if (isBoss) {
-    entries.push({ type: 'boss', delay: 1.4, bossIndex: Math.floor(wave / 5) - 1 });
+    // Deeper tiers meet the newer wardens: the rotation starts further along the list.
+    const wardenIndex = (Math.floor(wave / 5) - 1 + (d.rank || 0)) % BOSSES.length;
+    entries.push({ type: 'boss', delay: 1.4, bossIndex: wardenIndex });
     const adds = 4 + Math.floor(wave / 5) * 2 + density * 2;
     for (let i = 0; i < adds; i++) {
       entries.push({ type: i % 3 === 0 ? 'wisp' : 'crawler', delay: 4 + i * 0.55 });
@@ -514,6 +530,10 @@ export function buildWave(wave, pacts = {}, difficulty = null, bonus = null, the
     // An attuned arena sends the elements that beat it.
     const counters = theme ? countersOf(theme) : [];
     const biased = counters.length ? pool.filter(e => counters.includes(ENEMIES[e.key]?.element)) : [];
+    // Every third wave sends a mini-boss ahead of the horde.
+    if (wave >= 3 && wave % 3 === 0) {
+      entries.push({ type: wave % 2 ? 'mini_warden' : 'mini_shade', delay: 2.1 });
+    }
     const duration = Math.min(22, 4 + total * 0.55);
     for (let i = 0; i < total; i++) {
       entries.push({
@@ -589,7 +609,7 @@ export function buildHuntWave(wave, pacts = {}, difficulty = null, bonus = null)
   const p = normalizePacts(pacts);
   const d = difficulty || DIFFICULTIES.solar;
   const b = bonus || {};
-  const bossIndex = Math.max(0, wave - 1);
+  const bossIndex = (Math.max(0, wave - 1) + (d.rank || 0)) % BOSSES.length;
   const hpMult = (1 + 0.2 * (wave - 1)) * HUNT.bossHpMult * (1 + 0.12 * p.vitality) * (d.enemyHp || 1) * (b.hp || 1);
   const dmgMult = (1 + 0.1 * (wave - 1)) * (1 + 0.1 * p.fury) * (d.enemyDamage || 1);
   const speedMult = Math.min(1.8, (1 + 0.03 * (wave - 1) + p.haste * 0.05) * (d.enemySpeed || 1) * (b.speed || 1));
@@ -615,7 +635,7 @@ export function buildDuelWave(wave, pacts = {}, difficulty = null, bonus = null)
   const p = normalizePacts(pacts);
   const d = difficulty || DIFFICULTIES.solar;
   const b = bonus || {};
-  const bossIndex = Math.max(0, wave - 1);
+  const bossIndex = (Math.max(0, wave - 1) + (d.rank || 0)) % BOSSES.length;
   const hpMult = (1 + 0.24 * (wave - 1)) * DUEL.bossHpMult * (1 + 0.12 * p.vitality) * (d.enemyHp || 1) * (b.hp || 1);
   const dmgMult = (1 + 0.12 * (wave - 1)) * (1 + 0.1 * p.fury) * (d.enemyDamage || 1);
   const speedMult = Math.min(1.7, (1 + 0.02 * (wave - 1)) * (d.enemySpeed || 1) * (b.speed || 1));
@@ -626,7 +646,26 @@ export function buildDuelWave(wave, pacts = {}, difficulty = null, bonus = null)
   };
 }
 
-export function xpToNext(level) { return Math.round(12 + level * 9 + Math.pow(level, 1.45) * 1.6); }
+// Slower than it used to be: more fighting between drafts, fewer chains of cards.
+export function xpToNext(level) { return Math.round(20 + level * 13 + Math.pow(level, 1.5) * 2.4); }
+
+/* ------------------------------------------------------------
+   WEAPON RANKS — one weapon, grown by levels, replaced by choice.
+   ------------------------------------------------------------ */
+export const WEAPON_RANK = {
+  max: 5,
+  perRank: 0.14,          // +14% damage per rank held
+  step: 4,                // one rank every four levels
+  swapLevels: [5, 9, 13], // levels where a different weapon is offered
+  rarities: ['common', 'common', 'rare', 'epic', 'legendary'],
+  rarityMult: { common: 1, rare: 1.08, epic: 1.18, legendary: 1.3 },
+};
+export function weaponRankFor(level) {
+  return Math.min(WEAPON_RANK.max, 1 + Math.floor((Math.max(1, level) - 1) / WEAPON_RANK.step));
+}
+export function weaponRarityFor(rank) {
+  return WEAPON_RANK.rarities[Math.max(0, Math.min(WEAPON_RANK.max, rank) - 1)] || 'common';
+}
 
 export const SETTINGS_DEFAULT = {
   menus: 'default',
