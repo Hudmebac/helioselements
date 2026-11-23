@@ -6,7 +6,7 @@
 import {
   ELEMENTS, FUSIONS, resolveForm, fusionFor, buildWave, buildLaneWave, buildHuntWave, buildDuelWave, xpToNext,
   ARENAS, WEAPONS, weaponFor, applyWeapon, bestElementMult, ELEMENT_MATCH,
-  weaponRankFor, weaponRarityFor, WEAPON_RANK, WARDS, WARD_MAX_RANK,
+  weaponRankFor, weaponRarityFor, WEAPON_RANK, WARDS, WARD_MAX_RANK, wardSummaryFor,
   BOONS, RARITY, BOSSES, MODES, DEFENSES, SIEGE, LANE, HUNT, ESCORT, RITUAL, BLITZ, DUEL,
   WAVE_BONUSES, rollWaveBonus, SKILL_RUN,
   RELICS, RELIC_SLOTS, RELIC_MAX_RANK, relicById,
@@ -1435,17 +1435,6 @@ export class Game {
     const reachStep = Math.round(WEAPON_RANK.sidearmRankReach * 100);
     // A ward multiplies its whole effect by rank, so the card prints the real
     // numbers a rank lands on instead of repeating the flavour text.
-    const wardAt = (def, rank) => {
-      const bits = [];
-      if (def.shield) bits.push(Math.round(def.shield * rank) + ' shield');
-      if (def.thorns) bits.push('reflects ' + Math.round(def.thorns * rank * 100) + '%');
-      if (def.regen) bits.push((def.regen * rank).toFixed(1) + ' hp/s mending');
-      if (def.heal) bits.push(Math.round(def.heal * rank) + ' hp a pulse');
-      if (def.damage) bits.push(Math.round(def.damage * rank) + ' pulse damage');
-      if (def.ignite) bits.push(def.ignite.dps * rank + ' burn/s');
-      return bits.join(', ');
-    };
-
     // Every rank card reads the same, whether it was guaranteed or rolled.
     const rankCard = (it) => {
       const next = it.rank + 1;
@@ -1453,7 +1442,7 @@ export class Game {
       const isSide = it.piece === 'side';
       const rarity = isWard ? (next >= 3 ? 'epic' : 'rare') : weaponRarityFor(next);
       const desc = isWard
-        ? 'Rank ' + next + ' of ' + WARD_MAX_RANK + '. At rank ' + next + ': ' + wardAt(ward, next) + '.'
+        ? 'Rank ' + next + ' of ' + WARD_MAX_RANK + '. At rank ' + next + ': ' + wardSummaryFor(ward, next) + '.'
         : isSide
           ? 'Rank ' + next + ' of ' + WEAPON_RANK.max + '. +' + dmgStep + '% damage, ' + tempoStep + '% faster, ' + reachStep + '% more reach, and ' + weaponRarityFor(next).toUpperCase() + ' rarity.'
           : 'Rank ' + next + ' of ' + WEAPON_RANK.max + '. +' + dmgStep + '% weapon damage, and ' + weaponRarityFor(next).toUpperCase() + ' rarity.';

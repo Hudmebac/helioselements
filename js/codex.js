@@ -420,6 +420,7 @@ export const CHANGELOG = [
       'Rank cards print the real numbers a pick buys, and the draft header carries the loadout with it (WEAPON I R3 · WEAPON II R1 · PYRE R2) so the choice is made with the ranks in view.',
       'At a swap level the second arm can be promoted to the firing hand; the outgoing weapon drops into the second arm instead of vanishing. A flat +damage pick also now survives a swap, as its card always promised.',
       'The second arm picks and aims at its own target, preferring one the firing hand is not already shooting, so two weapons cover two sides of a crowd instead of the same enemy twice.',
+      'The ward in the HUD now prints what it actually gives at its current rank — 135 shield, 3.3 hp/s, 27 pulse damage — from the same numbers the draft cards use.',
       'Solar Caravan has a wayfinder: an arrow that floats above the reliquary and points at the next checkpoint — the next unlit waystone, then the eastern rift — with a soft ground zone showing exactly where you must stand, green when clear and red when contested.',
     ],
   },

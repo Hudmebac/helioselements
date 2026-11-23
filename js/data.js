@@ -710,6 +710,21 @@ export const WARDS = {
   },
 };
 
+/* What a ward actually gives at a rank, in words — the draft cards and the
+   HUD tooltip both print this, so the numbers cannot drift apart. */
+export function wardSummaryFor(def, rank = 1) {
+  if (!def) return '';
+  const r = Math.max(1, rank);
+  const bits = [];
+  if (def.shield) bits.push(Math.round(def.shield * r) + ' shield');
+  if (def.thorns) bits.push('reflects ' + Math.round(def.thorns * r * 100) + '%');
+  if (def.regen) bits.push((def.regen * r).toFixed(1) + ' hp/s mending');
+  if (def.heal) bits.push(Math.round(def.heal * r) + ' hp a pulse');
+  if (def.damage) bits.push(Math.round(def.damage * r) + ' pulse damage');
+  if (def.ignite) bits.push(def.ignite.dps * r + ' burn/s');
+  return bits.join(', ');
+}
+
 export const SETTINGS_DEFAULT = {
   menus: 'default',
   master: 0.7,

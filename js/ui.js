@@ -5,7 +5,7 @@
 
 import {
   ELEMENTS, FUSIONS, ENEMIES, BOSSES, BOONS, KEYBINDS, RARITY, VERSION,
-  MODES, ARENAS, DEFENSES, SIEGE, LANE, HUNT, ESCORT, RITUAL, BLITZ, DUEL, RELICS, RELIC_SLOTS, PACTS, pactRanks, pactReward, WARDS,
+  MODES, ARENAS, DEFENSES, SIEGE, LANE, HUNT, ESCORT, RITUAL, BLITZ, DUEL, RELICS, RELIC_SLOTS, PACTS, pactRanks, pactReward, WARDS, wardSummaryFor,
   WAVE_BONUSES, SKILL_RUN, WEAPONS, strongAgainst, weakTo,
   DIFFICULTIES, DIFFICULTY_ORDER, normalizeDifficulty, difficultyUnlocked,
   ACHIEVEMENTS, REWARDS, CONTROL_ACTIONS, keyLabel, DESCENT,
@@ -2178,8 +2178,9 @@ export class UI {
         }
         const ward = p.ward ? WARDS[p.ward.key] : null;
         if (ward) {
-          slots += `<span class="wslot ward" style="--wc:${ward.css}" title="${ward.name} — defence, rank ${p.ward.rank}"><i>${ward.icon}</i><span>${ward.name.split(' ')[0].toUpperCase()}</span><b>R${p.ward.rank}</b></span>`;
-          parts.push('defence: ' + ward.name + ' · rank ' + p.ward.rank);
+          const wardNow = wardSummaryFor(ward, p.ward.rank);
+          slots += `<span class="wslot ward" style="--wc:${ward.css}" title="${ward.name} — defence, rank ${p.ward.rank}: ${wardNow}"><i>${ward.icon}</i><span>${ward.name.split(' ')[0].toUpperCase()}</span><b>R${p.ward.rank}</b></span>`;
+          parts.push('defence: ' + ward.name + ' · rank ' + p.ward.rank + ' · ' + wardNow);
         }
         if (this.el.weaponSlots) this.el.weaponSlots.innerHTML = slots;
         this.el.weaponChip.title = parts.join(' · ');
