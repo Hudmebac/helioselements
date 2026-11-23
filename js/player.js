@@ -789,14 +789,19 @@ export class Player {
       if (this.sideTimer <= 0) {
         const tgt = this.game.enemies.nearest(this.pos, 15) || this.game.structures?.gateTarget?.(this.pos, 15) || null;
         if (tgt) {
+          // A second-arm rank buys rate and reach as well as damage (fireVolley
+          // pays the damage), so growing it competes with growing the firing hand.
+          const sideRank = Math.max(1, this.sideWeaponRank || 1);
+          const tempo = Math.max(0.5, 1 - WEAPON_RANK.sidearmRankTempo * (sideRank - 1));
+          const reach = 1 + WEAPON_RANK.sidearmRankReach * (sideRank - 1);
           this.fireVolley(this.sideForm, {
             rank: this.sideWeaponRank, rarity: this.sideWeaponRarity, boost: this.sideWeaponBoost,
-            damageScale: WEAPON_RANK.sidearmDamage, rangeMult: WEAPON_RANK.sidearmRange,
+            damageScale: WEAPON_RANK.sidearmDamage, rangeMult: WEAPON_RANK.sidearmRange * reach,
             angleOffset: 0.13, small: true,
             close: Math.hypot(tgt.pos.x - this.pos.x, tgt.pos.z - this.pos.z) <= WEAPON_RANK.closeRange,
           });
           this.sideTimer = Math.max(0.1, this.sideForm.stats.interval * this.stats.intervalMult
-            * WEAPON_RANK.sidearmInterval / (1 + (rb.interval || 0)));
+            * WEAPON_RANK.sidearmInterval * tempo / (1 + (rb.interval || 0)));
         } else {
           this.sideTimer = 0.12;
         }

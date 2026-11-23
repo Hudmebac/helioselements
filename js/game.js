@@ -1430,20 +1430,42 @@ export class Game {
     const ward = p.ward ? WARDS[p.ward.key] : null;
     const out = [];
 
+    const dmgStep = Math.round(WEAPON_RANK.perRank * 100);
+    const tempoStep = Math.round(WEAPON_RANK.sidearmRankTempo * 100);
+    const reachStep = Math.round(WEAPON_RANK.sidearmRankReach * 100);
+    // A ward multiplies its whole effect by rank, so the card prints the real
+    // numbers a rank lands on instead of repeating the flavour text.
+    const wardAt = (def, rank) => {
+      const bits = [];
+      if (def.shield) bits.push(Math.round(def.shield * rank) + ' shield');
+      if (def.thorns) bits.push('reflects ' + Math.round(def.thorns * rank * 100) + '%');
+      if (def.regen) bits.push((def.regen * rank).toFixed(1) + ' hp/s mending');
+      if (def.heal) bits.push(Math.round(def.heal * rank) + ' hp a pulse');
+      if (def.damage) bits.push(Math.round(def.damage * rank) + ' pulse damage');
+      if (def.ignite) bits.push(def.ignite.dps * rank + ' burn/s');
+      return bits.join(', ');
+    };
+
     // Every rank card reads the same, whether it was guaranteed or rolled.
     const rankCard = (it) => {
       const next = it.rank + 1;
       const isWard = it.piece === 'ward';
+      const isSide = it.piece === 'side';
       const rarity = isWard ? (next >= 3 ? 'epic' : 'rare') : weaponRarityFor(next);
+      const desc = isWard
+        ? 'Rank ' + next + ' of ' + WARD_MAX_RANK + '. At rank ' + next + ': ' + wardAt(ward, next) + '.'
+        : isSide
+          ? 'Rank ' + next + ' of ' + WEAPON_RANK.max + '. +' + dmgStep + '% damage, ' + tempoStep + '% faster, ' + reachStep + '% more reach, and ' + weaponRarityFor(next).toUpperCase() + ' rarity.'
+          : 'Rank ' + next + ' of ' + WEAPON_RANK.max + '. +' + dmgStep + '% weapon damage, and ' + weaponRarityFor(next).toUpperCase() + ' rarity.';
       return {
         kind: 'loadout', action: 'rank', piece: it.piece,
         name: '+1 Rank · ' + it.name,
-        desc: isWard
-          ? 'Rank ' + next + ' of ' + WARD_MAX_RANK + '. ' + ward.desc
-          : 'Rank ' + next + ' of ' + WEAPON_RANK.max + '. +' + Math.round(WEAPON_RANK.perRank * 100) + '% weapon damage, and ' + weaponRarityFor(next).toUpperCase() + ' rarity.',
+        desc,
         icon: it.icon, rarity, css: it.css,
         tag: it.slot, left: 'RANK ' + it.rank + ' → ' + next,
-        right: isWard ? 'WARD UP' : (weaponRarityFor(next) === weaponRarityFor(it.rank) ? '+' + Math.round(WEAPON_RANK.perRank * 100) + '% DMG' : weaponRarityFor(next).toUpperCase()),
+        right: isWard ? 'WARD UP'
+          : isSide ? '+' + dmgStep + '% · ' + tempoStep + '% RATE'
+          : (weaponRarityFor(next) === weaponRarityFor(it.rank) ? '+' + dmgStep + '% DMG' : weaponRarityFor(next).toUpperCase()),
       };
     };
 
@@ -1483,7 +1505,7 @@ export class Game {
         out.push({
           kind: 'loadout', action: 'sidearm', weaponKey: w.key,
           name: 'Second Arm · ' + w.name,
-          desc: w.desc + ' Fires on its own beat for ' + Math.round(WEAPON_RANK.sidearmDamage * 100) + '% damage, in its own hand.',
+          desc: w.desc + ' Fires on its own beat for ' + Math.round(WEAPON_RANK.sidearmDamage * 100) + '% damage; each rank adds +' + Math.round(WEAPON_RANK.perRank * 100) + '% damage, ' + Math.round(WEAPON_RANK.sidearmRankTempo * 100) + '% rate and ' + Math.round(WEAPON_RANK.sidearmRankReach * 100) + '% reach.',
           icon: w.icon, rarity: 'rare', css: w.css,
           tag: 'WEAPON II', left: 'EMPTY SLOT', right: 'RANK 1',
         });
@@ -1546,7 +1568,8 @@ export class Game {
       this.fx.ring(p.pos, w?.css ? p.form.glow : 0xffd98a, { r0: 0.4, r1: 3.2, life: 0.45, opacity: 0.6 });
       this.ui.toast(
         'RANK UP · ' + (w?.name || 'WEAPON').toUpperCase() + ' R' + (piece === 'side' ? p.sideWeaponRank : p.weaponRank) +
-        ' · +' + Math.round(WEAPON_RANK.perRank * 100) + '% DAMAGE',
+        ' · +' + Math.round(WEAPON_RANK.perRank * 100) + '% DMG' +
+        (piece === 'side' ? ' · +' + Math.round(WEAPON_RANK.sidearmRankTempo * 100) + '% RATE' : ''),
         w?.css || '#ffd98a'
       );
     }

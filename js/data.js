@@ -664,6 +664,8 @@ export const WEAPON_RANK = {
   sidearmDamage: 0.6,     // the second arm hits softer...
   sidearmInterval: 1.15,  // ...on a slower beat...
   sidearmRange: 0.85,     // ...and shorter
+  sidearmRankTempo: 0.06, // each second-arm rank fires 6% faster — a rank must be worth a pick
+  sidearmRankReach: 0.04, // ...and reaches 4% farther
   rarities: ['common', 'common', 'rare', 'epic', 'legendary'],
   rarityMult: { common: 1, rare: 1.08, epic: 1.18, legendary: 1.3 },
 };
