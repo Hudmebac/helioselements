@@ -5,7 +5,7 @@
 
 import {
   ELEMENTS, FUSIONS, ENEMIES, BOSSES, BOONS, KEYBINDS, RARITY, VERSION,
-  MODES, ARENAS, DEFENSES, SIEGE, LANE, HUNT, ESCORT, RITUAL, BLITZ, DUEL, RELICS, RELIC_SLOTS, PACTS, pactRanks, pactReward,
+  MODES, ARENAS, DEFENSES, SIEGE, LANE, HUNT, ESCORT, RITUAL, BLITZ, DUEL, RELICS, RELIC_SLOTS, PACTS, pactRanks, pactReward, WARDS,
   WAVE_BONUSES, SKILL_RUN, WEAPONS, strongAgainst, weakTo,
   DIFFICULTIES, DIFFICULTY_ORDER, normalizeDifficulty, difficultyUnlocked,
   ACHIEVEMENTS, REWARDS, CONTROL_ACTIONS, keyLabel, DESCENT,
@@ -104,7 +104,7 @@ export class UI {
         <div class="hud-actions">
           <div class="shard-chip" id="shard-chip" title="Sun shards — spend these in the Forge"><i>◈</i><b id="shard-count">3</b></div>
           <div class="kindle-chip" id="kindle-chip" title="Kindling — eight motes summon a Dawn Gift"><i>✺</i><span id="kindle-count">0/8</span><span class="k-bar"><b id="kindle-fill"></b></span></div>
-          <div class="weapon-chip" id="weapon-chip" title=""><i>⚔</i><span id="weapon-name">WEAPON</span><b id="weapon-rank">R1</b><em id="weapon-rarity">COMMON</em></div>
+          <div class="weapon-chip" id="weapon-chip" title=""><i>⚔</i><span id="weapon-name">WEAPON</span><b id="weapon-rank">R1</b><em id="weapon-rarity">COMMON</em><span class="weapon-slots" id="weapon-slots"></span></div>
           <button class="icon-btn forge-btn" data-act="forge" id="forge-btn" title="Open the Forge (B)"><span class="forge-glyph">⚒</span><span class="forge-label">Forge</span><span class="forge-key">B</span></button>
           <button class="icon-btn" data-act="sound" id="sound-btn" title="Toggle sound">♪</button>
           <button class="icon-btn" data-act="pause" title="Pause (Esc)">❚❚</button>
@@ -603,6 +603,7 @@ export class UI {
       weaponName: document.getElementById('weapon-name'),
       weaponRank: document.getElementById('weapon-rank'),
       weaponRarity: document.getElementById('weapon-rarity'),
+      weaponSlots: document.getElementById('weapon-slots'),
       relics: document.getElementById('hud-relics'),
       levelUpBtn: document.getElementById('levelup-btn'),
       levelUpCount: document.getElementById('levelup-count'),
@@ -2157,16 +2158,30 @@ export class UI {
     }
 
     if (this.el.weaponChip) {
-      const wp = game.player?.form?.weapon;
+      const p = game.player;
+      const wp = p?.form?.weapon;
       const on = game.state === 'playing' && !!wp;
       this.el.weaponChip.classList.toggle('on', on);
       if (on) {
         this.el.weaponName.textContent = wp.name.toUpperCase();
-        this.el.weaponRank.textContent = 'R' + (game.player.weaponRank || 1);
-        const rarity = game.player.weaponRarity || 'common';
+        this.el.weaponRank.textContent = 'R' + (p.weaponRank || 1);
+        const rarity = p.weaponRarity || 'common';
         this.el.weaponRarity.textContent = rarity.toUpperCase();
         this.el.weaponRarity.style.color = RARITY[rarity]?.css || '#a9b6d6';
-        this.el.weaponChip.title = wp.name + ' — rank ' + (game.player.weaponRank || 1) + ' · ' + rarity;
+        const parts = [wp.name + ' — rank ' + (p.weaponRank || 1) + ' · ' + rarity];
+        let slots = '';
+        const side = p.sideForm?.weapon;
+        if (side) {
+          slots += `<span class="wslot" title="${side.name} — second arm, rank ${p.sideWeaponRank}"><i>${side.icon}</i><span>${side.name.split(' ')[0].toUpperCase()}</span><b>R${p.sideWeaponRank}</b></span>`;
+          parts.push('second arm: ' + side.name + ' · rank ' + p.sideWeaponRank);
+        }
+        const ward = p.ward ? WARDS[p.ward.key] : null;
+        if (ward) {
+          slots += `<span class="wslot ward" style="--wc:${ward.css}" title="${ward.name} — defence, rank ${p.ward.rank}"><i>${ward.icon}</i><span>${ward.name.split(' ')[0].toUpperCase()}</span><b>R${p.ward.rank}</b></span>`;
+          parts.push('defence: ' + ward.name + ' · rank ' + p.ward.rank);
+        }
+        if (this.el.weaponSlots) this.el.weaponSlots.innerHTML = slots;
+        this.el.weaponChip.title = parts.join(' · ');
       }
     }
 
@@ -2434,10 +2449,14 @@ export class UI {
     const grid = document.getElementById('boon-grid');
     grid.innerHTML = cards.map((c, i) => {
       const css = c.css || '#a9b6d6';
-      const rarity = c.kind === 'sigil' ? 'FUSION PATH' : RARITY[c.rarity]?.name || 'Boon';
+      const rarity = c.kind === 'sigil' ? 'FUSION PATH'
+        : c.kind === 'loadout' ? (c.tag || 'LOADOUT')
+        : RARITY[c.rarity]?.name || 'Boon';
       const stock = c.kind === 'sigil'
         ? `<span>FUSION · ${c.fusionName || ''}</span><b>NEW FORM</b>`
-        : `<span>STACK ${c.stack} / ${c.max}</span><b>${c.max > 1 ? 'STACKABLE' : 'UNIQUE'}</b>`;
+        : c.kind === 'loadout'
+          ? `<span>${c.left || ''}</span><b>${c.right || ''}</b>`
+          : `<span>STACK ${c.stack} / ${c.max}</span><b>${c.max > 1 ? 'STACKABLE' : 'UNIQUE'}</b>`;
       return `<button class="boon-card" data-card="${i}" style="--rc:${css}">
         <span class="boon-rarity">${rarity}</span>
         <span class="boon-icon">${c.icon}</span>

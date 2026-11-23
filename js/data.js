@@ -517,12 +517,12 @@ export function buildWave(wave, pacts = {}, difficulty = null, bonus = null, the
     // Deeper tiers meet the newer wardens: the rotation starts further along the list.
     const wardenIndex = (Math.floor(wave / 5) - 1 + (d.rank || 0)) % BOSSES.length;
     entries.push({ type: 'boss', delay: 1.4, bossIndex: wardenIndex });
-    const adds = 4 + Math.floor(wave / 5) * 2 + density * 2;
+    const adds = 3 + Math.floor(wave / 5) * 2 + density * 2;
     for (let i = 0; i < adds; i++) {
       entries.push({ type: i % 3 === 0 ? 'wisp' : 'crawler', delay: 4 + i * 0.55 });
     }
   } else {
-    const total = Math.min(60, Math.round((6 + wave * 1.9) * (1 + density * 0.16) * (d.spawn || 1) * (b.spawn || 1)));
+    const total = Math.min(56, Math.round((6 + wave * 1.7) * (1 + density * 0.16) * (d.spawn || 1) * (b.spawn || 1)));
     const pool = [{ key: 'crawler', w: 100 }];
     if (wave >= 2) pool.push({ key: 'wisp', w: Math.min(60, 20 + wave * 4) });
     if (wave >= 3) pool.push({ key: 'spitter', w: Math.min(45, 10 + wave * 3) });
@@ -534,7 +534,8 @@ export function buildWave(wave, pacts = {}, difficulty = null, bonus = null, the
     if (wave >= 3 && wave % 3 === 0) {
       entries.push({ type: wave % 2 ? 'mini_warden' : 'mini_shade', delay: 2.1 });
     }
-    const duration = Math.min(22, 4 + total * 0.55);
+    // A longer trickle instead of a wall: same fight, less of a stampede.
+    const duration = Math.min(26, 5 + total * 0.7);
     for (let i = 0; i < total; i++) {
       entries.push({
         type: biased.length && Math.random() < 0.45 ? weightedPick(biased) : weightedPick(pool),
@@ -564,7 +565,7 @@ export function buildLaneWave(wave, pacts = {}, openLanes = [0, 1, 2], difficult
   const speedMult = Math.min(1.9, (1 + 0.012 * (wave - 1)) * (1 + 0.05 * p.haste) * (d.enemySpeed || 1) * (b.speed || 1));
   const lanes = openLanes.length ? openLanes : [1];
   const perLane = Math.min(14, Math.round((3 + Math.floor(wave * 0.7) + p.density) * (d.spawn || 1) * (b.spawn || 1)));
-  const duration = Math.min(16, 4 + perLane * 0.9);
+  const duration = Math.min(20, 5 + perLane * 0.95);
   const entries = [];
   // Attuned arenas bias their lanes toward the countering elements.
   const counterTypes = (theme ? countersOf(theme) : []).filter(k => ENEMIES[k] && (k === 'crawler'
@@ -653,19 +654,53 @@ export function xpToNext(level) { return Math.round(20 + level * 13 + Math.pow(l
    WEAPON RANKS — one weapon, grown by levels, replaced by choice.
    ------------------------------------------------------------ */
 export const WEAPON_RANK = {
-  max: 5,
-  perRank: 0.14,          // +14% damage per rank held
-  step: 4,                // one rank every four levels
-  swapLevels: [5, 9, 13], // levels where a different weapon is offered
+  max: 5,                 // one weapon, five ranks — earned in drafts
+  perRank: 0.16,          // +16% damage per rank held
+  swapLevels: [5, 9, 13], // levels where a replacement weapon is offered
+  baseRange: 1.2,         // shot lifetime at range 1 — deliberately short
+  closeRange: 6,          // shots loosed at a target inside this are braced
+  closeBonus: 1.14,       // ...and hit 14% harder
+  sidearmDamage: 0.6,     // the second arm hits softer...
+  sidearmInterval: 1.15,  // ...on a slower beat...
+  sidearmRange: 0.85,     // ...and shorter
   rarities: ['common', 'common', 'rare', 'epic', 'legendary'],
   rarityMult: { common: 1, rare: 1.08, epic: 1.18, legendary: 1.3 },
 };
-export function weaponRankFor(level) {
-  return Math.min(WEAPON_RANK.max, 1 + Math.floor((Math.max(1, level) - 1) / WEAPON_RANK.step));
-}
 export function weaponRarityFor(rank) {
   return WEAPON_RANK.rarities[Math.max(0, Math.min(WEAPON_RANK.max, rank) - 1)] || 'common';
 }
+
+/* ------------------------------------------------------------
+   DEFENCES — the single ward slot. One ward, three ranks.
+   ------------------------------------------------------------ */
+export const WARD_MAX_RANK = 3;
+
+export const WARDS = {
+  aegis: {
+    key: 'aegis', name: 'Aegis Ward', role: 'Bulwark', icon: '◈', element: 'tide',
+    color: 0x6fe3ff, glow: 0xbdf4ff, css: '#8fe8ff',
+    shield: 45, regen: 1.1, radius: 4.4, damage: 9, knockback: 3.5, slow: 0.28, interval: 2.2,
+    desc: '+45 shield per rank, slow healing, and a cold pulse that slows and shoves whatever crowds you.',
+  },
+  briar: {
+    key: 'briar', name: 'Briar Ward', role: 'Thorns', icon: '✧', element: 'verdant',
+    color: 0x63e08a, glow: 0xd6ffb8, css: '#73e698',
+    thorns: 0.35, radius: 3.8, damage: 16, knockback: 8, interval: 1.5,
+    desc: 'Reflects +35% of contact damage per rank, and bursts thorns that throw attackers off you.',
+  },
+  pyre: {
+    key: 'pyre', name: 'Pyre Ward', role: 'Burn', icon: '✹', element: 'ember',
+    color: 0xff6a2a, glow: 0xffc06a, css: '#ff8a52',
+    radius: 3.6, damage: 9, ignite: { dps: 4, duration: 2.2 }, knockback: 0, interval: 0.75,
+    desc: 'A ring of coals: everything that steps close catches fire, and the ring burns faster each rank.',
+  },
+  well: {
+    key: 'well', name: 'Tidewell', role: 'Mend', icon: '≈', element: 'tide',
+    color: 0x2fa8ff, glow: 0x8fe6ff, css: '#4fb9ff',
+    regen: 2.2, heal: 10, radius: 4.6, damage: 6, knockback: 2, interval: 3,
+    desc: 'Health back every second, and a washing pulse that mends you and pushes the horde off.',
+  },
+};
 
 export const SETTINGS_DEFAULT = {
   menus: 'default',

@@ -4,7 +4,10 @@
    ============================================================ */
 
 import { arenaClamp, glowTexture, shadowTexture, sigilTexture } from './engine.js';
-import { relicById, SIEGE, elementMult, WEAPON_RANK } from './data.js';
+import {
+  relicById, SIEGE, elementMult, WEAPON_RANK, weaponRarityFor, weaponFor, applyWeapon,
+  WARDS, WARD_MAX_RANK,
+} from './data.js';
 
 export class Player {
   constructor(game, form) {
@@ -38,6 +41,17 @@ export class Player {
     this.weaponRank = 1;
     this.weaponRarity = 'common';
     this.weaponBoost = 1;
+    // The rest of the loadout: a second arm and the single ward slot.
+    this.sideWeaponKey = null;
+    this.sideWeaponRank = 1;
+    this.sideWeaponRarity = 'common';
+    this.sideWeaponBoost = 1;
+    this.sideForm = null;
+    this.sideTimer = 0.6;
+    this.ward = null;
+    this.wardT = 0.8;
+    this._wardShield = 0;
+    this._wardThorns = 0;
 
     this.stats = {
       maxHp: 120, hp: 120, maxShield: 0, shield: 0,
@@ -207,6 +221,7 @@ export class Player {
     this.sigils = [...form.sigils];
     if (form.bonus?.maxHpPct) this.stats.maxHp = Math.max(this.stats.maxHp, Math.round(120 * (1 + form.bonus.maxHpPct)));
     if (form.regen) this.stats.regen = Math.max(this.stats.regen, form.regen);
+    this._rebuildSideForm();
     this.updateColors();
     this.game.engine.setAccent(form.color);
     if (quiet) return;
@@ -214,6 +229,96 @@ export class Player {
     this.game.fx.ring(this.pos, form.color, { r0: 1, r1: 9, life: 0.9, opacity: 0.8 });
     this.game.fx.burst(new THREE.Vector3(this.pos.x, 1, this.pos.z), form.color, { count: 40, speed: 9, size: 0.3, life: 1.1, up: 3 });
     this.game.engine.pulseExposure(0.5);
+  }
+
+  /* ------------- the loadout: second arm & ward ------------- */
+  _rebuildSideForm() {
+    if (!this.sideWeaponKey) { this.sideForm = null; return; }
+    const base = this.game.baseForm || this.form;
+    const w = weaponFor(this.sigils[0], this.sideWeaponKey);
+    this.sideForm = w && w.key !== this.form.weapon?.key ? applyWeapon(base, w) : null;
+    if (!this.sideForm) this.sideWeaponKey = null;
+  }
+
+  setSidearm(key) {
+    const w = weaponFor(this.sigils[0], key);
+    if (!w || w.key === this.form.weapon?.key) return false;
+    this.sideWeaponKey = w.key;
+    this.sideWeaponRank = 1;
+    this.sideWeaponRarity = weaponRarityFor(1);
+    this.sideWeaponBoost = 1;
+    this.sideTimer = 0.5;
+    this._rebuildSideForm();
+    return !!this.sideForm;
+  }
+
+  rankWeapon(piece) {
+    if (piece === 'side') {
+      if (!this.sideForm || this.sideWeaponRank >= WEAPON_RANK.max) return false;
+      this.sideWeaponRank += 1;
+      this.sideWeaponRarity = weaponRarityFor(this.sideWeaponRank);
+      return true;
+    }
+    if (this.weaponRank >= WEAPON_RANK.max) return false;
+    this.weaponRank += 1;
+    this.weaponRarity = weaponRarityFor(this.weaponRank);
+    return true;
+  }
+
+  setWard(key, rank = 1) {
+    const def = WARDS[key];
+    if (!def) return false;
+    this.ward = { key, rank: Math.max(1, Math.min(WARD_MAX_RANK, rank)) };
+    this.wardT = 0.6;
+    this.applyWardStats();
+    return true;
+  }
+
+  rankWard() {
+    if (!this.ward || this.ward.rank >= WARD_MAX_RANK) return false;
+    this.ward.rank += 1;
+    this.applyWardStats();
+    return true;
+  }
+
+  /* Wards that harden you are paid once, on equip and on every rank. */
+  applyWardStats() {
+    const def = this.ward ? WARDS[this.ward.key] : null;
+    const rank = this.ward?.rank || 0;
+    const shield = Math.round((def?.shield || 0) * rank);
+    const dShield = shield - this._wardShield;
+    if (dShield) {
+      this.stats.maxShield = Math.max(0, this.stats.maxShield + dShield);
+      if (dShield > 0) this.stats.shield = Math.min(this.stats.maxShield, this.stats.shield + dShield);
+      else this.stats.shield = Math.min(this.stats.shield, this.stats.maxShield);
+      this._wardShield = shield;
+    }
+    const thorns = (def?.thorns || 0) * rank;
+    if (thorns !== this._wardThorns) {
+      this.stats.thorns += thorns - this._wardThorns;
+      this._wardThorns = thorns;
+    }
+  }
+
+  updateWard(dt) {
+    const w = this.ward;
+    if (!w) return;
+    const def = WARDS[w.key];
+    if (!def) return;
+    if (def.regen) this.heal(def.regen * w.rank * dt, true);
+    this.wardT -= dt;
+    if (this.wardT > 0) return;
+    this.wardT = def.interval || 1.5;
+    if (def.heal) this.heal(def.heal * w.rank, true);
+    if (!def.damage && !def.slow) return;
+    const radius = def.radius || 4;
+    this.game.areaDamage(this.pos, radius, (def.damage || 0) * w.rank * this.stats.damageMult, {
+      color: def.color,
+      knockback: def.knockback || 0,
+      slow: def.slow ? { amount: def.slow, duration: 1.6 } : null,
+      ignite: def.ignite ? { dps: def.ignite.dps * w.rank, duration: def.ignite.duration } : null,
+    });
+    this.game.fx.ring(this.pos, def.glow || def.color, { r0: radius * 0.35, r1: radius, life: 0.45, opacity: 0.5 });
   }
 
   /* ------------- relics & companion ------------- */
@@ -655,7 +760,7 @@ export class Player {
     this.game.structures?.pushOut?.(this.pos, 0.62);
 
     // aim — lead moving targets by their velocity
-    const target = this.game.enemies.nearest(this.pos, 21) || this.game.structures?.gateTarget?.(this.pos, 21) || null;
+    const target = this.game.enemies.nearest(this.pos, 17) || this.game.structures?.gateTarget?.(this.pos, 17) || null;
     if (target) {
       const dx = target.pos.x - this.pos.x;
       const dz = target.pos.z - this.pos.z;
@@ -666,15 +771,35 @@ export class Player {
       this.aim.copy(this.dir);
     }
 
-    // attack
+    // attack — the weapon in the firing hand
     this.fireTimer -= dt;
     if (this.fireTimer <= 0) {
-      const tgt = target || this.game.enemies.nearest(this.pos, 21);
+      const tgt = target || this.game.enemies.nearest(this.pos, 17);
       if (tgt) {
         this.attack(tgt);
         this.fireTimer = Math.max(0.075, this.form.stats.interval * this.stats.intervalMult / (1 + (rb.interval || 0)));
       } else {
         this.fireTimer = 0;
+      }
+    }
+
+    // the second arm: its own tempo, half a step behind the first
+    if (this.sideForm) {
+      this.sideTimer -= dt;
+      if (this.sideTimer <= 0) {
+        const tgt = this.game.enemies.nearest(this.pos, 15) || this.game.structures?.gateTarget?.(this.pos, 15) || null;
+        if (tgt) {
+          this.fireVolley(this.sideForm, {
+            rank: this.sideWeaponRank, rarity: this.sideWeaponRarity, boost: this.sideWeaponBoost,
+            damageScale: WEAPON_RANK.sidearmDamage, rangeMult: WEAPON_RANK.sidearmRange,
+            angleOffset: 0.13, small: true,
+            close: Math.hypot(tgt.pos.x - this.pos.x, tgt.pos.z - this.pos.z) <= WEAPON_RANK.closeRange,
+          });
+          this.sideTimer = Math.max(0.1, this.sideForm.stats.interval * this.stats.intervalMult
+            * WEAPON_RANK.sidearmInterval / (1 + (rb.interval || 0)));
+        } else {
+          this.sideTimer = 0.12;
+        }
       }
     }
 
@@ -728,9 +853,10 @@ export class Player {
       }
     }
 
-    // relics & companion
+    // relics, ward & companion
     const regen = this.stats.regen + (rb.regen || 0);
     if (regen > 0) this.heal(regen * dt, true);
+    this.updateWard(dt);
     this.updateCompanion(dt);
     if (this.stats.shield < this.stats.maxShield && this.lastHurt > 5) {
       this.stats.shield = Math.min(this.stats.maxShield, this.stats.shield + 9 * dt);
@@ -740,16 +866,26 @@ export class Player {
   }
 
   attack(target) {
-    const f = this.form;
+    const d = target ? Math.hypot(target.pos.x - this.pos.x, target.pos.z - this.pos.z) : 99;
+    this.fireVolley(this.form, {
+      rank: this.weaponRank, rarity: this.weaponRarity, boost: this.weaponBoost,
+      damageScale: 1, rangeMult: 1, angleOffset: 0, small: false,
+      close: d <= WEAPON_RANK.closeRange,
+    });
+  }
+
+  /* One volley from one arm. The second arm calls this with its own stats. */
+  fireVolley(f, cfg = {}) {
     const s = this.stats;
     const rb = this.relicBonuses();
     const crown = this.relicCrown();
     const ce = crown?.effect || {};
     const cr = crown?.rank || 1;
-    const rankMult = 1 + WEAPON_RANK.perRank * (this.weaponRank - 1);
-    const rarityMult = WEAPON_RANK.rarityMult[this.weaponRarity] || 1;
+    const rankMult = 1 + WEAPON_RANK.perRank * ((cfg.rank || 1) - 1);
+    const rarityMult = WEAPON_RANK.rarityMult[cfg.rarity] || 1;
+    const closeMult = cfg.close ? WEAPON_RANK.closeBonus : 1;
     const base = f.stats.damage * s.damageMult * (1 + (rb.damage || 0)) * (1 + (this.game.giftBoost || 0))
-      * rankMult * rarityMult * (this.weaponBoost || 1);
+      * rankMult * rarityMult * (cfg.boost || 1) * (cfg.damageScale || 1) * closeMult;
     const count = Math.max(1, (f.stats.projectiles || 1) + s.extraProjectiles + (rb.projectiles || 0) + (ce.projectiles || 0) * cr);
     const critChance = (f.stats.crit || 0) + s.crit + (rb.crit || 0) + (ce.crit || 0) * cr;
     const pierce = (f.stats.pierce || 0) + s.extraPierce + (rb.pierce || 0) + (ce.pierce || 0) * cr;
@@ -767,8 +903,8 @@ export class Player {
     const shape = /maul|fist|landslide/.test(wkey) ? 'boulder'
       : /fan|squall|well|riptide/.test(wkey) ? 'needle'
       : /lance|edge|whip/.test(wkey) ? 'blade' : 'bolt';
-    const shotSize = (f.key === 'stone' ? 1.35 : 1) * (shape === 'boulder' ? 1.25 : 1);
-    const baseAngle = Math.atan2(this.aim.x, this.aim.z);
+    const shotSize = (f.key === 'stone' ? 1.35 : 1) * (shape === 'boulder' ? 1.25 : 1) * (cfg.small ? 0.78 : 1);
+    const baseAngle = Math.atan2(this.aim.x, this.aim.z) + (cfg.angleOffset || 0);
     const spread = count > 1 ? 0.085 : 0;
     for (let i = 0; i < count; i++) {
       const a = baseAngle + (i - (count - 1) / 2) * spread;
@@ -783,17 +919,17 @@ export class Player {
         stretch: f.stats.aoe ? 1 : 1.8,
         pierce, homing, aoe, chain, knockback: knock,
         ignite, slow: f.slow || null,
-        lifesteal, healOnHit, crit, life: 1.6 * (s.range || 1),
+        lifesteal, healOnHit, crit, life: WEAPON_RANK.baseRange * (s.range || 1) * (cfg.rangeMult || 1),
       });
       this.game.fx.trail(start, f.glow, 0.22, 0.2);
     }
     const muzzle = new THREE.Vector3(this.pos.x + this.aim.x * 0.8, 1.02, this.pos.z + this.aim.z * 0.8);
-    this.recoil = 1;
-    this.game.audio.shoot(f.key);
-    this.game.fx.burst(muzzle, f.glow, { count: 10, speed: 4.6, size: 0.24, life: 0.32, up: 1 });
+    this.recoil = Math.max(this.recoil, cfg.small ? 0.45 : 1);
+    if (!cfg.small) this.game.audio.shoot(f.key);
+    this.game.fx.burst(muzzle, f.glow, { count: cfg.small ? 6 : 10, speed: 4.6, size: cfg.small ? 0.18 : 0.24, life: 0.3, up: 1 });
     this.game.fx.burst(muzzle, 0xffffff, { count: 3, speed: 5.2, size: 0.13, life: 0.2, up: 0.5 });
-    this.game.fx.ring(muzzle, f.glow, { r0: 0.15, r1: 1.15, life: 0.22, opacity: 0.5 });
-    this.game.engine.addShake(0.04);
+    this.game.fx.ring(muzzle, f.glow, { r0: 0.15, r1: cfg.small ? 0.8 : 1.15, life: 0.22, opacity: 0.5 });
+    this.game.engine.addShake(cfg.small ? 0.02 : 0.04);
   }
 
   _updateVisual(dt) {

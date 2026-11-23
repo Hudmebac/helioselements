@@ -293,7 +293,9 @@ The **Play** button at the top of this README already points there; the canonica
 - **Caravan wayfinder**: an arrow now floats above the reliquary and points at the next checkpoint — the next unlit waystone, then the eastern rift — with a soft ground ring marking exactly where you must stand (green clear, red contested).
 - **Two new wardens and mini-bosses**: Cinder Tyrant and Stormglass Seraph join the rotation, deeper tiers meet them sooner, and every third wave sends a crowned Cinder Herald or Glass Revenant ahead of the horde.
 - **Essence buys less**: the level curve is roughly 60% longer, and a draft earned mid-wave is stored and opened when the wave clears.
-- **Weapons have a path**: rank every four levels, rarity following the rank, +10%/+15% percentage drafts, and at levels 5, 9 and 13 a replacement weapon that restarts at rank 1 with the rarity your level has earned. Base range is about a third shorter, with Long Shot and Far Sight to buy it back.
+- **Two arms and a ward**: you carry two weapons — the second fires slower for 60% damage at 85% reach — plus a single defence (Aegis, Briar, Pyre or Tidewell) that shields you, reflects contact damage, burns the crowd or mends you. The HUD lists all three with their ranks.
+- **Ranks are drafted, not automatic**: each level offers a rank to whichever piece is furthest behind — +16% damage per weapon rank, rarity following the rank — so you choose whether to push one arm to legendary or keep both growing. Replacements at levels 5, 9 and 13 still restart at rank 1.
+- **Shorter reach, closer fights**: shots travel about a quarter less far, but a shot fired inside six paces hits 14% harder, and waves trickle in over a longer window instead of arriving as one wall.
 
 </details>
 

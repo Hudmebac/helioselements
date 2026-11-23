@@ -438,8 +438,22 @@
   .weapon-chip span { font-weight: 700; color: var(--gold-hi); letter-spacing: .08em; }
   .weapon-chip b { font-size: 8.5px; font-weight: 800; color: #fff; }
   .weapon-chip em { font-style: normal; font-size: 6.5px; font-weight: 800; letter-spacing: .16em; }
+  /* Second arm and the ward slot, live beside the firing hand */
+  .weapon-chip .weapon-slots { display: flex; align-items: center; gap: 5px; }
+  .weapon-chip .wslot {
+    display: inline-flex; align-items: center; gap: 4px; height: 20px; padding: 0 6px;
+    border-radius: 10px; border: 1px solid rgba(245,194,107,.16);
+    font-size: 6.5px; letter-spacing: .1em; color: var(--faint);
+  }
+  .weapon-chip .wslot i { font-style: normal; font-size: 9px; color: var(--gold); }
+  .weapon-chip .wslot b { font-size: 7px; font-weight: 800; color: #fff; }
+  .weapon-chip .wslot.ward { color: var(--wc, #8fe8ff); border-color: rgba(255,255,255,.2); }
+  .weapon-chip .wslot.ward i { color: var(--wc, #8fe8ff); }
+  @media (max-width: 1180px) {
+    .weapon-chip .wslot span { display: none; }
+  }
   @media (max-width: 900px) {
-    .weapon-chip span, .weapon-chip em { display: none; }
+    .weapon-chip > span#weapon-name, .weapon-chip em { display: none; }
   }
 }
 

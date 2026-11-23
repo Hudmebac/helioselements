@@ -6,7 +6,7 @@
 import {
   ELEMENTS, FUSIONS, resolveForm, fusionFor, buildWave, buildLaneWave, buildHuntWave, buildDuelWave, xpToNext,
   ARENAS, WEAPONS, weaponFor, applyWeapon, bestElementMult, ELEMENT_MATCH,
-  weaponRankFor, weaponRarityFor, WEAPON_RANK,
+  weaponRarityFor, WEAPON_RANK, WARDS, WARD_MAX_RANK,
   BOONS, RARITY, BOSSES, MODES, DEFENSES, SIEGE, LANE, HUNT, ESCORT, RITUAL, BLITZ, DUEL,
   WAVE_BONUSES, rollWaveBonus, SKILL_RUN,
   RELICS, RELIC_SLOTS, RELIC_MAX_RANK, relicById,
@@ -1295,11 +1295,7 @@ export class Game {
       this.xp -= this.xpNeed;
       this.level++;
       this.xpNeed = xpToNext(this.level);
-      const p = this.player;
-      if (p) {
-        p.weaponRank = weaponRankFor(this.level);
-        p.weaponRarity = weaponRarityFor(p.weaponRank);
-      }
+      // Ranks are not handed out by the clock: the draft is where a weapon grows.
       if (this.skillRun) this.applyMastery();
       else this.pendingLevels++;
       leveled = true;
@@ -1381,36 +1377,9 @@ export class Game {
       }
     }
 
-    // The weapon path: a percentage boost to choose between, and at swap levels a
-    // replacement weapon that starts again at rank 1.
-    const wlist = WEAPONS[p.sigils[0]] || [];
-    const current = p.form.weapon || wlist[0];
-    const others = wlist.filter(w => w.key !== current?.key);
-    if (current && wlist.length > 1) {
-      const swap = WEAPON_RANK.swapLevels.includes(this.level) && others.length > 0;
-      if (swap) {
-        const pick = others[Math.floor(Math.random() * others.length)];
-        cards.push({
-          kind: 'weaponswap', weaponKey: pick.key,
-          name: 'Take ' + pick.name,
-          desc: 'Replaces ' + current.name + '. Its rank starts again at 1, but it arrives at ' +
-            weaponRarityFor(weaponRankFor(this.level)).toUpperCase() + ' rarity for your level.',
-          icon: pick.icon, rarity: 'epic', css: pick.css,
-        });
-      } else {
-        const useOther = others.length > 0 && Math.random() < 0.45;
-        const w = useOther ? others[Math.floor(Math.random() * others.length)] : current;
-        const pct = useOther ? 0.15 : 0.10;
-        cards.push({
-          kind: 'weaponboost', weaponKey: w.key, pct,
-          name: '+' + Math.round(pct * 100) + '% · ' + w.name,
-          desc: useOther
-            ? 'A rival pattern. Your own weapon gains ' + Math.round(pct * 100) + '% damage for this run.'
-            : 'Your weapon hits ' + Math.round(pct * 100) + '% harder for the rest of the run.',
-          icon: w.icon, rarity: useOther ? 'epic' : 'rare', css: w.css,
-        });
-      }
-    }
+    // The loadout path: fill the second arm and the ward before ranks.
+    const room = Math.max(0, Math.min(2, 3 - cards.length));
+    cards.push(...this.rollLoadoutCards(room));
 
     const pool = BOONS.filter(b => (this.boonStacks[b.id] || 0) < b.max && !(this.isHardcore && b.id === 'second_wind'));
     while (cards.length < 3 && pool.length) {
@@ -1445,7 +1414,156 @@ export class Game {
     return [first, ...rest];
   }
 
-  /* Swap the weapon in hand: full rank reset, rarity from the level you reached. */
+  /* ------------------------------------------------------------
+     LOADOUT
+     Two weapons and one defence. Filling an empty slot is offered
+     first; after that the piece furthest behind is offered for a
+     rank, so growth is always a choice.
+     ------------------------------------------------------------ */
+  rollLoadoutCards(limit = 2) {
+    const p = this.player;
+    if (!p || limit <= 0) return [];
+    const wlist = WEAPONS[p.sigils[0]] || [];
+    const main = p.form.weapon || wlist[0];
+    if (!main) return [];
+    const side = p.sideForm?.weapon || null;
+    const ward = p.ward ? WARDS[p.ward.key] : null;
+    const out = [];
+
+    // Milestone replacements for the firing hand.
+    if (WEAPON_RANK.swapLevels.includes(this.level)) {
+      const others = wlist.filter(w => w.key !== main.key && w.key !== side?.key);
+      if (others.length) {
+        const pick = others[Math.floor(Math.random() * others.length)];
+        out.push({
+          kind: 'loadout', action: 'swap', weaponKey: pick.key,
+          name: 'Take ' + pick.name,
+          desc: 'Replaces ' + main.name + ' in the firing hand. It starts again at rank 1 — a swap is a commitment, not a free upgrade.',
+          icon: pick.icon, rarity: 'epic', css: pick.css,
+          tag: 'WEAPON I', left: 'RANK 1 START', right: 'REPLACES ' + main.name.toUpperCase(),
+        });
+      }
+    }
+
+    // An empty second arm: both rival patterns, so the pick is real.
+    if (!side) {
+      for (const w of wlist) {
+        if (out.length >= limit) break;
+        if (w.key === main.key) continue;
+        out.push({
+          kind: 'loadout', action: 'sidearm', weaponKey: w.key,
+          name: 'Second Arm · ' + w.name,
+          desc: w.desc + ' Fires on its own beat for ' + Math.round(WEAPON_RANK.sidearmDamage * 100) + '% damage, in its own hand.',
+          icon: w.icon, rarity: 'rare', css: w.css,
+          tag: 'WEAPON II', left: 'EMPTY SLOT', right: 'RANK 1',
+        });
+      }
+    }
+
+    // An empty ward slot: two of the four wards each time it is offered.
+    if (!ward) {
+      const pool = Object.values(WARDS).slice();
+      for (let i = pool.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [pool[i], pool[j]] = [pool[j], pool[i]];
+      }
+      for (const w of pool) {
+        if (out.length >= limit) break;
+        out.push({
+          kind: 'loadout', action: 'ward', wardKey: w.key,
+          name: w.name, desc: w.desc,
+          icon: w.icon, rarity: 'epic', css: w.css,
+          tag: 'DEFENCE', left: 'THE WARD SLOT', right: 'RANK 1',
+        });
+      }
+    }
+
+    // Ranks: offer the piece that is furthest behind first.
+    const pieces = [];
+    if (p.weaponRank < WEAPON_RANK.max) pieces.push({ piece: 'main', rank: p.weaponRank, name: main.name, icon: main.icon, css: main.css, slot: 'WEAPON I' });
+    if (side && p.sideWeaponRank < WEAPON_RANK.max) pieces.push({ piece: 'side', rank: p.sideWeaponRank, name: side.name, icon: side.icon, css: side.css, slot: 'WEAPON II' });
+    if (ward && p.ward.rank < WARD_MAX_RANK) pieces.push({ piece: 'ward', rank: p.ward.rank, name: ward.name, icon: ward.icon, css: ward.css, slot: 'DEFENCE' });
+    pieces.sort((a, b) => a.rank - b.rank);
+    for (const it of pieces) {
+      if (out.length >= limit) break;
+      const next = it.rank + 1;
+      const isWard = it.piece === 'ward';
+      const rarity = isWard ? (next >= 3 ? 'epic' : 'rare') : weaponRarityFor(next);
+      out.push({
+        kind: 'loadout', action: 'rank', piece: it.piece,
+        name: '+1 Rank · ' + it.name,
+        desc: isWard
+          ? 'Rank ' + next + ' of ' + WARD_MAX_RANK + '. ' + ward.desc
+          : 'Rank ' + next + ' of ' + WEAPON_RANK.max + '. +' + Math.round(WEAPON_RANK.perRank * 100) + '% weapon damage, and ' + weaponRarityFor(next).toUpperCase() + ' rarity.',
+        icon: it.icon, rarity, css: it.css,
+        tag: it.slot, left: 'RANK ' + it.rank + ' → ' + next,
+        right: isWard ? 'WARD UP' : (weaponRarityFor(next) === weaponRarityFor(it.rank) ? '+' + Math.round(WEAPON_RANK.perRank * 100) + '% DMG' : weaponRarityFor(next).toUpperCase()),
+      });
+    }
+
+    // Everything maxed: fall back to flat damage for the run.
+    if (!out.length) {
+      const pct = this.level >= 8 ? 0.15 : 0.10;
+      out.push({
+        kind: 'weaponboost', weaponKey: main.key, pct,
+        name: '+' + Math.round(pct * 100) + '% · ' + main.name,
+        desc: 'Everything you carry is at its ceiling. Your firing hand hits ' + Math.round(pct * 100) + '% harder for the rest of the run.',
+        icon: main.icon, rarity: 'rare', css: main.css,
+        tag: 'WEAPON I', left: 'FLAT DAMAGE', right: 'THIS RUN',
+      });
+    }
+    return out.slice(0, limit);
+  }
+
+  rankPiece(piece) {
+    const p = this.player;
+    if (!p) return false;
+    if (piece === 'ward') {
+      const key = p.ward?.key;
+      if (!key || !p.rankWard()) return false;
+      const def = WARDS[key];
+      this.audio.fusion();
+      this.fx.ring(p.pos, def.color, { r0: (def.radius || 4) * 0.4, r1: def.radius || 4, life: 0.55, opacity: 0.7 });
+      this.ui.toast('WARD RANKED · ' + def.name.toUpperCase() + ' R' + p.ward.rank, def.css);
+    } else {
+      if (!p.rankWeapon(piece)) return false;
+      const w = piece === 'side' ? p.sideForm?.weapon : p.form.weapon;
+      this.audio.levelUp();
+      this.fx.ring(p.pos, w?.css ? p.form.glow : 0xffd98a, { r0: 0.4, r1: 3.2, life: 0.45, opacity: 0.6 });
+      this.ui.toast(
+        'RANK UP · ' + (w?.name || 'WEAPON').toUpperCase() + ' R' + (piece === 'side' ? p.sideWeaponRank : p.weaponRank) +
+        ' · +' + Math.round(WEAPON_RANK.perRank * 100) + '% DAMAGE',
+        w?.css || '#ffd98a'
+      );
+    }
+    this.ui.updateHud(this);
+    return true;
+  }
+
+  equipSidearm(key) {
+    const p = this.player;
+    if (!p?.setSidearm(key)) return false;
+    const w = p.sideForm.weapon;
+    this.audio.fusion();
+    this.fx.ring(p.pos, p.form.glow, { r0: 0.5, r1: 4, life: 0.55, opacity: 0.6 });
+    this.ui.toast('SECOND ARM · ' + w.name.toUpperCase() + ' · RANK 1', w.css || '#ffd98a');
+    this.ui.updateHud(this);
+    return true;
+  }
+
+  raiseWard(key) {
+    const p = this.player;
+    if (!p?.setWard(key, 1)) return false;
+    const def = WARDS[key];
+    this.audio.fusion();
+    this.fx.ring(p.pos, def.color, { r0: 0.5, r1: def.radius || 4, life: 0.7, opacity: 0.75 });
+    this.fx.burst(new THREE.Vector3(p.pos.x, 0.8, p.pos.z), def.glow, { count: 20, speed: 5, size: 0.24, life: 0.7, up: 2 });
+    this.ui.toast('WARD RAISED · ' + def.name.toUpperCase() + ' · RANK 1', def.css);
+    this.ui.updateHud(this);
+    return true;
+  }
+
+  /* Swap the firing hand: full rank reset, rarity follows the new rank. */
   equipWeapon(key) {
     const p = this.player;
     const w = weaponFor(p.sigils[0], key);
@@ -1455,7 +1573,7 @@ export class Game {
     this.save.weapons[p.sigils[0]] = w.key;
     p.setForm(applyWeapon(this.baseForm, w), true);
     p.weaponRank = 1;
-    p.weaponRarity = weaponRarityFor(weaponRankFor(this.level));
+    p.weaponRarity = weaponRarityFor(1);
     p.weaponBoost = 1;
     this.audio.fusion();
     this.fx.ring(p.pos, w.css ? p.form.color : p.form.glow, { r0: 0.5, r1: 5, life: 0.6, opacity: 0.7 });
@@ -1493,6 +1611,11 @@ export class Game {
       this.fx.ring(this.player.pos, this.player.form.glow, { r0: 0.4, r1: 3, life: 0.45, opacity: 0.55 });
     } else if (card.kind === 'weaponswap') {
       this.equipWeapon(card.weaponKey);
+    } else if (card.kind === 'loadout') {
+      if (card.action === 'swap') this.equipWeapon(card.weaponKey);
+      else if (card.action === 'sidearm') this.equipSidearm(card.weaponKey);
+      else if (card.action === 'ward') this.raiseWard(card.wardKey);
+      else if (card.action === 'rank') this.rankPiece(card.piece);
     } else {
       this.applyBoon(card);
     }

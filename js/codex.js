@@ -18,7 +18,7 @@
 import {
   VERSION, MODES, ELEMENTS, FUSIONS, BOSSES, PACTS, DIFFICULTIES, DESCENT,
   SIEGE, LANE, ESCORT, RITUAL, BLITZ, DUEL, CONTROL_ACTIONS, keyLabel,
-  RELIC_SLOTS, RARITY, KEYBINDS, KINDLING, WEAPON_RANK,
+  RELIC_SLOTS, RARITY, KEYBINDS, KINDLING, WEAPON_RANK, WARD_MAX_RANK, WARDS,
 } from './data.js';
 
 export const META = {
@@ -234,11 +234,11 @@ export const GUIDE = {
     {
       id: 'weapons',
       kicker: 'In hand',
-      title: 'One weapon, grown',
+      title: 'Two arms and a ward',
       body: [
-        `You carry one weapon, and it grows with you: a rank every four levels up to ${WEAPON_RANK.max}, each rank worth +${Math.round(WEAPON_RANK.perRank * 100)}% damage, with rarity following the rank — common, rare, epic, then legendary.`,
-        `Drafts can offer a percentage: +10% to the weapon in hand, or +15% to a rival pattern. At levels ${WEAPON_RANK.swapLevels.join(', ')} a different weapon is offered outright — it replaces what you hold, starts again at rank 1, and arrives at the rarity your level has earned.`,
-        `Range is deliberately short. Long Shot (+15%) and Far Sight (+25%) are the boons that buy it back, and the HUD always shows the weapon, its rank and its rarity.`,
+        `You carry two weapons and one defence: a firing hand, a second arm that fires on its own beat for ${Math.round(WEAPON_RANK.sidearmDamage * 100)}% damage at ${Math.round(WEAPON_RANK.sidearmRange * 100)}% reach, and a ward — ${Object.values(WARDS).map(w => w.name).join(', ')}. Drafts offer an empty slot before anything else, and two options each time, so the pick is yours.`,
+        `Ranks are earned, not handed out. A weapon holds ${WEAPON_RANK.max} ranks worth +${Math.round(WEAPON_RANK.perRank * 100)}% damage each; a ward holds ${WARD_MAX_RANK}. Every level's draft offers a rank to the piece that is furthest behind, so focusing one arm to legendary costs the other its growth. Rarity follows rank — common, rare, epic, legendary — and at levels ${WEAPON_RANK.swapLevels.join(', ')} a rival weapon is offered outright. A replacement starts again at rank 1: a swap is a commitment.`,
+        `Range is short on purpose. A shot loosed at a target within ${WEAPON_RANK.closeRange} paces hits ${Math.round((WEAPON_RANK.closeBonus - 1) * 100)}% harder, which rewards standing your ground instead of kiting; Long Shot (+15%) and Far Sight (+25%) are the boons that buy reach back. The HUD shows the firing hand, its rank and rarity, then the second arm and the ward.`,
       ],
     },
     {
@@ -413,7 +413,9 @@ export const CHANGELOG = [
       'Characters and weapons read better: the guardian carries its sigil and element name overhead, enemies wear their element sigil and a red hostile ring, and each weapon class fires its own projectile silhouette from a crystal focus that recoils.',
       'Two new wardens (Cinder Tyrant, Stormglass Seraph) and two crowned mini-bosses: every third wave sends a Cinder Herald or Glass Revenant ahead of the horde, and deeper tiers meet the newer wardens.',
       'Essence buys less: the level curve is roughly 60% longer, and drafts earned during a live wave are stored and opened when the wave clears instead of freezing the fight.',
-      'Weapons have a path: a rank every four levels, rarity that follows the rank, +10%/+15% percentage drafts, and at levels 5, 9 and 13 a replacement weapon that starts again at rank 1 with rarity from your level — all shown in the HUD. Base range is about a third shorter, with Long Shot and Far Sight to win it back.',
+      'A loadout instead of a single gun: two weapons (the second fires slower for 60% damage and 85% range) and one ward — Aegis, Briar, Pyre or Tidewell — with three ranks of its own, all shown in the HUD.',
+      'Ranks are drafted, not automatic: each level offers a rank to the piece furthest behind (+16% damage per weapon rank, rarity follows rank), so where you spend growth is a decision. Replacement weapons at levels 5, 9 and 13 still restart at rank 1.',
+      'Shorter reach, closer fights: projectiles travel about a quarter less far and lock on at 17 paces, but a shot fired inside six paces hits 14% harder, and waves now trickle in over a longer window instead of arriving as one wall.',
       'Solar Caravan has a wayfinder: an arrow that floats above the reliquary and points at the next checkpoint — the next unlit waystone, then the eastern rift — with a soft ground zone showing exactly where you must stand, green when clear and red when contested.',
     ],
   },
