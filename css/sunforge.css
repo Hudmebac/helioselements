@@ -36,6 +36,21 @@
   .shard-chip i { font-style: normal; font-size: 13px; text-shadow: 0 0 10px var(--gold); }
   .shard-chip b { color: var(--gold-hi); font-weight: 700; }
   .hud:not(.siege) .shard-chip, .hud:not(.siege) .forge-btn { display: none; }
+
+  /* Kindling: the meter that answers with a Dawn Gift */
+  .kindle-chip {
+    display: none; align-items: center; gap: 7px; height: 38px; padding: 0 11px;
+    border-radius: 20px; background: var(--glass); border: 1px solid rgba(255,176,102,.3);
+    font-size: 9px; letter-spacing: .1em; color: #ffb066; backdrop-filter: blur(12px);
+    transition: border-color .2s ease, box-shadow .2s ease;
+  }
+  .kindle-chip.on { display: flex; }
+  .kindle-chip i { font-style: normal; font-size: 13px; text-shadow: 0 0 10px #ffb066; }
+  .kindle-chip span { color: #ffd8a8; font-weight: 700; font-size: 10px; letter-spacing: .06em; }
+  .kindle-chip .k-bar { width: 26px; height: 3px; border-radius: 2px; background: rgba(255,176,102,.18); overflow: hidden; }
+  .kindle-chip .k-bar b { display: block; height: 100%; width: 0; background: linear-gradient(90deg, #ff8a3d, #ffd8a8); transition: width .18s ease; }
+  .kindle-chip.surge { border-color: #ffb066; animation: kindlePulse 1.1s ease-in-out infinite; }
+  @keyframes kindlePulse { 50% { box-shadow: 0 0 30px rgba(255,140,60,.55); } }
   .forge-btn { width: auto; min-width: 38px; padding: 0 10px; gap: 6px; display: flex; color: var(--gold); font-size: 14px; }
   .forge-label { font-size: 7px; font-weight: 800; letter-spacing: .18em; text-transform: uppercase; color: var(--gold); }
   .forge-key {

@@ -9,7 +9,7 @@ import {
   WAVE_BONUSES, SKILL_RUN, WEAPONS, strongAgainst, weakTo,
   DIFFICULTIES, DIFFICULTY_ORDER, normalizeDifficulty, difficultyUnlocked,
   ACHIEVEMENTS, REWARDS, CONTROL_ACTIONS, keyLabel, DESCENT,
-  MENU_DEPTHS, MENU_DEPTH_ORDER, menuDepth,
+  MENU_DEPTHS, MENU_DEPTH_ORDER, menuDepth, KINDLING,
 } from './data.js';
 import { LORE, GUIDE } from './codex.js';
 import { saveText, importSave } from './store.js';
@@ -103,6 +103,7 @@ export class UI {
 
         <div class="hud-actions">
           <div class="shard-chip" id="shard-chip" title="Sun shards — spend these in the Forge"><i>◈</i><b id="shard-count">3</b></div>
+          <div class="kindle-chip" id="kindle-chip" title="Kindling — eight motes summon a Dawn Gift"><i>✺</i><span id="kindle-count">0/8</span><span class="k-bar"><b id="kindle-fill"></b></span></div>
           <button class="icon-btn forge-btn" data-act="forge" id="forge-btn" title="Open the Forge (B)"><span class="forge-glyph">⚒</span><span class="forge-label">Forge</span><span class="forge-key">B</span></button>
           <button class="icon-btn" data-act="sound" id="sound-btn" title="Toggle sound">♪</button>
           <button class="icon-btn" data-act="pause" title="Pause (Esc)">❚❚</button>
@@ -558,6 +559,9 @@ export class UI {
       defPips: document.getElementById('def-pips'),
       shardChip: document.getElementById('shard-chip'),
       shardCount: document.getElementById('shard-count'),
+      kindleChip: document.getElementById('kindle-chip'),
+      kindleCount: document.getElementById('kindle-count'),
+      kindleFill: document.getElementById('kindle-fill'),
       forgeBtn: document.getElementById('forge-btn'),
       repairPrompt: document.getElementById('repair-prompt'),
       repairName: document.getElementById('repair-name'),
@@ -2145,6 +2149,13 @@ export class UI {
       const canForge = (game.phase === 'intermission' || game.phase === 'ready') && game.state === 'playing';
       this.el.forgeBtn.disabled = !canForge;
       this.el.forgeBtn.classList.toggle('ready', canForge);
+    }
+
+    if (this.el.kindleChip) {
+      this.el.kindleChip.classList.toggle('on', game.state === 'playing');
+      this.el.kindleCount.textContent = `${game.kindling || 0}/${KINDLING.need}`;
+      this.el.kindleFill.style.width = Math.round(Math.min(1, (game.kindling || 0) / KINDLING.need) * 100) + '%';
+      this.el.kindleChip.classList.toggle('surge', (game.giftT || 0) > 0);
     }
 
     if (game.repairTarget) {

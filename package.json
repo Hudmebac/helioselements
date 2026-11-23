@@ -1,6 +1,6 @@
 {
   "name": "helios-elements",
-  "version": "1.7.5",
+  "version": "1.7.6",
   "private": true,
   "type": "module",
   "description": "An elemental survival roguelite. Forge the sun. Hold the dark.",

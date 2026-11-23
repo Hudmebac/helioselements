@@ -15,7 +15,7 @@ One tab, no install, no account — a 3D roguelite that runs where you already a
 
 <br/>
 
-<img src="https://img.shields.io/badge/version-1.7.5-f5c26b?style=flat-square&labelColor=141726" alt="version 1.7.5">
+<img src="https://img.shields.io/badge/version-1.7.6-f5c26b?style=flat-square&labelColor=141726" alt="version 1.7.6">
 <img src="https://img.shields.io/badge/modes-8-67ecff?style=flat-square&labelColor=141726" alt="8 modes">
 <img src="https://img.shields.io/badge/engine-Three.js-8a5cff?style=flat-square&labelColor=141726" alt="Three.js">
 <img src="https://img.shields.io/badge/dependencies-0-73e698?style=flat-square&labelColor=141726" alt="no dependencies">
@@ -283,6 +283,15 @@ The **Play** button at the top of this README already points there; the canonica
 ## Changelog
 
 <details open>
+<summary><b>v1.7.6 — What the dead leave behind</b></summary>
+
+- **Kindling**: kills can shed a burning mote. Eight of them summon a **Dawn Gift** — +35% damage for 18 seconds, tracked by a HUD meter next to the shard count. Elites drop three, wardens four.
+- **Gifts answer the mission**: two shards and a mended core in Sunforge Siege, +4s on the clock in Eclipse Blitz, reliquary repair in Solar Caravan, a circle charge in Blind Ritual — and every second gift sends a wisp to fight beside you.
+- **Fallen bodies dissolve**: an ash puff at the moment of death, then a shrink and sink that clears the arena in 7 seconds (10 for elites, 16 for wardens) instead of lingering.
+
+</details>
+
+<details>
 <summary><b>v1.7.5 — Three depths of menu</b></summary>
 
 - **Settings → Interface → Menus**: *Simple* (four missions, one difficulty, no pacts or skill runs), *Default* (six missions, all four tiers, the Descent and weapon choice) and *Complex* (all eight missions, Eclipse Pacts, Skill Runs and the full Codex).
@@ -291,7 +300,7 @@ The **Play** button at the top of this README already points there; the canonica
 
 </details>
 
-**Earlier — v1.7.4:** the Descent multiplies every sunmark earned (+15% per rank, up to ×1.75, paid on the rank *played*), and **Settings → Save** exports or imports your progress. Before that: the Descent itself, Solar Caravan's eight-point road, level boons, Eclipse Pacts, Skill Runs, Warden Duel, and the Codex.
+**Earlier — v1.7.5:** three menu depths and the empty-arena wave gate. **v1.7.4:** the Descent multiplier (+15% per rank, paid on the rank *played*) and **Settings → Save** export/import. Before that: the Descent itself, Solar Caravan's eight-point road, level boons, Eclipse Pacts, Skill Runs, Warden Duel, and the Codex.
 
 ---
 
@@ -308,6 +317,6 @@ The **Play** button at the top of this README already points there; the canonica
 <br/>
 
 **Built with** Three.js (MIT) · Cinzel & Inter (OFL) · everything else hand-built — renderer, audio synthesis, UI and lore.<br/>
-<sub>Helios Elements v1.7.5 · no install, no account, no telemetry.</sub>
+<sub>Helios Elements v1.7.6 · no install, no account, no telemetry.</sub>
 
 </div>

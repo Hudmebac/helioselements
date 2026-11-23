@@ -3,7 +3,7 @@
    Elements, fusions, enemies, boons and wave composition.
    ============================================================ */
 
-export const VERSION = '1.7.5';
+export const VERSION = '1.7.6';
 
 export const ELEMENTS = {
   ember: {
@@ -976,6 +976,22 @@ export const DIFFICULTY_ORDER = ['kindled', 'solar', 'umbral', 'hardcore'];
    makes the next run slightly harder, and you can step back down.
    ------------------------------------------------------------ */
 export const DESCENT = { max: 5, hp: 0.07, damage: 0.05, markStep: 0.15 };
+
+/* ------------------------------------------------------------
+   KINDLING — what the dead leave behind.
+   Enemies shed burning motes; collect enough and the dawn answers
+   with a gift: a weapon surge, a helper, or whatever the mode needs.
+   ------------------------------------------------------------ */
+export const KINDLING = {
+  key: 'kindling', name: 'Kindling', icon: '✺',
+  color: 0xffb066, glow: 0xffd8a8, css: '#ffb066',
+  need: 8,
+  chance: 0.13,
+  elite: 3,
+  boss: 4,
+  boostTime: 18,
+  boostDamage: 0.35,
+};
 
 export function normalizeDifficulty(key) { return DIFFICULTIES[key] ? key : 'solar'; }
 

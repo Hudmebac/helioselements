@@ -18,7 +18,7 @@
 import {
   VERSION, MODES, ELEMENTS, FUSIONS, BOSSES, PACTS, DIFFICULTIES, DESCENT,
   SIEGE, LANE, ESCORT, RITUAL, BLITZ, DUEL, CONTROL_ACTIONS, keyLabel,
-  RELIC_SLOTS, RARITY, KEYBINDS,
+  RELIC_SLOTS, RARITY, KEYBINDS, KINDLING,
 } from './data.js';
 
 export const META = {
@@ -256,6 +256,8 @@ export const GUIDE = {
       title: 'Waves, wardens and bonuses',
       body: [
         `Every fifth wave is a warden: ${BOSSES.map(b => b.name).join(', ')} in that order. Wardens are the run's real checkpoints — if you cannot kill one, the wave after it will finish you.`,
+        `Kills can shed kindling — a burning mote that drifts to you if you are close and pulls itself in if you are not. Elites drop three and wardens drop four. Collect ${KINDLING.need} and the dawn answers with a Dawn Gift: +${Math.round(KINDLING.boostDamage * 100)}% damage for ${KINDLING.boostTime} seconds, plus what the mission actually needs — two shards and a mended core in Sunforge, four seconds on the clock in Blitz, reliquary repairs in Caravan, a circle charge in Ritual. Every second gift sends a wisp to fight beside you.`,
+        `Bodies no longer carpet the arena. Fallen enemies ash out in a few seconds — a puff of ash, a sink, and they are gone.`,
         `From wave two, a wave can arrive blessed: more enemies for more shards, faster enemies for more marks, or a thinner horde with a smaller purse. The bonus is shown in the wave pill before the wave starts.`,
         `Every run opens on an empty arena. Wave one does not count down — it waits until you press ${keyLabel('Enter')}, so nothing is on you until you say so.`,
         `Press ${keyLabel('Enter')} during the breather to call the next wave early for bonus essence. It is the fastest way to level, and the fastest way to die.`,
@@ -302,6 +304,7 @@ export const MARKETING = {
     { icon: '✦', title: 'Six sigils, five fusions', text: 'Every element plays differently, and any two can collapse into a hybrid form with its own attack, passive and ultimate.' },
     { icon: '◈', title: 'Eight ways to lose', text: 'Defend a core, break three rift gates, walk a reliquary home, seal three circles, outrun a sunset, or take the ring against four champions.' },
     { icon: '⚔', title: 'Wardens with names', text: 'Four bosses arrive on a fixed cadence, each with its own telegraphs, volleys and reinforcements.' },
+    { icon: '✺', title: 'Kindling and Dawn Gifts', text: 'Kills shed burning motes. Eight of them summon a gift that answers the mission — a damage surge, a wisp helper, shards, seconds or repairs.' },
     { icon: '☀', title: 'Builds that snowball', text: 'Boons, relics and pacts stack into runs that end very differently from how they started.' },
     { icon: '⬢', title: 'A Descent that remembers', text: 'Every completed mission raises the difficulty one step — and you can always step back down.' },
     { icon: '✧', title: 'Runs, not grinds', text: 'A mission is ten to twenty-five minutes. Sunmarks and achievements carry between runs; nothing else has to.' },
@@ -313,6 +316,7 @@ export const MARKETING = {
     ['Players', 'Single player'],
     ['Missions', '8 modes, 4 difficulty tiers, 5 descent ranks'],
     ['Menus', 'Simple, Default or Complex depth'],
+    ['Kindling', '8 motes summon a mode-aware Dawn Gift'],
     ['Session', '10–25 minutes per mission'],
     ['Controls', 'Keyboard and mouse, fully rebindable'],
     ['Engine', 'Three.js / WebGL, no install'],
@@ -385,6 +389,16 @@ export const FAQ = [
    CHANGELOG — newest first. Add an entry every release.
    ------------------------------------------------------------ */
 export const CHANGELOG = [
+  {
+    version: '1.7.6',
+    date: '2026-11-23',
+    title: 'What the dead leave behind',
+    items: [
+      'Kindling: kills can shed a burning mote. Eight motes summon a Dawn Gift — +35% damage for 18 seconds, shown in the HUD meter beside the shard count. Elites drop three, wardens four.',
+      'Dawn Gifts answer the mission: two shards and a mended core in Sunforge Siege, four seconds back on the clock in Eclipse Blitz, reliquary repair in Solar Caravan, a circle charge in Blind Ritual — and every second gift calls a wisp to fight beside you.',
+      'Fallen enemies now dissolve in seconds instead of lingering: a puff of ash at the moment of death, then a shrink and sink that clears the arena in seven seconds (ten for elites, sixteen for wardens).',
+    ],
+  },
   {
     version: '1.7.5',
     date: '2026-11-23',

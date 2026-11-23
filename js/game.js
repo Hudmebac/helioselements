@@ -12,7 +12,7 @@ import {
   PACTS, normalizePacts, pactRanks, pactReward,
   DIFFICULTIES, normalizeDifficulty, difficultyUnlocked, DESCENT,
   CONTROL_ACTIONS, defaultKeys, keyLabel,
-  ACHIEVEMENTS, REWARDS, menuDepth,
+  ACHIEVEMENTS, REWARDS, menuDepth, KINDLING,
 } from './data.js';
 import { Player } from './player.js';
 import { EnemyManager } from './enemies.js';
@@ -75,6 +75,9 @@ export class Game {
     this.runTime = 0;
     this.damageDealt = 0;
     this.essenceTotal = 0;
+    this.kindling = 0;
+    this.kindlingGifts = 0;
+    this.giftT = 0;
     this.boonStacks = {};
     this.boons = [];
     this.starterKey = null;
@@ -342,6 +345,9 @@ export class Game {
     this.runTime = 0;
     this.damageDealt = 0;
     this.essenceTotal = 0;
+    this.kindling = 0;
+    this.kindlingGifts = 0;
+    this.giftT = 0;
     this.boonStacks = {};
     this.boons = [];
     this._deathHandled = false;
@@ -910,6 +916,9 @@ export class Game {
       if (enemy.isBoss) this.pickups.spawnShard(enemy.pos);
     }
     if (enemy.elite && this.wavePlan?.bonus?.eliteShard) this.pickups.spawnShard(enemy.pos);
+
+    const kindle = enemy.isBoss ? KINDLING.boss : enemy.elite ? KINDLING.elite : (Math.random() < KINDLING.chance ? 1 : 0);
+    for (let i = 0; i < kindle; i++) this.pickups.spawnKindling(enemy.pos);
     if (this.mode === 'blitz' && this.phase === 'active') {
       this.blitzTimer = Math.min(this.blitzMax || BLITZ.waveTime, this.blitzTimer + (enemy.isBoss ? BLITZ.bossBonus : BLITZ.killBonus));
     }
@@ -1205,6 +1214,66 @@ export class Game {
     this.player.gainCharge(0.12);
     this.audio.pickup();
     this.gainXp(gain);
+  }
+
+  /* ============================================================
+     KINDLING — motes shed by the dead.
+     Eight of them and the dawn answers with a gift.
+     ============================================================ */
+  collectKindling(value = 1) {
+    if (this.state !== 'playing') return;
+    this.kindling += value;
+    this.player.gainCharge(0.1);
+    this.audio.pickup();
+    while (this.kindling >= KINDLING.need) {
+      this.kindling -= KINDLING.need;
+      this.dawnGift();
+    }
+  }
+
+  get giftBoost() { return this.giftT > 0 ? KINDLING.boostDamage : 0; }
+
+  dawnGift() {
+    this.kindlingGifts++;
+    this.giftT = KINDLING.boostTime;
+    const extras = [];
+
+    const core = this.structures?.core;
+    if (core && core.alive) {
+      this.shards += 2;
+      this.structures.repair(core, core.maxHp * 0.06);
+      extras.push('+2 SHARDS');
+    }
+    if (this.mode === 'blitz' && this.phase === 'active') {
+      this.blitzTimer = Math.min(this.blitzMax || BLITZ.waveTime, this.blitzTimer + 4);
+      extras.push('+4s');
+    }
+    if (this.mode === 'escort' && this.caravan && !this.caravan.done) {
+      const max = this.caravan.maxHp || 100;
+      this.caravan.hp = Math.min(max, (this.caravan.hp || 0) + max * 0.08);
+      extras.push('RELIQUARY +8%');
+    }
+    if (this.mode === 'ritual' && this.ritual?.shrines?.length) {
+      const shrine = this.ritual.shrines.find((s) => !s.sealed);
+      if (shrine) { shrine.charge = Math.min(0.99, shrine.charge + 0.25); extras.push('CIRCLE +25%'); }
+    }
+    if (this.kindlingGifts % 2 === 0 && this.player.sentinels.length < 3) {
+      this.player.addSentinel();
+      extras.push('WISP HELPER');
+    }
+
+    this.fx.ring(this.player.pos, KINDLING.color, { r0: 0.4, r1: 6.5, life: 0.55, opacity: 0.8 });
+    this.fx.burst(new THREE.Vector3(this.player.pos.x, 1, this.player.pos.z), KINDLING.color, {
+      count: 26, speed: 5, size: 0.24, life: 0.7, up: 2,
+    });
+    this.engine.pulseExposure(0.2);
+    this.engine.addShake(0.18);
+    this.audio.levelUp?.();
+    this.ui.toast(
+      `DAWN GIFT · +${Math.round(KINDLING.boostDamage * 100)}% DAMAGE ${KINDLING.boostTime}s` +
+      (extras.length ? ' · ' + extras.join(' · ') : ''),
+      KINDLING.css
+    );
   }
 
   gainXp(amount) {
@@ -1779,6 +1848,7 @@ export class Game {
     if (this.state !== 'playing' || !this.player) return;
 
     this.runTime += dt;
+    if (this.giftT > 0) this.giftT = Math.max(0, this.giftT - dt);
     this.player.update(dt);
     this.updateCoreGuard(dt);
     this.structures?.update(dt, this);

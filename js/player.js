@@ -712,7 +712,7 @@ export class Player {
     const crown = this.relicCrown();
     const ce = crown?.effect || {};
     const cr = crown?.rank || 1;
-    const base = f.stats.damage * s.damageMult * (1 + (rb.damage || 0));
+    const base = f.stats.damage * s.damageMult * (1 + (rb.damage || 0)) * (1 + (this.game.giftBoost || 0));
     const count = Math.max(1, (f.stats.projectiles || 1) + s.extraProjectiles + (rb.projectiles || 0) + (ce.projectiles || 0) * cr);
     const critChance = (f.stats.crit || 0) + s.crit + (rb.crit || 0) + (ce.crit || 0) * cr;
     const pierce = (f.stats.pierce || 0) + s.extraPierce + (rb.pierce || 0) + (ce.pierce || 0) * cr;
@@ -763,6 +763,7 @@ export class Player {
     this.body.rotation.x += dt * 0.25;
     this.shell.rotation.y -= dt * 0.5;
     this.aura.rotation.y += dt * 0.3;
+    this.auraMat.opacity = (this.game.giftT || 0) > 0 ? 0.13 + Math.sin(this.t * 7) * 0.05 : 0.055;
     this.ring1.rotation.z += dt * 1.4;
     this.ring2.rotation.z -= dt * 1.1;
     this.core.scale.setScalar(1 + Math.sin(this.t * 5) * 0.12);

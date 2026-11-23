@@ -251,7 +251,7 @@ export class Projectiles {
    PICKUPS
    ============================================================ */
 const MAX_PICKUPS = 90;
-export const CORPSE_TTL = 36;
+export const CORPSE_TTL = 7;
 export const PICKUP_TTL = 75;
 
 export class Pickups {
@@ -272,6 +272,12 @@ export class Pickups {
     this.shardHalo = new THREE.SpriteMaterial({
       map: glowTexture('rgba(220,255,230,.9)', 'rgba(90,255,160,.3)', 'rgba(40,255,140,0)'),
       transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, opacity: 0.8, toneMapped: false,
+    });
+    this.kindleGeo = new THREE.TetrahedronGeometry(0.21, 0);
+    this.kindleMat = new THREE.MeshBasicMaterial({ color: 0xffb066, toneMapped: false });
+    this.kindleHalo = new THREE.SpriteMaterial({
+      map: glowTexture('rgba(255,245,215,.95)', 'rgba(255,150,60,.4)', 'rgba(255,80,20,0)'),
+      transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, opacity: 0.9, toneMapped: false,
     });
   }
 
@@ -349,6 +355,30 @@ export class Pickups {
     this.list.push(p);
   }
 
+  /* Kindling: the burning motes the dead leave behind. */
+  spawnKindling(pos, value = 1) {
+    if (this.list.length >= MAX_PICKUPS) return null;
+    const p = this._get();
+    p.kind = 'kindling';
+    p.value = value;
+    p.mesh.geometry = this.kindleGeo;
+    p.mesh.material = this.kindleMat;
+    p.halo.material = this.kindleHalo;
+    p.mesh.position.set(pos.x + (Math.random() - 0.5) * 0.4, 0.72, pos.z + (Math.random() - 0.5) * 0.4);
+    p.mesh.scale.setScalar(1.3);
+    p.mesh.visible = true;
+    p.mesh.rotation.set(Math.random() * 3, Math.random() * 3, 0);
+    p.vx = (Math.random() - 0.5) * 1.8;
+    p.vz = (Math.random() - 0.5) * 1.8;
+    p.t = 0;
+    p.ttl = PICKUP_TTL;
+    p.magnetized = false;
+    p.baseY = 0.72;
+    this.scene.add(p.mesh);
+    this.list.push(p);
+    return p;
+  }
+
   fetchEssence(player, range = 18) {
     if (!player) return null;
     const magnet = player.stats.magnet + (player.relicBonuses?.().magnet || 0);
@@ -415,6 +445,11 @@ export class Pickups {
         if (p.kind === 'essence') {
           game.collectEssence(p.value);
           this.fx.burst(mesh.position, 0xffd27a, { count: 4, speed: 2, size: 0.13, life: 0.3, up: 1 });
+        } else if (p.kind === 'kindling') {
+          game.collectKindling(p.value);
+          this.fx.burst(mesh.position, 0xffb066, { count: 9, speed: 3.2, size: 0.19, life: 0.5, up: 1.8 });
+          this.fx.ring(mesh.position, 0xffb066, { r0: 0.25, r1: 1.6, life: 0.4, opacity: 0.75 });
+          this.audio.shard?.();
         } else {
           game.player.heal(p.value);
           this.fx.burst(mesh.position, 0x7dffb2, { count: 6, speed: 2.4, size: 0.16, life: 0.4, up: 1.4 });
@@ -471,11 +506,16 @@ export class Corpses {
       if (!mats.includes(m)) mats.push(m);
     });
 
-    const ttl = enemy.isBoss ? 70 : enemy.elite ? 30 : CORPSE_TTL;
+    // Heavy bodies hold their shape for a moment, then ash out quickly.
+    const ttl = enemy.isBoss ? 16 : enemy.elite ? 10 : CORPSE_TTL;
     this.list.push({
       group, enemy, mats, ttl, maxTtl: ttl,
-      baseY: group.position.y, ashT: 0,
+      baseY: group.position.y, baseScale: Math.max(group.scale.x, 0.6), ashT: 0,
     });
+    this.fx?.burst?.(
+      new THREE.Vector3(group.position.x, group.position.y + 0.6, group.position.z),
+      0x9b8f7c, { count: 12, speed: 3.2, size: 0.2, life: 0.7, up: 1.4 }
+    );
 
     while (this.list.length > this.max) {
       this._remove(this.list.shift());
@@ -499,10 +539,11 @@ export class Corpses {
         this.list.splice(i, 1);
         continue;
       }
-      const fadeWindow = Math.min(8, c.maxTtl * 0.3);
+      const fadeWindow = Math.max(1.1, c.maxTtl * 0.6);
       const lifeFade = c.ttl < fadeWindow ? c.ttl / fadeWindow : 1;
       const settle = 1 - c.ttl / c.maxTtl;
-      c.group.position.y = c.baseY - settle * 0.35;
+      c.group.position.y = c.baseY - settle * 0.5;
+      c.group.scale.setScalar(c.baseScale * (0.35 + 0.65 * lifeFade));
       for (const m of c.mats) {
         const base = m.userData?.corpseBase ?? 1;
         m.opacity = base * 0.5 * lifeFade;
