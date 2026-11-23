@@ -12,7 +12,7 @@ import {
   PACTS, normalizePacts, pactRanks, pactReward,
   DIFFICULTIES, normalizeDifficulty, difficultyUnlocked, DESCENT,
   CONTROL_ACTIONS, defaultKeys, keyLabel,
-  ACHIEVEMENTS, REWARDS,
+  ACHIEVEMENTS, REWARDS, menuDepth,
 } from './data.js';
 import { Player } from './player.js';
 import { EnemyManager } from './enemies.js';
@@ -277,13 +277,15 @@ export class Game {
     this.teardownRun();
     this.mode = MODES[modeKey] ? modeKey : 'siege';
     this.save.mode = this.mode;
-    this.difficulty = normalizeDifficulty(this.save.difficulty);
-    this.save.difficulty = this.difficulty;
-    this.skillRun = !!this.save.skillRun;
+    // Menu depth decides how much of the machinery this run is allowed to use.
+    const depth = menuDepth(this.save);
+    this.difficulty = depth.difficulty ? normalizeDifficulty(this.save.difficulty) : 'solar';
+    if (depth.difficulty) this.save.difficulty = this.difficulty;
+    this.skillRun = depth.skillRun ? !!this.save.skillRun : false;
     const diff = this.difficultyMeta();
     this.objMods = diff.objective || {};
-    this.pacts = normalizePacts(this.save.pacts);
-    this.save.pacts = { ...this.pacts };
+    this.pacts = normalizePacts(depth.pacts ? this.save.pacts : {});
+    if (depth.pacts) this.save.pacts = { ...this.pacts };
     // the rank this run is played at — a victory raises the save's rank, the payout must not follow it up
     this.runDescent = this.descentRank();
     this.relicChoiceCount = 3 + (this.save.rewards?.relic_choice ? 1 : 0) + (diff.relicChoices || 0);
@@ -296,7 +298,7 @@ export class Game {
     this.caravan = this.mode === 'escort' ? new Caravan(this.engine.scene, this.fx, this.audio, this.objMods) : null;
     this.ritual = this.mode === 'ritual' ? new Ritual(this.engine.scene, this.fx, this.audio, this.objMods) : null;
     const form = resolveForm([formKey]);
-    this.weapon = weaponFor(formKey, this.save.weapons?.[formKey]);
+    this.weapon = weaponFor(formKey, depth.weapons ? this.save.weapons?.[formKey] : undefined);
     const armed = applyWeapon(form, this.weapon);
     this.player = new Player(this, armed);
     this.engine.setAccent(armed.color);
@@ -317,12 +319,9 @@ export class Game {
 
     this.state = 'playing';
     this.wave = 1;
-    this.phase = 'intermission';
-    const interTimers = {
-      siege: 6.5, lane: 5, hunt: HUNT.interTimer, escort: ESCORT.interTimer,
-      ritual: RITUAL.interTimer, blitz: BLITZ.interTimer, duel: DUEL.interTimer, trial: 4.2,
-    };
-    this.interTimer = interTimers[this.mode] ?? 4.2;
+    // The arena opens empty: wave 1 does not count down, it waits for the player to begin.
+    this.phase = 'ready';
+    this.interTimer = 0;
     this.waveBonus = null;
     this.bonusWaves = 0;
     this.lastBonusId = null;
@@ -489,6 +488,8 @@ export class Game {
 
   /* ---------------- WAVES ---------------- */
   updateWave(dt) {
+    // Nothing spawns, ticks or ends while the run is waiting on the player.
+    if (this.phase === 'ready') return;
     if (this.phase === 'intermission') {
       this.interTimer -= dt;
       if (this.interTimer <= 0) this.startWave();
@@ -795,7 +796,13 @@ export class Game {
   }
 
   callWave() {
-    if (this.state !== 'playing' || this.phase !== 'intermission') return false;
+    if (this.state !== 'playing') return false;
+    // Starting the run is not an early call — wave 1 pays no bonus, it simply begins.
+    if (this.phase === 'ready') {
+      this.startWave();
+      return true;
+    }
+    if (this.phase !== 'intermission') return false;
     const bonus = 8 + this.wave * 4;
     const hasCore = !!this.structures?.core;
     if (hasCore) this.shards += SIEGE.earlyCallShards;
@@ -1775,8 +1782,11 @@ export class Game {
     this.player.update(dt);
     this.updateCoreGuard(dt);
     this.structures?.update(dt, this);
-    this.caravan?.update(dt, this);
-    this.ritual?.update(dt, this);
+    // Objectives cannot be drained or pre-charged before the first wave exists.
+    if (this.phase !== 'ready') {
+      this.caravan?.update(dt, this);
+      this.ritual?.update(dt, this);
+    }
     if (this.state !== 'playing') return;
     this.vault?.update(dt);
     if (this.vault?.done) {

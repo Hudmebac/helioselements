@@ -256,6 +256,7 @@ export const GUIDE = {
       body: [
         `Every fifth wave is a warden: ${BOSSES.map(b => b.name).join(', ')} in that order. Wardens are the run's real checkpoints — if you cannot kill one, the wave after it will finish you.`,
         `From wave two, a wave can arrive blessed: more enemies for more shards, faster enemies for more marks, or a thinner horde with a smaller purse. The bonus is shown in the wave pill before the wave starts.`,
+        `Every run opens on an empty arena. Wave one does not count down — it waits until you press ${keyLabel('Enter')}, so nothing is on you until you say so.`,
         `Press ${keyLabel('Enter')} during the breather to call the next wave early for bonus essence. It is the fastest way to level, and the fastest way to die.`,
       ],
     },
@@ -378,6 +379,16 @@ export const FAQ = [
    CHANGELOG — newest first. Add an entry every release.
    ------------------------------------------------------------ */
 export const CHANGELOG = [
+  {
+    version: '1.7.5',
+    date: '2026-11-23',
+    title: 'Three depths of menu',
+    items: [
+      'Settings → Interface → Menus. Simple shows four missions and one difficulty; Default shows six missions, every difficulty, the Descent and weapon choice; Complex opens all eight missions, Eclipse Pacts, Skill Runs and the whole Codex.',
+      'A run only ever uses what the chosen depth shows: hidden pacts, skill runs, weapon choices and difficulty tiers are switched off for that run instead of silently applying.',
+      'The first wave no longer starts on its own — the arena opens empty and waits for Enter or the Begin button.',
+    ],
+  },
   {
     version: '1.7.4',
     date: '2026-11-23',

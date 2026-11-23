@@ -9,6 +9,7 @@ import {
   WAVE_BONUSES, SKILL_RUN, WEAPONS, strongAgainst, weakTo,
   DIFFICULTIES, DIFFICULTY_ORDER, normalizeDifficulty, difficultyUnlocked,
   ACHIEVEMENTS, REWARDS, CONTROL_ACTIONS, keyLabel, DESCENT,
+  MENU_DEPTHS, MENU_DEPTH_ORDER, menuDepth,
 } from './data.js';
 import { LORE, GUIDE } from './codex.js';
 import { saveText, importSave } from './store.js';
@@ -138,8 +139,8 @@ export class UI {
           <div class="foot-right">
             <div class="intermission" id="intermission">
               <span class="count" id="inter-count">7</span>
-              <span class="txt"><b id="inter-label">NEXT WAVE</b>call early for essence</span>
-              <button class="call-btn" data-act="callwave">Call Wave ⏎</button>
+              <span class="txt"><b id="inter-label">NEXT WAVE</b><em id="inter-sub">call early for essence</em></span>
+              <button class="call-btn" data-act="callwave" id="inter-btn">Call Wave ⏎</button>
             </div>
           </div>
         </div>
@@ -570,6 +571,8 @@ export class UI {
       intermission: document.getElementById('intermission'),
       interCount: document.getElementById('inter-count'),
       interLabel: document.getElementById('inter-label'),
+      interSub: document.getElementById('inter-sub'),
+      interBtn: document.getElementById('inter-btn'),
       surgeCd: document.getElementById('surge-cd'),
       dashCd: document.getElementById('dash-cd'),
       ultCd: document.getElementById('ult-cd'),
@@ -602,6 +605,7 @@ export class UI {
     this._renderPacts();
     this._renderSettings();
     this._renderCodex('elements');
+    this._applyDepth();
     this._spawnEmbers();
     this._syncBest();
     this._buildWorldBars();
@@ -717,7 +721,7 @@ export class UI {
     });
 
     this.root.addEventListener('click', (e) => {
-      const el = e.target.closest('[data-act], [data-elem], [data-weapon], [data-card], [data-tab], [data-quality], [data-toggle], [data-mode], [data-run], [data-build], [data-forge], [data-upgrade], [data-pact], [data-relic], [data-reward], [data-diff], [data-music]');
+      const el = e.target.closest('[data-act], [data-elem], [data-weapon], [data-card], [data-tab], [data-quality], [data-toggle], [data-mode], [data-run], [data-build], [data-forge], [data-upgrade], [data-pact], [data-relic], [data-reward], [data-diff], [data-music], [data-menus]');
       if (!el) return;
       this.audio.unlock();
 
@@ -735,6 +739,13 @@ export class UI {
           this.audio.error();
         }
         this._renderDifficulties();
+        return;
+      }
+      if (el.dataset.menus) {
+        this.audio.ui();
+        this._setSetting('menus', el.dataset.menus);
+        this._applyDepth();
+        this._renderSettings();
         return;
       }
       if (el.dataset.pact) {
@@ -1276,7 +1287,29 @@ export class UI {
     this._renderPacts();
     this._renderRunStyle();
     this._decorateArenas();
+    this._applyDepth();
     this._syncBest();
+  }
+
+  /* Menu depth: the same game with more or fewer questions before the fight. */
+  _applyDepth() {
+    const depth = menuDepth(this.game.save);
+    this.depth = depth;
+    const show = (el, on) => { if (el) el.classList.toggle('is-hidden', !on); };
+    show(document.getElementById('runstyle-row'), depth.skillRun);
+    show(document.getElementById('diff-panel'), depth.difficulty);
+    show(document.getElementById('pact-panel'), depth.pacts);
+    show(document.querySelector('.weapon-panel'), depth.weapons);
+    const allowed = new Set(depth.modes);
+    document.querySelectorAll('#mode-row .mode-card').forEach(card => {
+      card.classList.toggle('is-hidden', !allowed.has(card.dataset.mode));
+    });
+    document.querySelectorAll('#codex-tabs .tab').forEach(tab => {
+      tab.classList.toggle('is-hidden', !depth.codex.includes(tab.dataset.tab));
+    });
+    // never leave a hidden mission or tab as the active one
+    if (MODES[this.mode] && !allowed.has(this.mode)) this.selectMode(depth.modes[0], true);
+    if (!depth.codex.includes(this._currentTab)) this._renderCodex(depth.codex[0]);
   }
 
   _decorateArenas() {
@@ -1848,6 +1881,7 @@ export class UI {
               <b>Skill runs</b> close boon drafts and relic offers for the whole run. Each level grants flat Mastery (+6% damage, +4% tempo, +8 health)
               and the dawn pays 60% more sunmarks. Choose the style on the mission select screen.<br><br>
               <b>Chain kills</b> to raise your essence multiplier — up to ×4. The chain decays in three seconds.<br><br>
+              <b>The first wave waits for you</b>: the arena opens empty — press Enter (or Begin) when you are ready for wave 1.<br><br>
               <b>Call the next wave early</b> during the breather for bonus essence. Risky. Rewarding.<br><br>
               <b>Fuse at level 3+</b>: take an Attune card to combine your sigil with a second element. Your attack, passive and ultimate all become the hybrid.<br><br>
               <b>Ultimate charge</b> builds from kills and damage. At 100%, press ${keyLabel(this.game.keyFor('ult'))} to reshape the arena.
@@ -1931,6 +1965,7 @@ export class UI {
     const body = document.getElementById('settings-body');
     if (!body) return;
     const s = this.game.save.settings;
+    const depth = menuDepth(this.game.save);
     const pct = (v) => Math.round(v * 100);
     body.innerHTML = `
       <div class="settings-subhead">Audio</div>
@@ -1960,6 +1995,12 @@ export class UI {
         </div>
       </div>
       <div class="settings-subhead">Interface</div>
+      <div class="settings-row depth-row">
+        <div class="label"><b>Menus</b><span>${depth.desc}</span></div>
+        <div class="seg depth-seg">
+          ${MENU_DEPTH_ORDER.map(k => `<button class="${k === depth.key ? 'on' : ''}" data-menus="${k}">${MENU_DEPTHS[k].name}</button>`).join('')}
+        </div>
+      </div>
       <div class="settings-row">
         <div class="label"><b>Damage numbers</b><span>Floating combat readouts</span></div>
         <button class="toggle ${s.numbers ? 'on' : ''}" data-toggle="numbers" aria-label="Toggle damage numbers"></button>
@@ -2101,7 +2142,7 @@ export class UI {
         }
       }
       this.el.shardCount.textContent = game.shards;
-      const canForge = game.phase === 'intermission' && game.state === 'playing';
+      const canForge = (game.phase === 'intermission' || game.phase === 'ready') && game.state === 'playing';
       this.el.forgeBtn.disabled = !canForge;
       this.el.forgeBtn.classList.toggle('ready', canForge);
     }
@@ -2146,6 +2187,8 @@ export class UI {
         const gates = game.structures.lanes.filter(l => l.gate.alive).length;
         phase = gates + ' GATES · ' + left + ' HOSTILES';
       }
+    } else if (game.phase === 'ready') {
+      phase = 'PRESS ENTER TO BEGIN';
     } else if (game.phase === 'intermission') {
       const secs = Math.max(0, game.interTimer || 0);
       phase = secs > 0.15 ? 'NEXT WAVE ' + Math.ceil(secs) : 'BREATHE';
@@ -2249,11 +2292,23 @@ export class UI {
     this.el.abilities.ult.classList.toggle('ready', p.charge >= 100);
     this.el.abilities.surge.classList.toggle('off', p.surgeCd > 0);
 
-    const interOn = game.phase === 'intermission' && game.state === 'playing';
+    const ready = game.phase === 'ready' && game.state === 'playing';
+    const interOn = (ready || game.phase === 'intermission') && game.state === 'playing';
     this.el.intermission.classList.toggle('on', interOn);
+    this.el.intermission.classList.toggle('ready', ready);
     if (interOn) {
-      this.el.interCount.textContent = Math.max(0, Math.ceil(game.interTimer));
-      this.el.interLabel.textContent = 'WAVE ' + game.wave;
+      if (ready) {
+        const tier = DIFFICULTIES[game.difficulty] || DIFFICULTIES.solar;
+        this.el.interCount.textContent = game.wave;
+        this.el.interLabel.textContent = 'WAVE ' + game.wave + ' · READY';
+        this.el.interSub.textContent = tier.name.toUpperCase() + ' · waits for you to begin';
+        this.el.interBtn.textContent = 'Begin ⏎';
+      } else {
+        this.el.interCount.textContent = Math.max(0, Math.ceil(game.interTimer));
+        this.el.interLabel.textContent = 'WAVE ' + game.wave;
+        this.el.interSub.textContent = 'call early for essence';
+        this.el.interBtn.textContent = 'Call Wave ⏎';
+      }
     }
 
     const pending = game.pendingLevels > 0 && game.state === 'playing';

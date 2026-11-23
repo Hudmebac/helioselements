@@ -270,6 +270,9 @@
   .intermission .count { font-family: var(--font-display); font-size: 22px; color: var(--gold-hi); line-height: 1; min-width: 26px; text-align: center; }
   .intermission .txt { font-size: 8px; letter-spacing: .18em; text-transform: uppercase; color: var(--muted); line-height: 1.6; }
   .intermission .txt b { display: block; color: var(--gold); font-weight: 600; letter-spacing: .12em; }
+  .intermission .txt em { font-style: normal; }
+  .intermission.ready { border-color: rgba(245, 194, 107, .42); box-shadow: 0 0 26px rgba(245, 194, 107, .16), var(--shadow); }
+  .intermission.ready .count { color: #ffe9b7; }
 
   .call-btn {
     font-size: 9px; font-weight: 800; letter-spacing: .16em; text-transform: uppercase;
@@ -895,7 +898,14 @@
   padding-bottom: 6px;
 }
 .settings-subhead:first-child { margin-top: 0; }
-.settings-note { font-size: 10.5px; line-height: 1.7; color: var(--faint); margin-bottom: 10px; }
+  .settings-note { font-size: 10.5px; line-height: 1.7; color: var(--faint); margin-bottom: 10px; }
+
+  /* Menu depth hides whole panels without fighting their own display rules. */
+  .is-hidden { display: none !important; }
+  .depth-row { align-items: center; }
+  .depth-row .label span { max-width: 46ch; }
+  .depth-seg { gap: 4px; flex-wrap: wrap; }
+  .depth-seg button { min-width: 74px; }
 
 /* Save export / import */
 .save-import { margin: 10px 0 14px; display: grid; gap: 8px; }

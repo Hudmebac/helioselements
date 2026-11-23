@@ -145,6 +145,8 @@ The payout uses the rank you **played**, not the one you just earned, and it is 
 
 <p><kbd>W</kbd> <kbd>A</kbd> <kbd>S</kbd> <kbd>D</kbd> move &nbsp;·&nbsp; aim with the mouse &nbsp;·&nbsp; attacking is automatic</p>
 
+Every run opens on an **empty arena**: wave 1 does not count down, so you can read the tier, spend shards at the Forge and walk the ground before anything spawns. Press <kbd>Enter</kbd> — or the **Begin** button — when you want the horde.
+
 | Keys | Action |
 |:---|:---|
 | <kbd>Space</kbd> / <kbd>Shift</kbd> | **Dash** — brief invulnerability, and Burst Dash turns it into a bomb |
@@ -152,11 +154,11 @@ The payout uses the rank you **played**, not the one you just earned, and it is 
 | <kbd>R</kbd> | **Ultimate** — when the sun is fully charged |
 | <kbd>B</kbd> / <kbd>F</kbd> | **The Forge** — raise and upgrade towers (Siege, Lanes) |
 | <kbd>E</kbd> (hold) | **Repair** the Sunforge, a tower or a lane pad |
-| <kbd>Enter</kbd> | **Call the next wave early** — more danger, more shards |
+| <kbd>Enter</kbd> | **Begin wave 1** · then **call the next wave early** — more danger, more shards |
 | <kbd>L</kbd> | Open a stored level-up draft |
 | <kbd>Esc</kbd> / <kbd>P</kbd> | Pause |
 
-All twelve actions are rebindable in **Settings → Controls**.
+All twelve actions are rebindable in **Settings → Controls**. **Settings → Interface → Menus** sets how much the game asks of you: *Simple* (four missions, one difficulty), *Default* (six missions, four difficulties, weapon choice) or *Complex* (all eight missions, Eclipse Pacts, Skill Runs, the full Codex).
 
 > [!NOTE]
 > Progress lives in `localStorage` (`helios.elements.save.v1`) — there is no cloud. **Settings → Save** exports your progress as text or a file and imports it back, so clearing site data is no longer fatal.

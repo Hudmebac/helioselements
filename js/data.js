@@ -3,7 +3,7 @@
    Elements, fusions, enemies, boons and wave composition.
    ============================================================ */
 
-export const VERSION = '1.7.4';
+export const VERSION = '1.7.5';
 
 export const ELEMENTS = {
   ember: {
@@ -629,6 +629,7 @@ export function buildDuelWave(wave, pacts = {}, difficulty = null, bonus = null)
 export function xpToNext(level) { return Math.round(12 + level * 9 + Math.pow(level, 1.45) * 1.6); }
 
 export const SETTINGS_DEFAULT = {
+  menus: 'default',
   master: 0.7,
   music: 0.45,
   sfx: 0.8,
@@ -790,6 +791,45 @@ export const MODES = {
     color: 0xffe7a3, css: '#ffe9a8', sigil: '⚔', hasCore: false, arena: 'crown',
   },
 };
+
+/* ------------------------------------------------------------
+   MENU DEPTH — the same game at three widths.
+   Simple asks nothing, Default asks for a tier, Complex opens every
+   dial the game owns. Hidden systems are switched off at run start,
+   so a lean menu is never secretly running pacts or skill runs.
+   ------------------------------------------------------------ */
+export const MENU_DEPTHS = {
+  simple: {
+    key: 'simple', name: 'Simple', icon: '○', css: '#8fe6a0',
+    tagline: 'Just the fight',
+    desc: 'Four missions and one difficulty. No pacts, no skill runs, no weapon picker — the arena, your sigil and the horde.',
+    modes: ['siege', 'trial', 'hunt', 'blitz'],
+    difficulty: false, pacts: false, skillRun: false, weapons: false,
+    codex: ['guide', 'elements', 'missions', 'controls'],
+  },
+  default: {
+    key: 'default', name: 'Default', icon: '◐', css: '#f5c26b',
+    tagline: 'The descent',
+    desc: 'Six missions, all four difficulties, the Descent and weapon choice. Pacts and skill runs wait behind Complex.',
+    modes: ['siege', 'lane', 'trial', 'hunt', 'escort', 'blitz'],
+    difficulty: true, pacts: false, skillRun: false, weapons: true,
+    codex: ['lore', 'guide', 'elements', 'fusions', 'missions', 'controls'],
+  },
+  complex: {
+    key: 'complex', name: 'Complex', icon: '●', css: '#b184ff',
+    tagline: 'Every dial',
+    desc: 'All eight missions, Eclipse Pacts, Skill Runs, weapon choice and the whole Codex — for players who want to tune the run themselves.',
+    modes: ['siege', 'lane', 'trial', 'hunt', 'escort', 'ritual', 'blitz', 'duel'],
+    difficulty: true, pacts: true, skillRun: true, weapons: true,
+    codex: ['lore', 'guide', 'elements', 'fusions', 'relics', 'bestiary', 'boons', 'dawn', 'missions', 'controls'],
+  },
+};
+
+export const MENU_DEPTH_ORDER = ['simple', 'default', 'complex'];
+
+export function menuDepth(save = {}) {
+  return MENU_DEPTHS[save?.settings?.menus] || MENU_DEPTHS.default;
+}
 
 /* ------------------------------------------------------------
    ARENAS — every mission fights on its own ground. Shape and size
@@ -1106,7 +1146,7 @@ export const CONTROL_ACTIONS = [
   { key: 'ult', name: 'Ultimate', def: 'KeyR' },
   { key: 'forge', name: 'Open the Forge', def: 'KeyB' },
   { key: 'repair', name: 'Repair (hold)', def: 'KeyE' },
-  { key: 'callwave', name: 'Call the next wave', def: 'Enter' },
+  { key: 'callwave', name: 'Begin wave 1 / call wave', def: 'Enter' },
   { key: 'levelup', name: 'Open stored level-up', def: 'KeyL' },
   { key: 'pause', name: 'Pause', def: 'Escape' },
 ];
@@ -1139,7 +1179,7 @@ export const KEYBINDS = [
   ['Shift / Space', 'Dash (brief invulnerability)'],
   ['Q', 'Elemental surge'],
   ['R', 'Ultimate (when fully charged)'],
-  ['Enter', 'Call the next wave early'],
+  ['Enter', 'Begin wave 1 · call the next wave early'],
   ['B / F', 'Open the Forge (Siege and Lanes)'],
   ['E (hold)', 'Repair the Sunforge, a tower or a lane pad'],
   ['L', 'Open a stored level-up'],
