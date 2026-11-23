@@ -655,7 +655,8 @@ export function xpToNext(level) { return Math.round(20 + level * 13 + Math.pow(l
    ------------------------------------------------------------ */
 export const WEAPON_RANK = {
   max: 5,                 // one weapon, five ranks — earned in drafts
-  perRank: 0.16,          // +16% damage per rank held
+  perRank: 0.20,          // +20% damage per rank held — a rank must beat a common boon
+  step: 4,                // the firing hand is expected to gain a rank every four levels
   swapLevels: [5, 9, 13], // levels where a replacement weapon is offered
   baseRange: 1.2,         // shot lifetime at range 1 — deliberately short
   closeRange: 6,          // shots loosed at a target inside this are braced
@@ -666,6 +667,11 @@ export const WEAPON_RANK = {
   rarities: ['common', 'common', 'rare', 'epic', 'legendary'],
   rarityMult: { common: 1, rare: 1.08, epic: 1.18, legendary: 1.3 },
 };
+/* The cadence the old automatic ladder used. While the firing hand sits
+   behind it, its rank card is always on offer in the draft. */
+export function weaponRankFor(level) {
+  return Math.min(WEAPON_RANK.max, 1 + Math.floor((Math.max(1, level) - 1) / WEAPON_RANK.step));
+}
 export function weaponRarityFor(rank) {
   return WEAPON_RANK.rarities[Math.max(0, Math.min(WEAPON_RANK.max, rank) - 1)] || 'common';
 }

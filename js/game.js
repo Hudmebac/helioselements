@@ -6,7 +6,7 @@
 import {
   ELEMENTS, FUSIONS, resolveForm, fusionFor, buildWave, buildLaneWave, buildHuntWave, buildDuelWave, xpToNext,
   ARENAS, WEAPONS, weaponFor, applyWeapon, bestElementMult, ELEMENT_MATCH,
-  weaponRarityFor, WEAPON_RANK, WARDS, WARD_MAX_RANK,
+  weaponRankFor, weaponRarityFor, WEAPON_RANK, WARDS, WARD_MAX_RANK,
   BOONS, RARITY, BOSSES, MODES, DEFENSES, SIEGE, LANE, HUNT, ESCORT, RITUAL, BLITZ, DUEL,
   WAVE_BONUSES, rollWaveBonus, SKILL_RUN,
   RELICS, RELIC_SLOTS, RELIC_MAX_RANK, relicById,
@@ -1430,6 +1430,36 @@ export class Game {
     const ward = p.ward ? WARDS[p.ward.key] : null;
     const out = [];
 
+    // Every rank card reads the same, whether it was guaranteed or rolled.
+    const rankCard = (it) => {
+      const next = it.rank + 1;
+      const isWard = it.piece === 'ward';
+      const rarity = isWard ? (next >= 3 ? 'epic' : 'rare') : weaponRarityFor(next);
+      return {
+        kind: 'loadout', action: 'rank', piece: it.piece,
+        name: '+1 Rank · ' + it.name,
+        desc: isWard
+          ? 'Rank ' + next + ' of ' + WARD_MAX_RANK + '. ' + ward.desc
+          : 'Rank ' + next + ' of ' + WEAPON_RANK.max + '. +' + Math.round(WEAPON_RANK.perRank * 100) + '% weapon damage, and ' + weaponRarityFor(next).toUpperCase() + ' rarity.',
+        icon: it.icon, rarity, css: it.css,
+        tag: it.slot, left: 'RANK ' + it.rank + ' → ' + next,
+        right: isWard ? 'WARD UP' : (weaponRarityFor(next) === weaponRarityFor(it.rank) ? '+' + Math.round(WEAPON_RANK.perRank * 100) + '% DMG' : weaponRarityFor(next).toUpperCase()),
+      };
+    };
+
+    // The pieces that can still grow, weakest first.
+    const pieces = [];
+    if (p.weaponRank < WEAPON_RANK.max) pieces.push({ piece: 'main', rank: p.weaponRank, name: main.name, icon: main.icon, css: main.css, slot: 'WEAPON I' });
+    if (side && p.sideWeaponRank < WEAPON_RANK.max) pieces.push({ piece: 'side', rank: p.sideWeaponRank, name: side.name, icon: side.icon, css: side.css, slot: 'WEAPON II' });
+    if (ward && p.ward.rank < WARD_MAX_RANK) pieces.push({ piece: 'ward', rank: p.ward.rank, name: ward.name, icon: ward.icon, css: ward.css, slot: 'DEFENCE' });
+    pieces.sort((a, b) => a.rank - b.rank);
+
+    // The firing hand never stalls: while it sits behind the old every-four-
+    // levels cadence, its rank card is in the draft no matter what else is on
+    // offer. The second arm and the ward still only grow when you spend a pick.
+    const guaranteed = p.weaponRank < weaponRankFor(this.level) ? pieces.find(it => it.piece === 'main') : null;
+    if (guaranteed) out.push(rankCard(guaranteed));
+
     // Milestone replacements for the firing hand.
     if (WEAPON_RANK.swapLevels.includes(this.level)) {
       const others = wlist.filter(w => w.key !== main.key && w.key !== side?.key);
@@ -1479,26 +1509,10 @@ export class Game {
     }
 
     // Ranks: offer the piece that is furthest behind first.
-    const pieces = [];
-    if (p.weaponRank < WEAPON_RANK.max) pieces.push({ piece: 'main', rank: p.weaponRank, name: main.name, icon: main.icon, css: main.css, slot: 'WEAPON I' });
-    if (side && p.sideWeaponRank < WEAPON_RANK.max) pieces.push({ piece: 'side', rank: p.sideWeaponRank, name: side.name, icon: side.icon, css: side.css, slot: 'WEAPON II' });
-    if (ward && p.ward.rank < WARD_MAX_RANK) pieces.push({ piece: 'ward', rank: p.ward.rank, name: ward.name, icon: ward.icon, css: ward.css, slot: 'DEFENCE' });
-    pieces.sort((a, b) => a.rank - b.rank);
     for (const it of pieces) {
       if (out.length >= limit) break;
-      const next = it.rank + 1;
-      const isWard = it.piece === 'ward';
-      const rarity = isWard ? (next >= 3 ? 'epic' : 'rare') : weaponRarityFor(next);
-      out.push({
-        kind: 'loadout', action: 'rank', piece: it.piece,
-        name: '+1 Rank · ' + it.name,
-        desc: isWard
-          ? 'Rank ' + next + ' of ' + WARD_MAX_RANK + '. ' + ward.desc
-          : 'Rank ' + next + ' of ' + WEAPON_RANK.max + '. +' + Math.round(WEAPON_RANK.perRank * 100) + '% weapon damage, and ' + weaponRarityFor(next).toUpperCase() + ' rarity.',
-        icon: it.icon, rarity, css: it.css,
-        tag: it.slot, left: 'RANK ' + it.rank + ' → ' + next,
-        right: isWard ? 'WARD UP' : (weaponRarityFor(next) === weaponRarityFor(it.rank) ? '+' + Math.round(WEAPON_RANK.perRank * 100) + '% DMG' : weaponRarityFor(next).toUpperCase()),
-      });
+      if (it === guaranteed) continue;
+      out.push(rankCard(it));
     }
 
     // Everything maxed: fall back to flat damage for the run.
