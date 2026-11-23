@@ -207,20 +207,16 @@ Thirteen chapters, a ten-part field guide, an FAQ and the changelog all live in 
 No framework, no bundler, no `node_modules`. Plain ES modules and a vendored Three.js, served by a 60-line static server.
 
 ```mermaid
-flowchart TD
-  menu([Title screen]) --> pick[Pick sigil, mission, difficulty]
-  pick --> run[Run starts at your Descent rank]
-  run --> wave[Wave N]
-  wave --> draft{Boon draft}
-  draft --> wave
-  wave -->|objective met| results[Results screen]
-  wave -->|you fall| results
-  results --> pay[Sunmarks x descent x difficulty x pacts]
+flowchart LR
+  menu([Title screen]) --> pick[Pick a mission]
+  pick --> wave[Wave N]
+  wave --> results[Run ends]
+  results --> pay[Sunmarks paid]
   pay --> save[(localStorage)]
-  pay --> ach[Achievements and rewards]
-  ach --> save
   save --> menu
 ```
+
+A run is closed: waves feed the results screen, the dusk pays out on the rank you played, and the save carries the Descent back to the title screen.
 
 <details>
 <summary><b>Repository map</b></summary>
