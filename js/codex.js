@@ -185,6 +185,7 @@ export const GUIDE = {
       kicker: 'First run',
       title: 'Start here',
       body: [
+        `Settings → Interface → Menus decides how much this screen asks of you: Simple (four missions, Solar only), Default (six missions and every difficulty tier) or Complex (all eight missions with Eclipse Pacts and Skill Runs). Nothing is locked away — change the depth whenever you like.`,
         `Pick a sigil on the mission screen. All six are viable; they differ in rhythm. Ember and Stone hit slowly and hard, Gale and Lumen hit fast and precise, Tide and Umbra trade damage for sustain.`,
         `Pick a mission. Sunforge Siege is the default and the best place to learn: there is a core to defend, so your mistakes are survivable for a while. Warden Duel is the opposite — one champion, no adds, nothing to hide behind.`,
         `Pick a difficulty. Solar is the balance point. Kindled is a gentler descent. Umbral and Hardcore unlock as you prove the run can be finished, and they pay more sunmarks for it.`,
