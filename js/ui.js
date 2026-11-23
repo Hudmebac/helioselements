@@ -1889,7 +1889,7 @@ export class UI {
               <b>Skill runs</b> close boon drafts and relic offers for the whole run. Each level grants flat Mastery (+6% damage, +4% tempo, +8 health)
               and the dawn pays 60% more sunmarks. Choose the style on the mission select screen.<br><br>
               <b>Chain kills</b> to raise your essence multiplier — up to ×4. The chain decays in three seconds.<br><br>
-              <b>The first wave waits for you</b>: the arena opens empty — press Enter (or Begin) when you are ready for wave 1.<br><br>
+              <b>The first wave starts itself</b>: the arena opens empty and wave 1 walks in after three seconds — press Enter (or Begin now) to start it early.<br><br>
               <b>Call the next wave early</b> during the breather for bonus essence. Risky. Rewarding.<br><br>
               <b>Fuse at level 3+</b>: take an Attune card to combine your sigil with a second element. Your attack, passive and ultimate all become the hybrid.<br><br>
               <b>Ultimate charge</b> builds from kills and damage. At 100%, press ${keyLabel(this.game.keyFor('ult'))} to reshape the arena.
@@ -2203,7 +2203,7 @@ export class UI {
         phase = gates + ' GATES · ' + left + ' HOSTILES';
       }
     } else if (game.phase === 'ready') {
-      phase = 'PRESS ENTER TO BEGIN';
+      phase = 'STARTS IN ' + Math.max(0, Math.ceil(game.readyTimer ?? 0)) + ' · ENTER TO BEGIN NOW';
     } else if (game.phase === 'intermission') {
       const secs = Math.max(0, game.interTimer || 0);
       phase = secs > 0.15 ? 'NEXT WAVE ' + Math.ceil(secs) : 'BREATHE';
@@ -2341,8 +2341,8 @@ export class UI {
         const tier = DIFFICULTIES[game.difficulty] || DIFFICULTIES.solar;
         this.el.interCount.textContent = game.wave;
         this.el.interLabel.textContent = 'WAVE ' + game.wave + ' · READY';
-        this.el.interSub.textContent = tier.name.toUpperCase() + ' · waits for you to begin';
-        this.el.interBtn.textContent = 'Begin ⏎';
+        this.el.interSub.textContent = tier.name.toUpperCase() + ' · begins in ' + Math.max(0, Math.ceil(game.readyTimer ?? 0));
+        this.el.interBtn.textContent = 'Begin now ⏎';
       } else {
         this.el.interCount.textContent = Math.max(0, Math.ceil(game.interTimer));
         this.el.interLabel.textContent = 'WAVE ' + game.wave;

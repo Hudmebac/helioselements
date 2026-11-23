@@ -3,8 +3,8 @@
    Bestiary, behaviours, bosses and the horde manager.
    ============================================================ */
 
-import { ENEMIES, BOSSES } from './data.js';
-import { arenaClamp, arenaRadiusAt, glowTexture, shadowTexture } from './engine.js';
+import { ENEMIES, BOSSES, ELEMENTS } from './data.js';
+import { arenaClamp, arenaRadiusAt, glowTexture, shadowTexture, sigilTexture } from './engine.js';
 
 const shadowMat = new THREE.MeshBasicMaterial({
   map: shadowTexture(), transparent: true, opacity: 0.42, depthWrite: false, color: 0x000000,
@@ -280,6 +280,28 @@ export class Enemy {
       this.eliteRing.position.y = -this.baseY + 0.05;
       group.add(this.eliteRing);
     }
+
+    // Element badge: the sigil of whatever this thing is made of.
+    const elMeta = this.element ? ELEMENTS[this.element] : null;
+    this.badgeMat = new THREE.SpriteMaterial({
+      map: sigilTexture(elMeta?.sigil || '✦', elMeta?.css || this.type.css || '#ff7a52'),
+      transparent: true, opacity: 0.72, depthWrite: false, toneMapped: false,
+    });
+    this.badge = new THREE.Sprite(this.badgeMat);
+    this.badge.scale.set(0.72, 0.36, 1);
+    this.badge.position.y = this.isBoss ? 3.55 : this.flying ? 1.15 : 1.35;
+    group.add(this.badge);
+
+    // Hostile ground ring: red says "this wants you dead", whatever its element.
+    const threatR = this.radius * (this.isBoss ? 2.0 : 1.5);
+    const threatMat = new THREE.MeshBasicMaterial({
+      color: 0xff4230, transparent: true, opacity: this.isBoss ? 0.4 : 0.26,
+      side: THREE.DoubleSide, blending: THREE.AdditiveBlending, depthWrite: false, toneMapped: false,
+    });
+    const threat = new THREE.Mesh(new THREE.RingGeometry(threatR * 0.8, threatR, 44), threatMat);
+    threat.rotation.x = -Math.PI / 2;
+    threat.position.y = -this.baseY + 0.05;
+    group.add(threat);
 
     group.scale.setScalar(scale);
     this.group = group;

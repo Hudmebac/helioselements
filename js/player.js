@@ -3,7 +3,7 @@
    The guardian: movement, auto-attack, dash, surge, ultimate.
    ============================================================ */
 
-import { arenaClamp, glowTexture, shadowTexture } from './engine.js';
+import { arenaClamp, glowTexture, shadowTexture, sigilTexture } from './engine.js';
 import { relicById, SIEGE, elementMult } from './data.js';
 
 export class Player {
@@ -108,6 +108,32 @@ export class Player {
       this.ringMats.push(mat);
     }
 
+    // Element identity, legible at a glance: the sigil glyph and its name float
+    // over the guardian, and re-draw when a fusion changes the form.
+    this.sigilMat = new THREE.SpriteMaterial({
+      map: sigilTexture(form.sigil || '✦', form.css || '#ffd98a', (form.name || 'GUARDIAN').toUpperCase()),
+      transparent: true, opacity: 0.9, depthWrite: false, toneMapped: false,
+    });
+    this.sigil = new THREE.Sprite(this.sigilMat);
+    this.sigil.scale.set(1.75, 0.77, 1);
+    this.sigil.position.set(0, 1.95, 0);
+    group.add(this.sigil);
+
+    // Weapon focus: the crystal every shot leaves from, aimed with the body.
+    this.focusMat = new THREE.MeshBasicMaterial({ color: form.glow, toneMapped: false, transparent: true, opacity: 0.92 });
+    this.focus = new THREE.Mesh(new THREE.OctahedronGeometry(0.2, 0), this.focusMat);
+    this.focus.position.set(0, 0.12, 0.92);
+    this.focus.scale.set(0.8, 0.8, 1.9);
+    group.add(this.focus);
+    this.focusHalo = new THREE.Sprite(new THREE.SpriteMaterial({
+      map: glowTexture('rgba(255,255,255,.95)', 'rgba(255,220,150,.4)', 'rgba(255,150,40,0)'),
+      color: form.glow, transparent: true, blending: THREE.AdditiveBlending,
+      depthWrite: false, opacity: 0.4, toneMapped: false,
+    }));
+    this.focusHalo.scale.set(1.5, 1.5, 1);
+    this.focus.add(this.focusHalo);
+    this.recoil = 0;
+
     this.shardGroup = new THREE.Group();
     this.shards = [];
     const shardMat = new THREE.MeshBasicMaterial({ color: form.glow, transparent: true, opacity: 0.7, toneMapped: false });
@@ -161,6 +187,10 @@ export class Player {
     this.ringMats[0].color.set(form.color);
     this.ringMats[1].color.set(form.glow);
     this.shardMat.color.set(form.glow);
+    this.sigilMat.map = sigilTexture(form.sigil || '✦', form.css || '#ffd98a', (form.name || 'GUARDIAN').toUpperCase());
+    this.sigilMat.needsUpdate = true;
+    this.focusMat.color.set(form.glow);
+    this.focusHalo.material.color.set(form.glow);
     this.groundRingMat.color.set(form.glow);
     this.light.color.set(form.glow);
     for (const s of this.sentinels) {
@@ -725,6 +755,12 @@ export class Player {
     const ignite = f.ignite || (ce.ignite ? { dps: ce.ignite.dps * cr, duration: ce.ignite.duration } : null);
     const healOnHit = (f.healOnHit || 0) + (ce.healOnHit || 0) * cr;
 
+    // Each weapon class fires its own silhouette instead of the same dot.
+    const wkey = f.weapon?.key || '';
+    const shape = /maul|fist|landslide/.test(wkey) ? 'boulder'
+      : /fan|squall|well|riptide/.test(wkey) ? 'needle'
+      : /lance|edge|whip/.test(wkey) ? 'blade' : 'bolt';
+    const shotSize = (f.key === 'stone' ? 1.35 : 1) * (shape === 'boulder' ? 1.25 : 1);
     const baseAngle = Math.atan2(this.aim.x, this.aim.z);
     const spread = count > 1 ? 0.085 : 0;
     for (let i = 0; i < count; i++) {
@@ -735,7 +771,8 @@ export class Player {
       const start = new THREE.Vector3(this.pos.x + dir.x * 0.75, 0.92, this.pos.z + dir.z * 0.75);
       this.game.projectiles.fire({
         pos: start, dir, speed: f.stats.projSpeed, damage,
-        color: f.color, glow: f.glow, size: this.form.key === 'stone' ? 1.5 : 1,
+        color: f.color, glow: f.glow, size: shotSize, shape,
+        halo: shape === 'boulder' ? 2.9 : 2.4,
         stretch: f.stats.aoe ? 1 : 1.8,
         pierce, homing, aoe, chain, knockback: knock,
         ignite, slow: f.slow || null,
@@ -744,15 +781,21 @@ export class Player {
       this.game.fx.trail(start, f.glow, 0.22, 0.2);
     }
     const muzzle = new THREE.Vector3(this.pos.x + this.aim.x * 0.8, 1.02, this.pos.z + this.aim.z * 0.8);
+    this.recoil = 1;
     this.game.audio.shoot(f.key);
-    this.game.fx.burst(muzzle, f.glow, { count: 7, speed: 3.8, size: 0.22, life: 0.3, up: 0.9 });
-    this.game.fx.burst(muzzle, 0xffffff, { count: 2, speed: 4.5, size: 0.12, life: 0.18, up: 0.4 });
+    this.game.fx.burst(muzzle, f.glow, { count: 10, speed: 4.6, size: 0.24, life: 0.32, up: 1 });
+    this.game.fx.burst(muzzle, 0xffffff, { count: 3, speed: 5.2, size: 0.13, life: 0.2, up: 0.5 });
+    this.game.fx.ring(muzzle, f.glow, { r0: 0.15, r1: 1.15, life: 0.22, opacity: 0.5 });
     this.game.engine.addShake(0.04);
   }
 
   _updateVisual(dt) {
     const g = this.group;
     g.position.set(this.pos.x, 0.9 + Math.sin(this.t * 3.1) * 0.07, this.pos.z);
+    this.recoil = Math.max(0, this.recoil - dt * 7);
+    this.focus.position.z = 0.92 - this.recoil * 0.3;
+    this.focus.scale.set(0.8 + this.recoil * 0.55, 0.8 + this.recoil * 0.55, 1.9 + this.recoil * 1.1);
+    this.focusHalo.material.opacity = 0.32 + this.recoil * 0.5;
     const targetRot = Math.atan2(this.aim.x, this.aim.z);
     let diff = targetRot - g.rotation.y;
     while (diff > Math.PI) diff -= Math.PI * 2;

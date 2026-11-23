@@ -145,7 +145,7 @@ The payout uses the rank you **played**, not the one you just earned, and it is 
 
 <p><kbd>W</kbd> <kbd>A</kbd> <kbd>S</kbd> <kbd>D</kbd> move &nbsp;·&nbsp; aim with the mouse &nbsp;·&nbsp; attacking is automatic</p>
 
-Every run opens on an **empty arena**: wave 1 does not count down, so you can read the tier, spend shards at the Forge and walk the ground before anything spawns. Press <kbd>Enter</kbd> — or the **Begin** button — when you want the horde.
+Every run opens on an **empty arena** and begins on its own after **three seconds** — enough time to read the tier and walk the ground. Press <kbd>Enter</kbd> — or **Begin now** — to start the horde immediately.
 
 | Keys | Action |
 |:---|:---|
@@ -288,6 +288,8 @@ The **Play** button at the top of this README already points there; the canonica
 - **Kindling**: kills can shed a burning mote. Eight of them summon a **Dawn Gift** — +35% damage for 18 seconds, tracked by a HUD meter next to the shard count. Elites drop three, wardens four.
 - **Gifts answer the mission**: two shards and a mended core in Sunforge Siege, +4s on the clock in Eclipse Blitz, reliquary repair in Solar Caravan, a circle charge in Blind Ritual — and every second gift sends a wisp to fight beside you.
 - **Fallen bodies dissolve**: an ash puff at the moment of death, then a shrink and sink that clears the arena in 7 seconds (10 for elites, 16 for wardens) instead of lingering.
+- **Runs begin on their own**: wave 1 starts three seconds after the arena opens, with the countdown on the HUD — <kbd>Enter</kbd> still starts it immediately.
+- **Characters read their element**: the guardian carries its sigil and element name overhead, every enemy wears its element's sigil and a red hostile ring underfoot, and weapons fire their own silhouette (bolt, blade, needle, boulder) from a crystal focus that kicks with every shot.
 - **Caravan wayfinder**: an arrow under the objective bar points at the next checkpoint — the next unlit waystone, then the eastern rift — with the live distance in metres.
 
 </details>

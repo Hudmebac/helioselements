@@ -68,6 +68,35 @@ export function glowTexture(inner = 'rgba(255,255,255,1)', mid = 'rgba(255,190,1
   return t;
 }
 
+const sigilTextures = new Map();
+
+/* A glyph (plus an optional name) drawn on a canvas — used above the player and
+   the horde so an element is readable at a glance instead of a guess at a hue. */
+export function sigilTexture(glyph = '✦', color = '#ffd98a', label = '') {
+  const key = glyph + '|' + color + '|' + label;
+  if (sigilTextures.has(key)) return sigilTextures.get(key);
+  const c = document.createElement('canvas');
+  c.width = 256;
+  c.height = label ? 112 : 128;
+  const ctx = c.getContext('2d');
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.shadowColor = color;
+  ctx.shadowBlur = 30;
+  ctx.fillStyle = color;
+  ctx.font = '700 62px "Cinzel", Georgia, serif';
+  ctx.fillText(glyph, 128, label ? 42 : 64);
+  if (label) {
+    ctx.shadowBlur = 16;
+    ctx.font = '700 25px "Inter", system-ui, sans-serif';
+    ctx.fillText(label, 128, 92);
+  }
+  const t = new THREE.CanvasTexture(c);
+  t.needsUpdate = true;
+  sigilTextures.set(key, t);
+  return t;
+}
+
 let _shadowTex = null;
 export function shadowTexture() {
   if (_shadowTex) return _shadowTex;

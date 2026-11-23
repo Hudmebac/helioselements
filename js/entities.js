@@ -14,6 +14,14 @@ export class Projectiles {
     this.list = [];
     this.pool = [];
     this.geo = new THREE.IcosahedronGeometry(0.28, 1);
+    // Each weapon class gets its own shot silhouette.
+    this.shapeGeo = {
+      orb: this.geo,
+      bolt: new THREE.OctahedronGeometry(0.3, 0),
+      blade: new THREE.BoxGeometry(0.11, 0.34, 1.16),
+      needle: new THREE.ConeGeometry(0.16, 1.0, 6),
+      boulder: new THREE.DodecahedronGeometry(0.42, 0),
+    };
     this.streakGeo = new THREE.ConeGeometry(0.23, 1.5, 8, 1, true);
     this.haloTex = glowTexture('rgba(255,255,255,1)', 'rgba(255,255,255,.35)', 'rgba(255,255,255,0)');
     this.hotCoreMat = new THREE.SpriteMaterial({
@@ -71,9 +79,10 @@ export class Projectiles {
       p = { mesh, halo, streak, core, hit: new Set() };
     }
     const mesh = p.mesh;
+    mesh.geometry = this.shapeGeo[cfg.shape] || this.geo;
     mesh.material = this._mat(cfg.color ?? 0xffffff);
     p.halo.material = this._haloMat(cfg.glow ?? cfg.color ?? 0xffffff);
-    p.halo.scale.setScalar(cfg.halo ?? 2.0);
+    p.halo.scale.setScalar(cfg.halo ?? 2.4);
     p.streak.material = this._streakMat(cfg.glow ?? cfg.color ?? 0xffffff);
     p.streak.scale.set(1, cfg.streakLength ?? 1, 1);
     const sz = cfg.size ?? 1;

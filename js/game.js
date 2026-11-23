@@ -20,6 +20,8 @@ import { Projectiles, Pickups, Corpses } from './entities.js';
 import { Structures, Caravan, Ritual } from './structures.js';
 import { SunlessVault } from './vaults.js';
 import { arenaRadiusAt } from './engine.js';
+
+const READY_DELAY = 3;
 import { persist } from './store.js';
 
 export class Game {
@@ -322,8 +324,9 @@ export class Game {
 
     this.state = 'playing';
     this.wave = 1;
-    // The arena opens empty: wave 1 does not count down, it waits for the player to begin.
+    // The arena opens empty and begins on its own after three seconds.
     this.phase = 'ready';
+    this.readyTimer = READY_DELAY;
     this.interTimer = 0;
     this.waveBonus = null;
     this.bonusWaves = 0;
@@ -494,8 +497,12 @@ export class Game {
 
   /* ---------------- WAVES ---------------- */
   updateWave(dt) {
-    // Nothing spawns, ticks or ends while the run is waiting on the player.
-    if (this.phase === 'ready') return;
+    // The arena is empty for a moment, then wave one walks in by itself — Enter skips the wait.
+    if (this.phase === 'ready') {
+      this.readyTimer = Math.max(0, (this.readyTimer ?? READY_DELAY) - dt);
+      if (this.readyTimer <= 0) this.startWave();
+      return;
+    }
     if (this.phase === 'intermission') {
       this.interTimer -= dt;
       if (this.interTimer <= 0) this.startWave();
@@ -544,6 +551,7 @@ export class Game {
   }
 
   startWave() {
+    this.readyTimer = 0;
     const diff = this.difficultyMeta();
     const bonus = rollWaveBonus(this.wave, this.lastBonusId);
     this.waveBonus = bonus;
