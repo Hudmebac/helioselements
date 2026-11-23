@@ -2444,9 +2444,18 @@ export class UI {
     const kicker = document.getElementById('levelup-kicker');
     const sub = document.getElementById('levelup-sub');
     kicker.textContent = 'LEVEL ' + game.level;
-    sub.textContent = game.pendingLevels > 1
+    // Ranks are a decision, so the draft shows where each piece stands.
+    const p = game.player;
+    const loadout = [];
+    if (p) {
+      loadout.push('I R' + (p.weaponRank || 1));
+      if (p.sideForm) loadout.push('II R' + (p.sideWeaponRank || 1));
+      if (p.ward) loadout.push((WARDS[p.ward.key]?.name || 'WARD').split(' ')[0].toUpperCase() + ' R' + p.ward.rank);
+    }
+    const ranks = loadout.length ? '  ·  ' + loadout.join(' · ') : '';
+    sub.textContent = (game.pendingLevels > 1
       ? game.pendingLevels + ' boons remain — choose one'
-      : 'The sun offers three paths. Take one.';
+      : 'The sun offers three paths. Take one.') + ranks;
     const grid = document.getElementById('boon-grid');
     grid.innerHTML = cards.map((c, i) => {
       const css = c.css || '#a9b6d6';

@@ -300,6 +300,8 @@ The **Play** button at the top of this README points at the game, and `/site/` r
 - **Two arms and a ward**: you carry two weapons — the second fires slower for 60% damage at 85% reach, and every rank of it also adds 6% fire rate and 4% reach — plus a single defence (Aegis, Briar, Pyre or Tidewell) that shields you, reflects contact damage, burns the crowd or mends you. The HUD lists all three with their ranks.
 - **Ranks are drafted, not automatic**: each level offers a rank to whichever piece is furthest behind — +20% damage per weapon rank, rarity following the rank — so you choose whether to push one arm to legendary or keep both growing. The firing hand's rank card is guaranteed while it sits below one rank per four levels, so it can't stall at rank 1. Replacements at levels 5, 9 and 13 still restart at rank 1. Rank cards print what the pick buys: damage, rate and reach for an arm, and the real shield, mending and pulse numbers for a ward.
 - **Shorter reach, closer fights**: shots travel about a quarter less far, but a shot fired inside six paces hits 14% harder, and waves trickle in over a longer window instead of arriving as one wall.
+- **Draft clarity**: the first draft offers one second arm and one ward side by side (two arm cards used to hide the ward until you took an arm), rank cards print the numbers a pick actually buys, and the draft header shows your live ranks — `WEAPON I R3 · WEAPON II R1 · PYRE R2`.
+- **Swapping hands**: at levels 5, 9 and 13 a rival weapon is still offered outright, or the second arm can be promoted into the firing hand so the old blade drops a slot instead of vanishing. Both start at rank 1, and a flat +damage pick now survives the swap "for the rest of the run", as its card says.
 
 </details>
 

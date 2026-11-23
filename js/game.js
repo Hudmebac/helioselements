@@ -1482,51 +1482,67 @@ export class Game {
     const guaranteed = p.weaponRank < weaponRankFor(this.level) ? pieces.find(it => it.piece === 'main') : null;
     if (guaranteed) out.push(rankCard(guaranteed));
 
-    // Milestone replacements for the firing hand.
+    // Milestone replacements for the firing hand. The weapon in the second arm
+    // is offered too: promoting it hands the old firing blade down one slot
+    // instead of throwing it away.
     if (WEAPON_RANK.swapLevels.includes(this.level)) {
       const others = wlist.filter(w => w.key !== main.key && w.key !== side?.key);
-      if (others.length) {
-        const pick = others[Math.floor(Math.random() * others.length)];
+      const candidates = side ? others.concat([side]) : others;
+      if (candidates.length) {
+        const pick = candidates[Math.floor(Math.random() * candidates.length)];
+        const promote = !!side && pick.key === side.key;
         out.push({
           kind: 'loadout', action: 'swap', weaponKey: pick.key,
-          name: 'Take ' + pick.name,
-          desc: 'Replaces ' + main.name + ' in the firing hand. It starts again at rank 1 — a swap is a commitment, not a free upgrade.',
+          name: (promote ? 'Promote ' : 'Take ') + pick.name,
+          desc: promote
+            ? 'Swaps hands with your second arm: ' + pick.name + ' takes the firing hand and ' + main.name + ' drops into the second arm. Both start again at rank 1.'
+            : 'Replaces ' + main.name + ' in the firing hand. It starts again at rank 1 — a swap is a commitment, not a free upgrade.',
           icon: pick.icon, rarity: 'epic', css: pick.css,
-          tag: 'WEAPON I', left: 'RANK 1 START', right: 'REPLACES ' + main.name.toUpperCase(),
+          tag: 'WEAPON I', left: promote ? 'SWAP HANDS' : 'RANK 1 START',
+          right: 'REPLACES ' + main.name.toUpperCase(),
         });
       }
     }
 
-    // An empty second arm: both rival patterns, so the pick is real.
-    if (!side) {
-      for (const w of wlist) {
-        if (out.length >= limit) break;
-        if (w.key === main.key) continue;
-        out.push({
-          kind: 'loadout', action: 'sidearm', weaponKey: w.key,
-          name: 'Second Arm · ' + w.name,
-          desc: w.desc + ' Fires on its own beat for ' + Math.round(WEAPON_RANK.sidearmDamage * 100) + '% damage; each rank adds +' + Math.round(WEAPON_RANK.perRank * 100) + '% damage, ' + Math.round(WEAPON_RANK.sidearmRankTempo * 100) + '% rate and ' + Math.round(WEAPON_RANK.sidearmRankReach * 100) + '% reach.',
-          icon: w.icon, rarity: 'rare', css: w.css,
-          tag: 'WEAPON II', left: 'EMPTY SLOT', right: 'RANK 1',
-        });
-      }
+    // Cards for the empty slots, so the two systems read the same way.
+    const sideCard = (w) => ({
+      kind: 'loadout', action: 'sidearm', weaponKey: w.key,
+      name: 'Second Arm · ' + w.name,
+      desc: w.desc + ' Fires on its own beat for ' + Math.round(WEAPON_RANK.sidearmDamage * 100) + '% damage; each rank adds +' + dmgStep + '% damage, ' + tempoStep + '% rate and ' + reachStep + '% reach.',
+      icon: w.icon, rarity: 'rare', css: w.css,
+      tag: 'WEAPON II', left: 'EMPTY SLOT', right: 'RANK 1',
+    });
+    const wardCard = (w) => ({
+      kind: 'loadout', action: 'ward', wardKey: w.key,
+      name: w.name, desc: w.desc,
+      icon: w.icon, rarity: 'epic', css: w.css,
+      tag: 'DEFENCE', left: 'THE WARD SLOT', right: 'RANK 1',
+    });
+    const rivals = wlist.filter(w => w.key !== main.key);
+    const wardPool = Object.values(WARDS).slice();
+    for (let i = wardPool.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [wardPool[i], wardPool[j]] = [wardPool[j], wardPool[i]];
     }
 
-    // An empty ward slot: two of the four wards each time it is offered.
-    if (!ward) {
-      const pool = Object.values(WARDS).slice();
-      for (let i = pool.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [pool[i], pool[j]] = [pool[j], pool[i]];
+    // Both slots empty: show one arm and one ward. Two arm cards used to fill
+    // the draft on their own, which hid the ward until an arm was taken.
+    if (!side && !ward && rivals.length && limit - out.length >= 2) {
+      out.push(sideCard(rivals[Math.floor(Math.random() * rivals.length)]));
+      out.push(wardCard(wardPool[0]));
+    } else {
+      if (!side) {
+        for (const w of rivals) {
+          if (out.length >= limit) break;
+          out.push(sideCard(w));
+        }
       }
-      for (const w of pool) {
-        if (out.length >= limit) break;
-        out.push({
-          kind: 'loadout', action: 'ward', wardKey: w.key,
-          name: w.name, desc: w.desc,
-          icon: w.icon, rarity: 'epic', css: w.css,
-          tag: 'DEFENCE', left: 'THE WARD SLOT', right: 'RANK 1',
-        });
+      // An empty ward slot: two of the four wards each time it is offered.
+      if (!ward) {
+        for (const w of wardPool) {
+          if (out.length >= limit) break;
+          out.push(wardCard(w));
+        }
       }
     }
 
@@ -1608,10 +1624,22 @@ export class Game {
     this.weapon = w;
     this.save.weapons = this.save.weapons || {};
     this.save.weapons[p.sigils[0]] = w.key;
+    const outgoing = p.form.weapon;
+    // setForm() drops a second arm that would match the new firing hand, so the
+    // second arm is read before the swap, not after it.
+    const sideHeld = p.sideForm?.weapon?.key || null;
+    // A flat-damage pick is sold as "for the rest of the run", so a swap keeps it.
+    const boost = p.weaponBoost || 1;
     p.setForm(applyWeapon(this.baseForm, w), true);
     p.weaponRank = 1;
     p.weaponRarity = weaponRarityFor(1);
-    p.weaponBoost = 1;
+    p.weaponBoost = boost;
+    // If the second arm already carried the incoming weapon, the outgoing firing
+    // hand takes its place — no two hands ever fire the same weapon.
+    let rotated = null;
+    if (sideHeld === w.key && outgoing && outgoing.key !== w.key) {
+      if (p.setSidearm(outgoing.key)) rotated = outgoing;
+    }
     this.audio.fusion();
     this.fx.ring(p.pos, w.css ? p.form.color : p.form.glow, { r0: 0.5, r1: 5, life: 0.6, opacity: 0.7 });
     this.fx.burst(new THREE.Vector3(p.pos.x, 1.1, p.pos.z), p.form.glow, { count: 22, speed: 5, size: 0.24, life: 0.6, up: 2 });
@@ -1619,6 +1647,9 @@ export class Game {
       'ARMED · ' + w.name.toUpperCase() + ' · RANK 1 · ' + p.weaponRarity.toUpperCase(),
       w.css || '#ffd98a'
     );
+    if (rotated) {
+      this.ui.toast('SECOND ARM · ' + rotated.name.toUpperCase() + ' · RANK 1', rotated.css || '#ffd98a');
+    }
     this.ui.updateHud(this);
     return true;
   }
