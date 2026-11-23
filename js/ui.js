@@ -186,6 +186,7 @@ export class UI {
             <button class="menu-btn" data-act="codex">Dawn Codex <span class="arr">✦</span></button>
             <button class="menu-btn" data-act="settings">Settings <span class="arr">✦</span></button>
             <button class="menu-btn" data-act="credits">Credits <span class="arr">✦</span></button>
+            <a class="menu-btn" href="../">Website <span class="arr">↗</span></a>
           </nav>
           <div class="title-foot">
             <span>Best wave <b data-best-wave>0</b></span><span class="dot"></span>

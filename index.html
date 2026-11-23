@@ -1,39 +1,203 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <title>Helios Elements — Forge the Sun</title>
-  <meta name="description" content="Helios Elements is a 3D elemental survival roguelite. Choose your sigil, fuse the elements, and hold the arena against the dark.">
-  <meta name="theme-color" content="#06070f">
-  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cdefs%3E%3CradialGradient id='g'%3E%3Cstop offset='0' stop-color='%23fff3cf'/%3E%3Cstop offset='.55' stop-color='%23f5c26b'/%3E%3Cstop offset='1' stop-color='%23ff6a3d'/%3E%3C/radialGradient%3E%3C/defs%3E%3Ccircle cx='32' cy='32' r='16' fill='url(%23g)'/%3E%3Cg stroke='%23f5c26b' stroke-width='2.4' stroke-linecap='round'%3E%3Cpath d='M32 4v8M32 52v8M4 32h8M52 32h8M12 12l6 6M46 46l6 6M52 12l-6 6M18 46l-6 6'/%3E%3C/g%3E%3C/svg%3E">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Helios Elements — Forge the sun. Hold the dark.</title>
+  <meta name="description" content="Helios Elements is a free elemental survival roguelite for the browser. Six sigils, five hybrid forms, eight missions and a descent that gets harder every time you win.">
+  <meta name="theme-color" content="#07080f">
+  <link rel="canonical" href="./">
+
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Helios Elements — Forge the sun. Hold the dark.">
+  <meta property="og:description" content="A free browser roguelite: six elemental sigils, five hybrid forms, eight missions, and a sun that will not go out quietly.">
+  <meta property="og:image" content="https://hudmebac.github.io/helioselements/marketing/storyboard/01-sunfall-lanes.png">
+  <meta name="twitter:card" content="summary_large_image">
+
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700;900&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/style.css">
-  <link rel="stylesheet" href="css/sunforge.css">
-  <link rel="stylesheet" href="css/eclipse.css">
+  <link rel="stylesheet" href="site/site.css">
+
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "VideoGame",
+    "name": "Helios Elements",
+    "description": "An elemental survival roguelite for the browser. Six sigils, five hybrid forms, eight missions and a persistent descent.",
+    "genre": ["Action", "Roguelite", "Survival"],
+    "gamePlatform": "Web browser",
+    "applicationCategory": "Game",
+    "operatingSystem": "Any (WebGL)",
+    "playMode": "SinglePlayer",
+    "inLanguage": "en",
+    "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" }
+  }
+  </script>
 </head>
 <body>
-  <div id="app">
-    <div id="stage">
-      <canvas id="game-canvas"></canvas>
-      <div id="vignette" aria-hidden="true"></div>
-      <div id="grain" aria-hidden="true"></div>
+
+<header class="nav" id="nav">
+  <a class="brand" href="#top"><span class="brand-sigil">✦</span> Helios Elements</a>
+  <nav class="nav-links">
+    <a href="#missions">Missions</a>
+    <a href="#sigils">Sigils</a>
+    <a href="#lore">Lore</a>
+    <a href="#guide">How to play</a>
+    <a href="#press">Press</a>
+    <a href="#updates">Updates</a>
+  </nav>
+  <a class="btn btn-small" href="play/">Play</a>
+</header>
+
+<main id="top">
+
+  <section class="hero">
+    <div class="hero-copy">
+      <div class="eyebrow" id="hero-eyebrow"></div>
+      <h1 id="hero-title"></h1>
+      <p class="lede" id="hero-lede"></p>
+      <div class="cta-row">
+        <a class="btn btn-primary" href="play/">Play in your browser</a>
+        <a class="btn" href="#lore">Read the lore</a>
+      </div>
+      <p class="fine" id="hero-fine"></p>
     </div>
+    <figure class="hero-art">
+      <img src="marketing/storyboard/01-sunfall-lanes.png" alt="Gameplay in Sunfall Lanes: the player holds the Sunforge against a horde of pale hostiles." loading="eager" width="1920" height="1080">
+      <figcaption>Sunfall Lanes · wave 3 of 20</figcaption>
+    </figure>
+  </section>
 
-    <div id="ui" aria-live="polite"></div>
-
-    <div id="boot" role="status">
-      <div class="boot-sun"></div>
-      <div class="boot-word">HELIOS</div>
-      <div class="boot-sub">IGNITING THE ARENA</div>
+  <section class="section" id="about">
+    <div class="section-head">
+      <div class="eyebrow">The game</div>
+      <h2>A roguelite about holding a light</h2>
     </div>
+    <div class="two-col">
+      <div class="prose" id="about-copy"></div>
+      <div class="stat-strip" id="about-stats"></div>
+    </div>
+  </section>
 
-    <div id="fatal" hidden></div>
-  </div>
+  <section class="section" id="missions">
+    <div class="section-head">
+      <div class="eyebrow">Eight missions</div>
+      <h2>Every mode asks a different question</h2>
+      <p class="section-note">Defend. Break. Escort. Seal. Outrun. Survive. Duel. The arena changes with the objective — and so does the build that wins it.</p>
+    </div>
+    <div class="card-grid" id="mission-grid"></div>
+  </section>
 
-  <script src="js/lib/three.min.js"></script>
-  <script type="module" src="js/main.js"></script>
+  <section class="section" id="sigils">
+    <div class="section-head">
+      <div class="eyebrow">The six seams</div>
+      <h2>Pick a sigil. Then break it in half.</h2>
+      <p class="section-note">Each sigil is a rhythm, not a stat line. At level three you can take a second one and fuse.</p>
+    </div>
+    <div class="card-grid sigil-grid" id="sigil-grid"></div>
+    <h3 class="sub-head">The five forged forms</h3>
+    <div class="fusion-row" id="fusion-row"></div>
+  </section>
+
+  <section class="section" id="screens">
+    <div class="section-head">
+      <div class="eyebrow">Screens</div>
+      <h2>What a descent looks like</h2>
+      <p class="section-note">Captured at 1920×1080 from the live build: Sunfall Lanes, a warden, the pilgrim road, the eclipse, and the dawn.</p>
+    </div>
+    <div class="gallery" id="gallery"></div>
+  </section>
+
+  <section class="section" id="lore">
+    <div class="section-head">
+      <div class="eyebrow">Lore</div>
+      <h2>The Dawn Codex</h2>
+      <p class="section-note" id="lore-intro"></p>
+    </div>
+    <div class="chapters" id="lore-chapters"></div>
+  </section>
+
+  <section class="section" id="guide">
+    <div class="section-head">
+      <div class="eyebrow">How to play</div>
+      <h2>From first sigil to last warden</h2>
+      <p class="section-note" id="guide-intro"></p>
+    </div>
+    <div class="guide" id="guide-sections"></div>
+  </section>
+
+  <section class="section band" id="descent">
+    <div class="band-inner">
+      <div>
+        <div class="eyebrow">The Descent</div>
+        <h2>Winning is not the end of the difficulty curve</h2>
+        <p id="descent-copy"></p>
+      </div>
+      <div class="descent-meter" id="descent-meter" aria-hidden="true"></div>
+    </div>
+  </section>
+
+  <section class="section" id="faq">
+    <div class="section-head">
+      <div class="eyebrow">Questions</div>
+      <h2>Before you descend</h2>
+    </div>
+    <div class="faq" id="faq-list"></div>
+  </section>
+
+  <section class="section" id="press">
+    <div class="section-head">
+      <div class="eyebrow">Press kit</div>
+      <h2>Everything a write-up needs</h2>
+      <p class="section-note" id="press-hook"></p>
+    </div>
+    <div class="card-grid feature-grid" id="feature-grid"></div>
+    <div class="press-cols">
+      <div>
+        <h3 class="sub-head">Fact sheet</h3>
+        <table class="facts" id="fact-table"></table>
+      </div>
+      <div>
+        <h3 class="sub-head">Assets</h3>
+        <ul class="assets" id="asset-list"></ul>
+        <p class="fine" id="press-contact"></p>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="updates">
+    <div class="section-head">
+      <div class="eyebrow">Updates</div>
+      <h2>What changed, and when</h2>
+      <p class="section-note">The game and this page are built from the same content file, so a release note and the Codex never disagree.</p>
+    </div>
+    <div class="changelog" id="changelog"></div>
+  </section>
+
+  <section class="playband" id="play">
+    <div>
+      <div class="eyebrow">No install · no account</div>
+      <h2>Hold the line for twenty waves</h2>
+      <p id="play-copy"></p>
+    </div>
+    <a class="btn btn-primary btn-large" href="play/">Play Helios Elements</a>
+  </section>
+
+</main>
+
+<footer class="footer">
+  <div class="footer-brand"><span class="brand-sigil">✦</span> Helios Elements</div>
+  <div class="footer-meta" id="footer-meta"></div>
+  <nav class="footer-links">
+    <a href="play/">Play</a>
+    <a href="#lore">Lore</a>
+    <a href="#guide">How to play</a>
+    <a href="#press">Press</a>
+    <a href="#updates">Updates</a>
+  </nav>
+</footer>
+
+<script type="module" src="site/site.js"></script>
 </body>
 </html>

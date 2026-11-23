@@ -401,6 +401,7 @@
   .menu-btn {
     position: relative; display: flex; align-items: center; justify-content: space-between; gap: 14px;
     padding: 15px 20px; border-radius: 12px; text-align: left; overflow: hidden;
+    text-decoration: none;
     background: linear-gradient(120deg, rgba(20, 23, 44, .68), rgba(8, 10, 20, .55));
     border: 1px solid rgba(255, 255, 255, .08); color: var(--text);
     font-size: 10px; letter-spacing: .24em; text-transform: uppercase; font-weight: 600;
