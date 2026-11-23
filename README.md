@@ -1,6 +1,6 @@
 <div align="center">
 
-<sub>B R O W S E R &nbsp; R O G U E L I T E &nbsp; · &nbsp; v 1 . 7 . 4</sub>
+<sub>B R O W S E R &nbsp; R O G U E L I T E &nbsp; · &nbsp; v 1 . 7 . 6</sub>
 
 # ☀ HELIOS ELEMENTS
 
