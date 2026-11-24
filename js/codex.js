@@ -103,6 +103,7 @@ export const LORE = {
       paragraphs: [
         `Crawlers run. Wisps drift and sting from range. Brutes are slow, and being slow is the only mercy they offer. Spitters keep their distance and spit what the Eclipse made of them.`,
         `They share one thought: the nearest light. In the Siege that means your towers and your core — which is why standing in a Crawler's path is a real tactic and not a brave one.`,
+        `The Dawn scholars sorted the children into a field table — motes, crowned, wardens — not because the Eclipse cared about order, but because naming a thing is the first way to survive it. The Periodic Horde records the tell before the strike and the sigil that answers it.`,
       ],
     },
     {
@@ -111,7 +112,8 @@ export const LORE = {
       title: 'The Wardens',
       paragraphs: [
         `Every fifth wave, the Eclipse sends something with a name.`,
-        `The Rift Warden is the First Wound, all volleys and a telegraphed charge. The Ashen Colossus is the Grief of Mountains, and it fights like a landslide with a grudge. The Void Herald is the Quiet Between Stars — it does not shout, it simply removes. And last is Helios Unbound, the Sun That Remembers, which is what the light becomes when it is left alone too long with its own memory.`,
+        `The Rift Warden is the First Wound, all volleys and a telegraphed charge. The Ashen Colossus is the Grief of Mountains, and it fights like a landslide with a grudge. The Void Herald is the Quiet Between Stars — it does not shout, it simply removes. Then comes Helios Unbound, the Sun That Remembers, which is what the light becomes when it is left alone too long with its own memory.`,
+        `Two more have been crowned since the first record: the Cinder Tyrant, Last Ember King, all pressure and summons; and the Stormglass Seraph, the Sky That Broke, fast volleys and a long charge line. Six wardens rotate through the fifth wave — which one arrives depends on the depth you chose.`,
         `They were keepers once. The Codex does not say of what.`,
       ],
     },
@@ -324,7 +326,7 @@ export const MARKETING = {
   features: [
     { icon: '✦', title: 'Six sigils, five fusions', text: 'Every element plays differently, and any two can collapse into a hybrid form with its own attack, passive and ultimate.' },
     { icon: '◈', title: 'Eight ways to lose', text: 'Defend a core, break three rift gates, walk a reliquary home, seal three circles, outrun a sunset, or take the ring against four champions.' },
-    { icon: '⚔', title: 'Wardens with names', text: 'Four bosses arrive on a fixed cadence, each with its own telegraphs, volleys and reinforcements.' },
+    { icon: '⚔', title: 'Wardens with names', text: 'Six wardens rotate through the fifth wave, each with its own telegraphs, volleys and reinforcements.' },
     { icon: '✺', title: 'Kindling and Dawn Gifts', text: 'Kills shed burning motes. Eight of them summon a gift that answers the mission — a damage surge, a wisp helper, shards, seconds or repairs.' },
     { icon: '☀', title: 'Builds that snowball', text: 'Boons, relics and pacts stack into runs that end very differently from how they started.' },
     { icon: '⬢', title: 'A Descent that remembers', text: 'Every completed mission raises the difficulty one step — and you can always step back down.' },
@@ -410,6 +412,17 @@ export const FAQ = [
    CHANGELOG — newest first. Add an entry every release.
    ------------------------------------------------------------ */
 export const CHANGELOG = [
+  {
+    version: '1.10.0',
+    date: '2026-11-24',
+    title: 'The Periodic Horde',
+    items: [
+      'The Bestiary is now the Periodic Horde: a field table of four motes, six crowned sub-bosses and six named wardens. Every entry has a role, threat rating, combat pattern, tell, base stats and the elements that counter it.',
+      'The Codex now carries all eight arenas with their shape, size, attunement and host mission, plus a build note and the three armaments for every sigil and fusion.',
+      'Weapon cards on the mission screen print hit damage, rate, volley, pierce, blast and chain, so the three arms for a sigil can be compared without decoding prose.',
+      'The archive now matches the game: six wardens, 25 boons, and the Cinder Tyrant and Stormglass Seraph are named in the lore as well as the table.',
+    ],
+  },
   {
     version: '1.9.11',
     date: '2026-11-24',

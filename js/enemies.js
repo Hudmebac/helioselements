@@ -1,6 +1,6 @@
 /* ============================================================
    HELIOS ELEMENTS — ENEMIES
-   Bestiary, behaviours, bosses and the horde manager.
+   Periodic Horde, behaviours, bosses and the horde manager.
    ============================================================ */
 
 import { ENEMIES, BOSSES, ELEMENTS } from './data.js';

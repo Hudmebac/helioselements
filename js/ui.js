@@ -6,7 +6,7 @@
 import {
   ELEMENTS, FUSIONS, ENEMIES, BOSSES, BOONS, KEYBINDS, RARITY, VERSION,
   MODES, ARENAS, DEFENSES, SIEGE, LANE, HUNT, ESCORT, RITUAL, BLITZ, DUEL, RELICS, RELIC_SLOTS, PACTS, pactRanks, pactReward, WARDS, wardSummaryFor, WEAPON_RANK, WARD_MAX_RANK,
-  WAVE_BONUSES, SKILL_RUN, WEAPONS, strongAgainst, weakTo,
+  WAVE_BONUSES, SKILL_RUN, WEAPONS, applyWeapon, strongAgainst, weakTo,
   DIFFICULTIES, DIFFICULTY_ORDER, normalizeDifficulty, difficultyUnlocked,
   ACHIEVEMENTS, REWARDS, CONTROL_ACTIONS, keyLabel, DESCENT,
   MENU_DEPTHS, MENU_DEPTH_ORDER, menuDepth, KINDLING, romanTier, CAMERA_VIEWS,
@@ -22,6 +22,10 @@ const fmtTime = (s) => {
 
 const statBar = (label, value) => `
   <div class="statbar"><span>${label}</span><div class="track"><i style="width:${value * 10}%"></i></div></div>`;
+
+const threatPips = (n) => `<span class="threat-pips" aria-label="Threat ${n} of 5" title="Threat ${n} of 5">${Array.from({ length: 5 }, (_, i) => `<i class="${i < n ? 'on' : ''}"></i>`).join('')}</span>`;
+
+const arenaGlyph = (shape) => ({ circle: '●', octagon: '⬣', hexagon: '⬢', oval: '⬭', square: '■' }[shape] || '◇');
 
 export class UI {
   constructor({ game, audio, engine, save }) {
@@ -366,7 +370,7 @@ export class UI {
             <button class="tab active" data-tab="elements">Sigils</button>
             <button class="tab" data-tab="fusions">Fusions</button>
             <button class="tab" data-tab="relics">Relics</button>
-            <button class="tab" data-tab="bestiary">Bestiary</button>
+            <button class="tab" data-tab="bestiary">Periodic Horde</button>
             <button class="tab" data-tab="boons">Boons</button>
             <button class="tab" data-tab="dawn">Dawn</button>
             <button class="tab" data-tab="missions">Missions</button>
@@ -1633,11 +1637,22 @@ export class UI {
     const title = document.getElementById('weapon-title');
     if (title) title.textContent = el.name + ' weapons';
     if (!row) return;
-    row.innerHTML = list.map(w => `
+    row.innerHTML = list.map(w => {
+      const stats = applyWeapon(el, w).stats;
+      const facts = [
+        `HIT ${Math.round(stats.damage)}`,
+        `${(1 / stats.interval).toFixed(1)}/s`,
+        stats.projectiles > 1 ? `VOLLEY ${stats.projectiles}` : '',
+        stats.pierce ? `PIERCE ${stats.pierce}` : '',
+        stats.aoe ? `BLAST ${stats.aoe.toFixed(1)}m` : '',
+        stats.chain ? `CHAIN ${stats.chain}` : '',
+      ].filter(Boolean);
+      return `
       <button class="weapon-card ${w.key === picked ? 'selected' : ''}" data-weapon="${w.key}" data-welem="${el.key}" style="--wc:${w.css}">
         <span class="weapon-ico">${w.icon}</span>
-        <span class="weapon-copy"><em>${w.tagline}</em><b>${w.name}</b><span>${w.desc}</span></span>
-      </button>`).join('');
+        <span class="weapon-copy"><em>${w.tagline}</em><b>${w.name}</b><span>${w.desc}</span><span class="weapon-facts">${facts.map(f => `<i>${f}</i>`).join('')}</span></span>
+      </button>`;
+    }).join('');
   }
 
   selectElement(key) {
@@ -1706,6 +1721,8 @@ export class UI {
           </div>
           <p>${el.blurb}</p>
           <p style="margin-top:8px;color:${el.css};font-size:10px">${el.passive}</p>
+          <div class="cc-build"><span>BUILD</span>${el.build || ''}</div>
+          <div class="cc-armaments"><span>ARMAMENTS</span>${(WEAPONS[el.key] || []).map(w => `<i style="--wc:${w.css}">${w.icon} ${w.name}</i>`).join('')}</div>
           <div class="cc-match"><span>▲ ${strongAgainst(el.key).map(k => ELEMENTS[k].name).join(' · ')}</span><span>▼ ${weakTo(el.key).map(k => ELEMENTS[k].name).join(' · ')}</span></div>
           <div class="cc-meta"><span>Surge · ${el.surge.name}</span><b>${el.ult.name}</b></div>
         </article>
@@ -1735,6 +1752,7 @@ export class UI {
               </div>
               <p>${f.blurb}</p>
               <p style="margin-top:8px;color:${f.css};font-size:10px">${f.passive}</p>
+              <div class="cc-build"><span>BUILD</span>${f.build || ''}</div>
               <div class="cc-meta"><span>${f.tagline}</span><b>${f.ult.name}</b></div>
             </article>
           `).join('')}
@@ -1745,7 +1763,8 @@ export class UI {
         <div class="codex-lead"><b>${seen} / ${RELICS.length}</b> relics discovered. Elites offer signets and talismans; wardens and Sunless Vaults can offer crowns.</div>
         ${['signet', 'talisman', 'crown'].map(slot => {
           const items = RELICS.filter(r => r.slot === slot);
-          return `<div class="section-label">${RELIC_SLOTS[slot].name}s</div>
+          const seenSlot = items.filter(r => this.save.codex?.relics?.[r.id]?.seen).length;
+          return `<div class="relic-slot-head"><div class="section-label">${RELIC_SLOTS[slot].name}s · ${seenSlot} / ${items.length}</div><p>${RELIC_SLOTS[slot].blurb}</p></div>
             <div class="codex-grid relic-codex-grid">
               ${items.map(r => {
                 const entry = this.save.codex?.relics?.[r.id];
@@ -1796,33 +1815,61 @@ export class UI {
         </div>
       `;
     } else if (tab === 'bestiary') {
+      const bringChips = (element) => weakTo(element).map(k => {
+        const el = ELEMENTS[k];
+        return `<span style="--bc:${el.css}">${el.sigil} ${el.name}</span>`;
+      }).join('');
+      const hordeCard = (e, prefix, i, kind) => {
+        const el = ELEMENTS[e.element] || ELEMENTS.umbra;
+        const isWarden = kind === 'warden';
+        const role = isWarden ? 'Warden · ' + e.title : (e.role || 'Horde');
+        const stats = isWarden
+          ? `<span>CLASS <b>Warden</b></span><span>THREAT <b>${e.threat}/5</b></span>`
+          : `<span>HP <b>${e.hp}</b></span><span>DMG <b>${e.damage}</b></span><span>ESSENCE <b>${e.xp}</b></span>`;
+        return `<article class="horde-card ${kind}" style="--ec:${e.css}">
+          <span class="horde-number">${prefix}-${String(i + 1).padStart(2, '0')}</span>
+          <div class="horde-top">
+            <span class="horde-sigil">${el.sigil}</span>
+            <div class="horde-name"><h4>${e.name}</h4><div class="horde-role">${role}</div></div>
+            ${threatPips(e.threat || 1)}
+          </div>
+          ${e.desc ? `<p>${e.desc}</p>` : ''}
+          ${e.pattern ? `<p class="horde-pattern">${e.pattern}</p>` : ''}
+          ${e.tell ? `<div class="horde-tell"><span>TELL</span>${e.tell}</div>` : ''}
+          <div class="horde-foot">
+            <div class="horde-stats">${stats}</div>
+            <div class="horde-counter"><span>BRING</span>${bringChips(e.element)}</div>
+          </div>
+        </article>`;
+      };
+      const motes = Object.values(ENEMIES).filter(e => !e.miniBoss && !e.boss);
+      const crowned = Object.values(ENEMIES).filter(e => e.miniBoss);
+      const groups = [
+        { title: 'Motes', note: 'The common children of the Eclipse.', entries: motes, prefix: 'H', kind: 'mote' },
+        { title: 'Crowned', note: 'Sub-bosses that arrive ahead of the horde.', entries: crowned, prefix: 'C', kind: 'crowned' },
+        { title: 'Wardens', note: 'Named powers that arrive every fifth wave.', entries: BOSSES, prefix: 'W', kind: 'warden' },
+      ];
       body.innerHTML = `
-        <div class="section-label">The horde</div>
-        <div class="bestiary">
-          ${Object.values(ENEMIES).filter(e => !e.boss).map(e => `
-            <article class="beast-card" style="--ec:${e.css}">
-              <div class="beast-orb">${e.key === 'crawler' ? '▲' : e.key === 'wisp' ? '◇' : e.key === 'brute' ? '⬢' : '◉'}</div>
-              <div>
-                <h4>${e.name}</h4>
-                <p>${e.desc}</p>
-                <div class="beast-stats"><span>HP <b>${e.hp}</b></span><span>DMG <b>${e.damage}</b></span><span>ESSENCE <b>${e.xp}</b></span></div>
-              </div>
-            </article>
-          `).join('')}
+        <div class="horde-intro">
+          <div>
+            <div class="section-label">Dawn Codex · field table</div>
+            <h3>Periodic Horde</h3>
+            <p>Six elements, three orders of danger. This is what the Eclipse sends, how it moves, and which sigils answer it. Bring the elements under a specimen — the wheel rewards the counter, not the biggest number.</p>
+          </div>
+          <div class="horde-tally">
+            <span><b>${motes.length}</b> motes</span>
+            <span><b>${crowned.length}</b> crowned</span>
+            <span><b>${BOSSES.length}</b> wardens</span>
+          </div>
         </div>
-        <div class="section-label">Wardens — every fifth wave</div>
-        <div class="codex-grid">
-          ${BOSSES.map((b, i) => `
-            <article class="codex-card" style="--ec:${b.css}">
-              <div class="cc-top">
-                <span class="cc-sigil">${['◉', '⨂', '✵', '☀'][i] || '◉'}</span>
-                <div><div class="cc-name">${b.name}</div><div class="cc-role">Warden · ${b.title}</div></div>
-              </div>
-              <p>Volleys of riftfire, a telegraphed charge, and reinforcements from the dark. Kill it before the arena fills.</p>
-              <div class="cc-meta"><span>Appears · wave ${(i + 1) * 5}</span><b>${i === 3 ? 'Final' : 'Boss'}</b></div>
-            </article>
-          `).join('')}
-        </div>`;
+        <div class="horde-legend">
+          ${Object.values(ELEMENTS).map(el => `<span class="horde-element" style="--ec:${el.css}"><b>${el.sigil} ${el.name}</b><i>▲ ${strongAgainst(el.key).map(k => ELEMENTS[k].name).join(' · ')}</i></span>`).join('')}
+        </div>
+        ${groups.map(g => `<section class="horde-band">
+          <div class="horde-band-head"><div><span class="section-label">${g.title}</span><p>${g.note}</p></div><span class="horde-band-count">${g.prefix}-01 — ${g.prefix}-${String(g.entries.length).padStart(2, '0')}</span></div>
+          <div class="horde-grid">${g.entries.map((e, i) => hordeCard(e, g.prefix, i, g.kind)).join('')}</div>
+        </section>`).join('')}
+      `;
     } else if (tab === 'boons') {
       body.innerHTML = `
         <div class="section-label">Draftable boons</div>
@@ -1877,7 +1924,19 @@ export class UI {
               <div class="mission-top"><span class="mission-ico">${m.sigil}</span><div><div class="cc-name">${m.name}</div><div class="cc-role">${m.kicker}</div></div></div>
               <p>${m.desc}</p>
               <div class="cc-meta"><span>${m.tagline}</span><b>${m.goal}</b></div>
-            </article>`).join('')}
+            </article>          `).join('')}
+        </div>
+        <div class="section-label">The eight arenas</div>
+        <div class="arena-grid">
+          ${Object.values(ARENAS).map(a => {
+            const element = ELEMENTS[a.element] || ELEMENTS.lumen;
+            const hosted = Object.values(MODES).filter(m => m.arena === a.id);
+            return `<article class="arena-card" style="--ec:${element.css}">
+              <div class="arena-top"><span class="arena-glyph">${arenaGlyph(a.shape)}</span><div><div class="cc-name">${a.name}</div><div class="cc-role">${a.shapeName} · ${a.radius}m · ${element.name} attuned</div></div></div>
+              <p>${a.blurb}</p>
+              <div class="arena-meta"><span>${hosted.map(m => m.name).join(' · ')}</span><b>${a.size}</b></div>
+            </article>`;
+          }).join('')}
         </div>
         <div class="section-label">Level bonuses</div>
         <p class="subnote" style="font-size:10.5px;line-height:1.8">

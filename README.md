@@ -1,6 +1,6 @@
 <div align="center">
 
-<sub>B R O W S E R &nbsp; R O G U E L I T E &nbsp; · &nbsp; v 1 . 9 . 5</sub>
+<sub>B R O W S E R &nbsp; R O G U E L I T E &nbsp; · &nbsp; v 1 . 10 . 0</sub>
 
 # ☀ HELIOS ELEMENTS
 
@@ -15,7 +15,7 @@ One tab, no install, no account — a 3D roguelite that runs where you already a
 
 <br/>
 
-<img src="https://img.shields.io/badge/version-1.9.11-f5c26b?style=flat-square&labelColor=141726" alt="version 1.9.11">
+<img src="https://img.shields.io/badge/version-1.10.0-f5c26b?style=flat-square&labelColor=141726" alt="version 1.10.0">
 <img src="https://img.shields.io/badge/touch-ready-67ecff?style=flat-square&labelColor=141726" alt="touch ready">
 <img src="https://img.shields.io/badge/modes-8-67ecff?style=flat-square&labelColor=141726" alt="8 modes">
 <img src="https://img.shields.io/badge/engine-Three.js-8a5cff?style=flat-square&labelColor=141726" alt="Three.js">
@@ -42,9 +42,9 @@ Every run is a negotiation between three clocks: your health, the incoming horde
 
 <div align="center">
 
-| ⚔ **6** sigils | ⨂ **5** fusions | ✦ **18** armaments | ◈ **29** relics | ✺ **23** boons |
+| ⚔ **6** sigils | ⨂ **5** fusions | ✦ **18** armaments | ◈ **29** relics | ✺ **25** boons |
 |:---:|:---:|:---:|:---:|:---:|
-| ⛨ **8** mission modes | ⌖ **8** arenas | ☄ **4** wardens | ♛ **34** achievements | ⟡ **∞** dawns |
+| ⛨ **8** mission modes | ⌖ **8** arenas | ☄ **6** wardens | ♛ **34** achievements | ⟡ **∞** dawns |
 
 </div>
 
@@ -217,6 +217,8 @@ All twelve actions are rebindable in **Settings → Controls**. **Settings → I
 
 Thirteen chapters, a ten-part field guide, an FAQ and the changelog all live in **`js/codex.js`** — the in-game Codex and the site are both rendered from that one file, so they can never disagree.
 
+The Codex also carries the **Periodic Horde**: every mote, crowned sub-boss and named warden with its role, threat, combat pattern, tell and counters. Beside it, the arena table, sigil build notes and all eighteen armaments make the archive match the run.
+
 ---
 
 ## Under the hood
@@ -304,6 +306,15 @@ The **Play** button at the top of this README points at the game, and `/site/` r
 ## Changelog
 
 <details open>
+<summary><b>v1.10.0 — The Periodic Horde</b></summary>
+
+- **The Bestiary is now the Periodic Horde:** a proper field table of every mote, crowned sub-boss and named warden, grouped by threat order. Each entry has a clear role, threat rating, combat pattern, tell, base stats and the elements that counter it.
+- **The archive agrees with the game:** six wardens instead of four, 25 boons instead of 23, plus the arena table, sigil build notes and armament lists in the Codex.
+- **Armaments read at a glance:** weapon cards on the mission screen now print hit, rate, volley, pierce, blast and chain facts instead of asking you to infer the shape from prose.
+
+</details>
+
+<details>
 <summary><b>v1.9.11 — Recover the lost step</b></summary>
 
 - **Existing saves fixed:** a save already sitting at Descent 3 with no record of Descent 4 now recovers that lost rank on load. The recovery is one-time and marked in the save, so it cannot keep adding ranks.
@@ -490,6 +501,6 @@ The **Play** button at the top of this README points at the game, and `/site/` r
 <br/>
 
 **Built with** Three.js (MIT) · Cinzel & Inter (OFL) · everything else hand-built — renderer, audio synthesis, UI and lore.<br/>
-<sub>Helios Elements v1.9.11 · no install, no account, no telemetry.</sub>
+<sub>Helios Elements v1.10.0 · no install, no account, no telemetry.</sub>
 
 </div>
