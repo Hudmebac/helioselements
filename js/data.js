@@ -1330,10 +1330,10 @@ export const ESCORT = {
   contestedRadius: 4.2,
   repairRate: 30,
   repairRadius: 5.8,
-  // Escort enemies are meant to survive long enough to reach the reliquary;
-  // their direct attacks are paced below the old proximity tick.
-  enemyHpMult: 1.3,
-  attackDamageMult: 0.55,
+  // Escort enemies are meant to survive long enough to reach the reliquary,
+  // and their direct hits must hurt enough that ignoring them loses the run.
+  enemyHpMult: 1.6,
+  attackDamageMult: 1.25,
   decay: 7,
   /* Integrity is the pay ledger. Above the safe line the run pays in full;
      below it every crack takes marks off the final purse. */
