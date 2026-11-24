@@ -273,6 +273,11 @@
   .intermission .txt em { font-style: normal; }
   .intermission.ready { border-color: rgba(245, 194, 107, .42); box-shadow: 0 0 26px rgba(245, 194, 107, .16), var(--shadow); }
   .intermission.ready .count { color: #ffe9b7; }
+  /* On the hosted site a fixed badge owns the bottom-right corner: keep the
+     wave countdown and its call button above it on wide screens. */
+  @media (min-width: 821px) {
+    .foot-right { padding-bottom: 64px; }
+  }
 
   .call-btn {
     font-size: 9px; font-weight: 800; letter-spacing: .16em; text-transform: uppercase;
@@ -1121,3 +1126,11 @@
   color: var(--gold); opacity: .9;
 }
 .best-tag.on { display: inline; }
+
+/* Ascension tier — the run's difficulty step, shown from Tier I up. */
+.tier-tag {
+  display: inline-block; align-self: center;
+  font-size: 7px; font-weight: 800; letter-spacing: .14em; text-transform: uppercase;
+  color: var(--gold-hi); padding: 2px 7px; border-radius: 20px;
+  border: 1px solid rgba(245, 194, 107, .32); background: rgba(245, 194, 107, .08);
+}

@@ -20,6 +20,7 @@ export function defaultSave() {
     skillRuns: 0,
     skillWins: 0,
     bestSkill: 0,
+    bestAscension: 0,
     difficulty: 'solar',
     descent: 0,
     difficultyBest: { kindled: 0, solar: 0, umbral: 0, hardcore: 0 },

@@ -13,7 +13,7 @@ import {
   PACTS, normalizePacts, pactRanks, pactReward,
   DIFFICULTIES, normalizeDifficulty, difficultyUnlocked, DESCENT,
   CONTROL_ACTIONS, defaultKeys, keyLabel,
-  ACHIEVEMENTS, REWARDS, menuDepth, KINDLING,
+  ACHIEVEMENTS, REWARDS, menuDepth, KINDLING, romanTier,
 } from './data.js';
 import { Player } from './player.js';
 import { EnemyManager } from './enemies.js';
@@ -57,6 +57,7 @@ export class Game {
     this.blitzTimer = 0;
     this.shards = 0;
     this.victory = false;
+    this.ascension = 0;
     this.repairTarget = null;
     this._repairTick = 0;
     this.runId = 0;
@@ -324,6 +325,7 @@ export class Game {
     this.coreLastLight = false;
 
     this.victory = false;
+    this.ascension = 0;
     this.repairTarget = null;
     this._repairTick = 0;
 
@@ -500,6 +502,77 @@ export class Game {
     this.start(key, this.mode);
   }
 
+  /* A victory is not the end of the run: carry the same guardian, build and
+     shards into the next tier, with the horde compounding 10% harder each
+     time. The mode's objective is rebuilt from scratch for the new tier. */
+  ascend() {
+    if (!this.victory || this.state !== 'gameover' || !this.player) return false;
+    this.ascension = Math.max(0, this.ascension || 0) + 1;
+    this.victory = false;
+    this._deathHandled = false;
+    this._lastStandUsed = false;
+    this._gateHinted = {};
+    this.state = 'playing';
+    this.phase = 'ready';
+    this.readyTimer = READY_DELAY + 0.8;
+    this.interTimer = 0;
+    this.wave = 1;
+    this.wavePlan = null;
+    this.spawnQueue = [];
+    this.waveClock = 0;
+    this.waveBonus = null;
+    this.lastBonusId = null;
+    this.blitzTimer = 0;
+    this.repairTarget = null;
+    this.pendingRelicDrafts = [];
+    this.relicDraft = null;
+
+    this.enemies.clear();
+    this.projectiles.clear();
+    this.pickups.clear();
+    this.corpses.clear();
+    if (this.vault) {
+      this.vault.clear();
+      this.vault = null;
+    }
+    this.ui.hideRelic();
+    this.ui.hideForge();
+    this.ui.setBoss(null);
+
+    // Fresh objective for the new tier: a new Sunforge, new gates, a new road.
+    if (this.structures) {
+      this.structures.clear();
+      this.structures = new Structures(this.engine.scene, this.fx, this.audio, this.mode, this.difficultyMeta());
+    }
+    if (this.caravan) {
+      this.caravan.clear();
+      this.caravan = new Caravan(this.engine.scene, this.fx, this.audio, this.objMods);
+    }
+    if (this.ritual) {
+      this.ritual.clear();
+      this.ritual = new Ritual(this.engine.scene, this.fx, this.audio, this.objMods);
+    }
+
+    this.player.alive = true;
+    this.player.group.visible = true;
+    this.player.invuln = 2.4;
+    this.player.heal(this.player.stats.maxHp * 0.35);
+    this.player.gainCharge(20);
+
+    this.audio.setIntensity(0.28);
+    this.audio.wave();
+    this.fx.flash('heal');
+    this.engine.pulseExposure(0.7);
+    this.engine.addShake(0.8);
+    this.ui.enterGame(this);
+    const tier = romanTier(this.ascension + 1);
+    const pct = Math.round((Math.pow(1.1, this.ascension) - 1) * 100);
+    this.ui.banner('TIER ' + tier, 'YOU ASCEND', 'Keep your build · the horde comes back ' + pct + '% stronger');
+    this.ui.toast('ASCENSION ' + tier + ' · +' + pct + '% ENEMY HEALTH AND DAMAGE', '#ffd98a');
+    persist(this.save);
+    return true;
+  }
+
   /* ---------------- WAVES ---------------- */
   updateWave(dt) {
     // The arena is empty for a moment, then wave one walks in by itself — Enter skips the wait.
@@ -570,6 +643,13 @@ export class Game {
     if (climb.rank) {
       this.wavePlan.hpMult *= climb.hp;
       this.wavePlan.dmgMult *= climb.damage;
+    }
+    // Ascension: each tier compounds 10% more health and damage, 2% more speed.
+    if (this.ascension > 0) {
+      const tier = Math.pow(1.1, this.ascension);
+      this.wavePlan.hpMult *= tier;
+      this.wavePlan.dmgMult *= tier;
+      this.wavePlan.speedMult *= Math.pow(1.02, this.ascension);
     }
     this.spawnQueue = this.wavePlan.entries.map(e => ({ ...e }));
     this.waveClock = 0;
@@ -2037,6 +2117,7 @@ export class Game {
     }
     this.save.bestKills = Math.max(this.save.bestKills || 0, this.kills);
     this.save.bestTime = Math.max(this.save.bestTime || 0, this.runTime);
+    this.save.bestAscension = Math.max(this.save.bestAscension || 0, this.ascension || 0);
     this.save.runs = (this.save.runs || 0) + 1;
 
     const core = this.structures?.core;
@@ -2102,6 +2183,8 @@ export class Game {
         descentDamage: this.descentMeta().damage,
         descentPaid: progress.descentRank,
         descentMult: progress.descentMult,
+        ascension: this.ascension || 0,
+        tier: romanTier((this.ascension || 0) + 1),
       });
     }, delay);
   }

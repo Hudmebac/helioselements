@@ -268,7 +268,7 @@ export const GUIDE = {
       title: 'Waves, wardens and bonuses',
       body: [
         `Every fifth wave is a warden: ${BOSSES.map(b => b.name).join(', ')}. Deeper difficulty tiers start further along that list, so a Hardcore run meets different wardens than a Solar one.`,
-        `Every third wave sends a crowned mini-boss ahead of the horde — a Cinder Herald or a Glass Revenant. They hit like elites, carry far more health, and always drop a shard.`,
+        `Every third wave sends a crowned sub-boss ahead of the horde — one of six: Cinder Herald, Glass Revenant, Brine Custodian, Squall Matron, Dawn Inquisitor or Granite Sentinel. They rotate with the wave and the difficulty rank, a second one joins from wave six, and they hit like elites, carry far more health, and always drop a shard.`,
         `Kills can shed kindling — a burning mote that drifts to you if you are close and pulls itself in if you are not. Elites drop three and wardens drop four. Collect ${KINDLING.need} and the dawn answers with a Dawn Gift: +${Math.round(KINDLING.boostDamage * 100)}% damage for ${KINDLING.boostTime} seconds, plus what the mission actually needs — two shards and a mended core in Sunforge, four seconds on the clock in Blitz, reliquary repairs in Caravan, a circle charge in Ritual. Every second gift sends a wisp to fight beside you.`,
         `Bodies no longer carpet the arena. Fallen enemies ash out in a few seconds — a puff of ash, a sink, and they are gone.`,
         `From wave two, a wave can arrive blessed: more enemies for more shards, faster enemies for more marks, or a thinner horde with a smaller purse. The bonus is shown in the wave pill before the wave starts.`,
@@ -284,6 +284,7 @@ export const GUIDE = {
       body: [
         `A run ends when you die, when the core falls, or when the clock or the ritual runs out. What it earned is banked as sunmarks and achievements — nothing you did is wasted.`,
         `Complete a mission and the Descent rises one step, up to ${DESCENT.max}. Each step makes the next run harder: +${Math.round(DESCENT.hp * 100)}% enemy health and +${Math.round(DESCENT.damage * 100)}% enemy damage per rank. It also pays: every sunmark a run earns is multiplied by +${Math.round(DESCENT.markStep * 100)}% per rank, and the results screen shows the multiplier you were paid. You can step back down from the results screen or the mission select at any time.`,
+        `Winning is not the end if you do not want it to be. The results screen offers Ascend: the same guardian, build, weapons and shards carry into the next tier — Tier I, then II, III, IV, V and beyond — and the mission starts again with the horde 10% stronger for every tier. The HUD always shows the tier you are playing. Ascension is optional: Descend Again starts a fresh Tier I, and Change Sigil takes you back to the mission screen.`,
         `Sunmarks buy permanent rewards in the Dawn Codex: extra relic choices, boon rerolls, starting shards, a second wind, and more.`,
       ],
     },
@@ -403,6 +404,18 @@ export const FAQ = [
    CHANGELOG — newest first. Add an entry every release.
    ------------------------------------------------------------ */
 export const CHANGELOG = [
+  {
+    version: '1.9.0',
+    date: '2026-11-24',
+    title: 'Ascension',
+    items: [
+      'A victory no longer ends the run. The results screen offers Ascend: keep the guardian, every boon, weapon rank, relic and shard you carry, and the mission rebuilds itself at the next tier. Tiers are numbered I, II, III, IV, V and onward, and each step compounds +10% enemy health and damage (and +2% speed), so Tier II is a little crueller than the run that earned it.',
+      'Every mode ascends on its own terms: a new Sunforge and pedestals, new rift gates, a new caravan road, new ritual circles, or the next set of wardens and champions. Progress pays marks every tier, and the best tier reached is recorded.',
+      'Six crowned sub-bosses now walk the horde: the Cinder Herald, Glass Revenant, Brine Custodian, Squall Matron, Dawn Inquisitor and Granite Sentinel. They rotate every third wave, a second one joins from wave six, and lanes and hunts send their own.',
+      'Enemies read better at a glance: orbiting shards of their element, crawled spines, brute shoulder horns and lit chests, spitter lens fins, and a rune aura around every crowned sub-boss.',
+      'The guardian’s armament is visible: the weapon in hand changes silhouette with the firing hand — maul, fan, lance or caster orb — with a glowing grip rune and two elemental motes in orbit. The desktop next-wave countdown also clears the hosted badge’s corner.',
+    ],
+  },
   {
     version: '1.8.2',
     date: '2026-11-24',

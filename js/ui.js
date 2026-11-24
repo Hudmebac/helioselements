@@ -9,7 +9,7 @@ import {
   WAVE_BONUSES, SKILL_RUN, WEAPONS, strongAgainst, weakTo,
   DIFFICULTIES, DIFFICULTY_ORDER, normalizeDifficulty, difficultyUnlocked,
   ACHIEVEMENTS, REWARDS, CONTROL_ACTIONS, keyLabel, DESCENT,
-  MENU_DEPTHS, MENU_DEPTH_ORDER, menuDepth, KINDLING,
+  MENU_DEPTHS, MENU_DEPTH_ORDER, menuDepth, KINDLING, romanTier,
 } from './data.js';
 import { LORE, GUIDE } from './codex.js';
 import { saveText, importSave } from './store.js';
@@ -66,6 +66,7 @@ export class UI {
         <div class="hud-center">
           <div class="wave-pill">
             <span class="lbl">WAVE</span><b id="hud-wave">1</b>
+            <span class="tier-tag" id="hud-tier"></span>
             <span class="sep"></span><span class="phase" id="hud-phase">PREPARE</span>
             <span class="best-tag" id="hud-best"></span>
             <span class="diff-badge" id="hud-diff"></span>
@@ -522,7 +523,8 @@ export class UI {
           </div>
           <div class="panel-body" id="go-body"></div>
           <div class="panel-actions">
-            <button class="btn primary" data-act="retry">Descend Again</button>
+            <button class="btn primary" data-act="ascend" id="go-ascend" hidden>Ascend</button>
+            <button class="btn" data-act="retry">Descend Again</button>
             <button class="btn" data-act="stepback" id="go-stepback" hidden>Step Back</button>
             <button class="btn" data-act="change">Change Sigil</button>
             <div class="spacer"></div>
@@ -543,6 +545,7 @@ export class UI {
       hpText: document.getElementById('hud-hp-text'),
       shieldFill: document.getElementById('hud-shield-fill'),
       wave: document.getElementById('hud-wave'),
+      tier: document.getElementById('hud-tier'),
       phase: document.getElementById('hud-phase'),
       best: document.getElementById('hud-best'),
       bossWrap: document.getElementById('boss-wrap'),
@@ -983,6 +986,11 @@ export class UI {
       case 'retry':
         this.audio.ui();
         this.game.restart();
+        break;
+      case 'ascend':
+        this.audio.confirm();
+        this.hideGameOver();
+        this.game.ascend();
         break;
       case 'stepback':
         this.audio.ui();
@@ -2238,6 +2246,12 @@ export class UI {
     else if (game.mode === 'blitz') this.el.wave.textContent = Math.min(game.wave, BLITZ.goalWave) + ' / ' + BLITZ.goalWave;
     else if (game.mode === 'duel') this.el.wave.textContent = Math.min(game.wave, DUEL.goalWave) + ' / ' + DUEL.goalWave;
     else this.el.wave.textContent = game.wave;
+    if (this.el.tier) {
+      const tierNo = (game.ascension || 0) + 1;
+      this.el.tier.textContent = 'TIER ' + romanTier(tierNo);
+      this.el.tier.style.color = tierNo > 1 ? '#ffe0a3' : '';
+      this.el.tier.style.borderColor = tierNo > 1 ? 'rgba(255, 224, 163, .55)' : '';
+    }
     if (this.el.best) {
       const showBest = game.mode === 'trial';
       const best = Math.max(game.save?.bestTrial || 0, this.save?.bestTrial || 0);
@@ -2253,7 +2267,9 @@ export class UI {
         phase = gates + ' GATES · ' + left + ' HOSTILES';
       }
     } else if (game.phase === 'ready') {
-      phase = 'STARTS IN ' + Math.max(0, Math.ceil(game.readyTimer ?? 0)) + ' · ENTER TO BEGIN NOW';
+      // Touch has a Begin button, so the keyboard hint only costs width there.
+      phase = 'STARTS IN ' + Math.max(0, Math.ceil(game.readyTimer ?? 0))
+        + (this.game.touch?.enabled ? '' : ' · ENTER TO BEGIN NOW');
     } else if (game.phase === 'intermission') {
       const secs = Math.max(0, game.interTimer || 0);
       phase = secs > 0.15 ? 'NEXT WAVE ' + Math.ceil(secs) : 'BREATHE';
@@ -2614,6 +2630,7 @@ export class UI {
       <div class="section-label">Run modifiers</div>
       <div class="run-notes">
         <span style="color:${diff.css};border-color:${diff.css}55">${diff.icon} ${diff.name}${diff.hardcore ? ' · NO REVIVE' : ''}</span>
+        ${this.game.ascension ? `<span style="color:#ffd98a;border-color:#ffd98a55">TIER ${romanTier(this.game.ascension + 1)} · +${Math.round((Math.pow(1.1, this.game.ascension) - 1) * 100)}% HORDE</span>` : ''}
         <span>${pactsTotal ? pactsTotal + ' pact ranks' : 'No pacts'}</span>
         <span>Reward ×${pactReward(pacts).toFixed(2)} · Marks ×${diff.markMult.toFixed(2)}${this.game.skillRun ? ' ×' + SKILL_RUN.markMult.toFixed(2) : ''}</span>
         ${this.game.skillRun ? `<span style="color:${SKILL_RUN.css};border-color:${SKILL_RUN.css}55">⟡ SKILL RUN · NO DRAFTS · NO RELICS</span>` : ''}
@@ -2685,6 +2702,17 @@ export class UI {
       stepBtn.hidden = rank <= 0;
       stepBtn.textContent = 'Step Back to Descent ' + Math.max(0, rank - 1);
     }
+    const ascension = summary.ascension || 0;
+    const ascendBtn = document.getElementById('go-ascend');
+    if (ascendBtn) {
+      ascendBtn.hidden = !victory;
+      ascendBtn.textContent = 'Ascend to Tier ' + romanTier(ascension + 2);
+    }
+    const retryBtn = screenEl.querySelector('[data-act="retry"]');
+    if (retryBtn) {
+      retryBtn.classList.toggle('primary', !victory);
+      retryBtn.textContent = victory ? 'Restart from Tier I' : 'Descend Again';
+    }
 
     const p = this.game.player;
     const build = p ? this._buildPills(p) : '';
@@ -2700,6 +2728,7 @@ export class UI {
       : summary.mode === 'ritual' ? ` · ${summary.ritualSealed || 0}/${RITUAL.shrineCount} circles` : '';
     const skillText = summary.skillRun ? ` · SKILL RUN (×${SKILL_RUN.markMult.toFixed(2)})` : '';
     const bonusText = summary.bonusWaves ? ` · ${summary.bonusWaves} bonus waves` : '';
+    const tierText = ascension ? ` · tier ${romanTier(ascension + 1)}` : '';
     document.getElementById('go-body').innerHTML = `
       <div class="run-stats">
         <div class="stat-tile ${summary.newBest ? 'new-best' : ''}"><span>Wave reached</span><b class="gold">${summary.wave}</b><small>${summary.newBest ? 'NEW BEST' : 'best ' + summary.bestWave}</small></div>
@@ -2710,8 +2739,9 @@ export class UI {
       <div class="dawn-earned">
         <div><span>SUNMARKS EARNED</span><b>+${summary.marksEarned || 0}</b><small>descent ×${(summary.descentMult || 1).toFixed(2)}</small></div>
         <div><span>DAWN BANK</span><b>${summary.totalMarks || 0}</b></div>
-        <div class="dawn-note"><span>RUN NOTES</span><small><b style="color:${diff.css}">${diff.hardcore ? 'HARDCORE' : diff.name}</b> · ${pactsTotal ? pactsTotal + ' pact ranks · ×' + pactMult.toFixed(2) : 'No pacts'} · ${summary.vaults || 0} vaults · ${summary.relicPicks || 0} relics${coreText}${gateText}${modeText}${skillText}${bonusText}</small></div>
+        <div class="dawn-note"><span>RUN NOTES</span><small><b style="color:${diff.css}">${diff.hardcore ? 'HARDCORE' : diff.name}</b> · ${pactsTotal ? pactsTotal + ' pact ranks · ×' + pactMult.toFixed(2) : 'No pacts'} · ${summary.vaults || 0} vaults · ${summary.relicPicks || 0} relics${coreText}${gateText}${modeText}${skillText}${bonusText}${tierText}</small></div>
       </div>
+      ${victory ? `<div class="dawn-catchup" style="color:#ffd98a;border-color:#ffd98a44;background:#ffd98a12">ASCEND TO TIER ${romanTier(ascension + 2)} · KEEP THIS BUILD · THE HORDE COMES BACK 10% STRONGER</div>` : ''}
       ${summary.newDifficultyBest ? `<div class="dawn-catchup" style="color:${diff.css};border-color:${diff.css}44;background:${diff.css}12">NEW ${diff.name.toUpperCase()} RECORD · WAVE ${summary.difficultyBest}</div>` : ''}
       ${summary.catchUp > 1 ? `<div class="dawn-catchup">DAWN'S FAVOR · +20% SUNMARKS FOR A LESS-TRAVELLED SIGIL</div>` : ''}
       ${summary.descent ? `<div class="dawn-catchup" style="color:#ffb066;border-color:#ffb06644;background:#ffb06612">DESCENT ${summary.descent} · NEXT RUN +${Math.round((summary.descentHp - 1) * 100)}% ENEMY HEALTH · +${Math.round((summary.descentDamage - 1) * 100)}% DAMAGE · +${Math.round(summary.descent * DESCENT.markStep * 100)}% SUNMARKS</div>` : ''}

@@ -151,6 +151,22 @@ export class Player {
     this.focus.add(this.focusHalo);
     this.recoil = 0;
 
+    // The armament in the guardian's hand: the silhouette follows the weapon,
+    // the colour follows the sigil. Rebuilt whenever the firing hand changes.
+    this.weaponRig = new THREE.Group();
+    this.weaponRig.position.set(0, 0.05, 0.55);
+    group.add(this.weaponRig);
+    this._buildWeaponRig();
+
+    // Two elemental motes in orbit — the sigil, not just the colour.
+    this.elementOrbMat = new THREE.MeshBasicMaterial({ color: form.glow, transparent: true, opacity: 0.85, toneMapped: false });
+    this.elementOrbs = [];
+    for (let i = 0; i < 2; i++) {
+      const o = new THREE.Mesh(new THREE.OctahedronGeometry(0.085, 0), this.elementOrbMat);
+      group.add(o);
+      this.elementOrbs.push(o);
+    }
+
     this.shardGroup = new THREE.Group();
     this.shards = [];
     const shardMat = new THREE.MeshBasicMaterial({ color: form.glow, transparent: true, opacity: 0.7, toneMapped: false });
@@ -204,6 +220,7 @@ export class Player {
     this.ringMats[0].color.set(form.color);
     this.ringMats[1].color.set(form.glow);
     this.shardMat.color.set(form.glow);
+    if (this.elementOrbMat) this.elementOrbMat.color.set(form.glow);
     this.sigilMat.map = sigilTexture(form.sigil || '✦', form.css || '#ffd98a', (form.name || 'GUARDIAN').toUpperCase());
     this.sigilMat.needsUpdate = true;
     this.focusMat.color.set(form.glow);
@@ -223,12 +240,101 @@ export class Player {
     if (form.regen) this.stats.regen = Math.max(this.stats.regen, form.regen);
     this._rebuildSideForm();
     this.updateColors();
+    this._buildWeaponRig();
     this.game.engine.setAccent(form.color);
     if (quiet) return;
     this.heal(this.stats.maxHp * 0.2);
     this.game.fx.ring(this.pos, form.color, { r0: 1, r1: 9, life: 0.9, opacity: 0.8 });
     this.game.fx.burst(new THREE.Vector3(this.pos.x, 1, this.pos.z), form.color, { count: 40, speed: 9, size: 0.3, life: 1.1, up: 3 });
     this.game.engine.pulseExposure(0.5);
+  }
+
+  /* What the firing hand looks like: heavy maul, spread fan, long lance, or
+     a caster's orb. Derived from the weapon's mods, so every sigil's three
+     armaments read differently in the guardian's hand. */
+  _weaponMood() {
+    const w = this.form.weapon;
+    const key = w?.key || '';
+    const mods = w?.mods || {};
+    if (/maul|fist|landslide|bulwark|voidmaw/.test(key) || (mods.damage || 1) >= 1.25) return 'maul';
+    if ((mods.projectiles || 0) > 0 || /fan|well|prism|squall|riptide|volley/.test(key)) return 'fan';
+    if ((mods.pierce || 0) > 0 || /lance|edge|whip|spear|dawn/.test(key)) return 'lance';
+    return 'orb';
+  }
+
+  _buildWeaponRig() {
+    if (!this.weaponRig) return;
+    while (this.weaponRig.children.length) {
+      const old = this.weaponRig.children.pop();
+      old.traverse?.(o => {
+        if (o.geometry) o.geometry.dispose();
+        if (o.material) o.material.dispose();
+      });
+    }
+    const form = this.form;
+    const kind = this._weaponMood();
+    const metal = new THREE.MeshStandardMaterial({
+      color: 0x2c2938, metalness: 0.78, roughness: 0.3,
+      emissive: form.color, emissiveIntensity: 0.35, flatShading: true,
+    });
+    const glowMat = new THREE.MeshBasicMaterial({ color: form.glow, toneMapped: false });
+
+    const shaft = new THREE.Mesh(new THREE.CylinderGeometry(0.045, 0.065, 0.86, 6), metal);
+    shaft.rotation.x = Math.PI / 2;
+    shaft.position.z = 0.3;
+    this.weaponRig.add(shaft);
+
+    if (kind === 'maul') {
+      const head = new THREE.Mesh(new THREE.BoxGeometry(0.46, 0.32, 0.36), metal);
+      head.position.z = 0.72;
+      this.weaponRig.add(head);
+      for (const s of [-1, 1]) {
+        const stud = new THREE.Mesh(new THREE.ConeGeometry(0.09, 0.26, 4), glowMat);
+        stud.position.set(s * 0.19, 0, 0.74);
+        stud.rotation.z = s * -Math.PI / 2;
+        this.weaponRig.add(stud);
+      }
+      const core = new THREE.Mesh(new THREE.OctahedronGeometry(0.1, 0), glowMat);
+      core.position.set(0, 0.2, 0.72);
+      this.weaponRig.add(core);
+    } else if (kind === 'fan') {
+      for (let i = -1; i <= 1; i++) {
+        const prong = new THREE.Mesh(new THREE.ConeGeometry(0.075, 0.5, 4), glowMat);
+        prong.position.set(i * 0.18, 0, 0.76);
+        prong.rotation.x = Math.PI / 2;
+        prong.rotation.z = i * 0.28;
+        this.weaponRig.add(prong);
+      }
+      const bar = new THREE.Mesh(new THREE.BoxGeometry(0.46, 0.06, 0.08), metal);
+      bar.position.z = 0.58;
+      this.weaponRig.add(bar);
+    } else if (kind === 'lance') {
+      const blade = new THREE.Mesh(new THREE.ConeGeometry(0.095, 0.82, 4), glowMat);
+      blade.rotation.x = Math.PI / 2;
+      blade.position.z = 0.74;
+      this.weaponRig.add(blade);
+      const guard = new THREE.Mesh(new THREE.TorusGeometry(0.15, 0.022, 5, 18), metal);
+      guard.rotation.x = Math.PI / 2;
+      guard.position.z = 0.48;
+      this.weaponRig.add(guard);
+    } else {
+      const orb = new THREE.Mesh(new THREE.IcosahedronGeometry(0.15, 1), glowMat);
+      orb.position.z = 0.76;
+      this.weaponRig.add(orb);
+      const cage = new THREE.Mesh(new THREE.TorusGeometry(0.21, 0.02, 5, 20), metal);
+      cage.position.z = 0.76;
+      this.weaponRig.add(cage);
+      const cage2 = cage.clone();
+      cage2.rotation.x = Math.PI / 2;
+      this.weaponRig.add(cage2);
+    }
+
+    const rune = new THREE.Mesh(new THREE.TorusGeometry(0.1, 0.018, 4, 16), glowMat);
+    rune.rotation.y = Math.PI / 2;
+    rune.position.z = 0.52;
+    this.weaponRig.add(rune);
+    this.weaponRig.userData.kind = kind;
+    this.weaponRig.userData.rune = rune;
   }
 
   /* ------------- the loadout: second arm & ward ------------- */
@@ -954,6 +1060,10 @@ export class Player {
     g.position.set(this.pos.x, 0.9 + Math.sin(this.t * 3.1) * 0.07, this.pos.z);
     this.recoil = Math.max(0, this.recoil - dt * 7);
     this.focus.position.z = 0.92 - this.recoil * 0.3;
+    if (this.weaponRig) {
+      this.weaponRig.position.z = 0.55 - this.recoil * 0.16;
+      if (this.weaponRig.userData.rune) this.weaponRig.userData.rune.rotation.z += dt * 2.4;
+    }
     this.focus.scale.set(0.8 + this.recoil * 0.55, 0.8 + this.recoil * 0.55, 1.9 + this.recoil * 1.1);
     this.focusHalo.material.opacity = 0.32 + this.recoil * 0.5;
     const targetRot = Math.atan2(this.aim.x, this.aim.z);
@@ -970,6 +1080,16 @@ export class Player {
     this.ring1.rotation.z += dt * 1.4;
     this.ring2.rotation.z -= dt * 1.1;
     this.core.scale.setScalar(1 + Math.sin(this.t * 5) * 0.12);
+
+    if (this.elementOrbs) {
+      for (let i = 0; i < this.elementOrbs.length; i++) {
+        const a = this.t * 1.15 + i * Math.PI;
+        const o = this.elementOrbs[i];
+        o.position.set(Math.cos(a) * 0.78, 0.28 + Math.sin(this.t * 2.1 + i) * 0.12, Math.sin(a) * 0.78);
+        o.rotation.x += dt * 2.2;
+        o.rotation.y += dt * 3;
+      }
+    }
 
     for (let i = 0; i < this.shards.length; i++) {
       const a = this.t * 1.6 + (i / this.shards.length) * Math.PI * 2;

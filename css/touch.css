@@ -182,7 +182,9 @@ body.tc-on .levelup-btn { display: none !important; }
   body.tc-on .form-role { display: none; }
   body.tc-on .hud-vitals .sigil-chip { width: 30px; height: 30px; font-size: 13px; }
   body.tc-on .hud-center { gap: 5px; }
-  body.tc-on .hud-center .wave-pill { border-radius: 30px; }
+  body.tc-on .hud-center .wave-pill { border-radius: 30px; gap: 5px; padding: 5px 9px; }
+  /* Tier I / II fits beside the wave on a 390px phone without crowding it off. */
+  body.tc-on .tier-tag, .tier-tag { font-size: 6px; padding: 1px 4px; letter-spacing: .1em; }
   body.tc-on .core-line { font-size: 8px; }
 }
 

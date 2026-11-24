@@ -145,7 +145,7 @@ export class Enemy {
   _buildMesh() {
     const t = this.type;
     const group = new THREE.Group();
-    const scale = this.isBoss ? 1.35 : this.miniBoss ? 1.14 : 1;
+    const scale = this.isBoss ? 1.35 : this.miniBoss ? 1.18 : 1;
     this.baseY = this.flying ? 1.55 : 0.7;
     this.scale = scale;
 
@@ -166,10 +166,17 @@ export class Enemy {
     this.accentMat = accentMat;
 
     if (t.shape === 'crawler') {
-      const body = new THREE.Mesh(geo('crawler', () => new THREE.IcosahedronGeometry(0.62, 0)), bodyMat);
+      const body = new THREE.Mesh(geo('crawler', () => new THREE.IcosahedronGeometry(0.62, 1)), bodyMat);
       body.scale.set(1.1, 0.85, 1.15);
       group.add(body);
       this.body = body;
+      // A ridge of embers along the back: the crawler reads as cinder, not a blob.
+      for (let i = 0; i < 3; i++) {
+        const spike = new THREE.Mesh(geo('crawlerSpike', () => new THREE.ConeGeometry(0.11, 0.34, 4)), accentMat);
+        spike.position.set(0, 0.4 - i * 0.03, 0.34 - i * 0.3);
+        spike.rotation.x = -0.45;
+        group.add(spike);
+      }
       for (let i = 0; i < 6; i++) {
         const a = (i / 6) * Math.PI * 2;
         const leg = new THREE.Mesh(geo('leg', () => new THREE.ConeGeometry(0.085, 0.5, 4)), accentMat);
@@ -198,10 +205,20 @@ export class Enemy {
       group.add(halo);
       this.halo = halo;
     } else if (t.shape === 'brute') {
-      const body = new THREE.Mesh(geo('brute', () => new THREE.DodecahedronGeometry(1.05, 0)), bodyMat);
+      const body = new THREE.Mesh(geo('brute', () => new THREE.DodecahedronGeometry(1.05, 1)), bodyMat);
       body.scale.set(1, 0.92, 0.95);
       group.add(body);
       this.body = body;
+      // Shoulder horns and a lit chest: a brute should look like it was carved.
+      for (const s of [-1, 1]) {
+        const horn = new THREE.Mesh(geo('bruteHorn', () => new THREE.ConeGeometry(0.16, 0.72, 4)), accentMat);
+        horn.position.set(s * 0.74, 0.5, 0.06);
+        horn.rotation.z = s * -0.55;
+        group.add(horn);
+      }
+      const chest = new THREE.Mesh(geo('bruteChest', () => new THREE.SphereGeometry(0.17, 10, 8)), accentMat);
+      chest.position.set(0, 0.12, 0.93);
+      group.add(chest);
       const plateMat = new THREE.MeshStandardMaterial({ color: 0x2a2622, roughness: 0.6, metalness: 0.5 });
       for (let i = 0; i < 4; i++) {
         const a = (i / 4) * Math.PI * 2;
@@ -218,9 +235,18 @@ export class Enemy {
         group.add(crack);
       }
     } else if (t.shape === 'spitter') {
-      const body = new THREE.Mesh(geo('spitter', () => new THREE.SphereGeometry(0.6, 12, 10)), bodyMat);
+      const body = new THREE.Mesh(geo('spitter', () => new THREE.SphereGeometry(0.6, 18, 14)), bodyMat);
       group.add(body);
       this.body = body;
+      // Three lens fins, fanned like a sun dial.
+      for (let i = 0; i < 3; i++) {
+        const a = -0.9 + i * 0.9;
+        const fin = new THREE.Mesh(geo('spitterFin', () => new THREE.ConeGeometry(0.12, 0.44, 4)), accentMat);
+        fin.position.set(Math.sin(a) * 0.68, 0.26, Math.cos(a) * 0.46);
+        fin.rotation.x = -0.4;
+        fin.rotation.z = a * 0.3;
+        group.add(fin);
+      }
       const ring = new THREE.Mesh(
         new THREE.TorusGeometry(0.82, 0.05, 6, 24),
         new THREE.MeshBasicMaterial({ color: this.glow, transparent: true, opacity: 0.75, toneMapped: false })
@@ -274,8 +300,31 @@ export class Enemy {
       this.halo = halo;
     }
 
+    // Orbiting shards and a lit heart: every creature carries its element with it.
+    const orbGeo = geo('enemyShard', () => new THREE.TetrahedronGeometry(0.1, 0));
+    this.orbiters = [];
+    const orbCount = this.isBoss ? 5 : this.miniBoss ? 4 : 2;
+    for (let i = 0; i < orbCount; i++) {
+      const orb = new THREE.Mesh(orbGeo, accentMat);
+      orb.userData = {
+        a: (i / orbCount) * Math.PI * 2,
+        r: (this.miniBoss ? 1.12 : 0.9) + (i % 2) * 0.18,
+        h: 0.06 + (i % 3) * 0.2,
+        s: 0.65 + i * 0.17,
+      };
+      group.add(orb);
+      this.orbiters.push(orb);
+    }
+
     if (this.miniBoss) {
       // Crowned: a mini-boss should never be mistaken for the horde around it.
+      const auraMat = new THREE.MeshBasicMaterial({
+        color: this.glow, transparent: true, opacity: 0.14, wireframe: true,
+        depthWrite: false, toneMapped: false,
+      });
+      this.miniAura = new THREE.Mesh(new THREE.IcosahedronGeometry(1.35, 1), auraMat);
+      this.miniAura.position.y = 0.1;
+      group.add(this.miniAura);
       const crownMat = new THREE.MeshBasicMaterial({ color: 0xffe6a8, toneMapped: false });
       for (let i = 0; i < 4; i++) {
         const a = (i / 4) * Math.PI * 2;
@@ -487,6 +536,19 @@ export class Enemy {
     if (this.bossRingA) { this.bossRingA.rotation.z += dt * 0.8; this.bossRingB.rotation.z -= dt * 0.6; }
     if (this.bossCore) this.bossCore.scale.setScalar(1 + Math.sin(game.time * 4) * 0.12);
     if (this.eliteRing) this.eliteRing.rotation.z += dt * 1.2;
+    if (this.orbiters) {
+      for (const o of this.orbiters) {
+        const a = game.time * o.userData.s + o.userData.a;
+        o.position.set(Math.cos(a) * o.userData.r, o.userData.h + Math.sin(a * 2 + this.phase) * 0.1, Math.sin(a) * o.userData.r);
+        o.rotation.x += dt * 3;
+        o.rotation.y += dt * 2;
+      }
+    }
+    if (this.miniAura) {
+      this.miniAura.rotation.y -= dt * 0.55;
+      this.miniAura.rotation.x += dt * 0.28;
+      this.miniAura.material.opacity = 0.1 + Math.sin(game.time * 2.2 + this.phase) * 0.05;
+    }
     if (this.isBoss && this.enraged && Math.random() < dt * 12) {
       fx.trail(new THREE.Vector3(this.pos.x + (Math.random() - 0.5) * 2, this.baseY + Math.random() * 2.6, this.pos.z + (Math.random() - 0.5) * 2), this.glow, 0.25, 0.4);
     }
@@ -640,5 +702,6 @@ export class Enemy {
   dispose() {
     if (this.bodyMat) this.bodyMat.dispose();
     if (this.accentMat) this.accentMat.dispose();
+    if (this.miniAura) this.miniAura.material.dispose();
   }
 }

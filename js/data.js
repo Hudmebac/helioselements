@@ -3,7 +3,19 @@
    Elements, fusions, enemies, boons and wave composition.
    ============================================================ */
 
-export const VERSION = '1.8.2';
+export const VERSION = '1.9.0';
+
+/* Ascension tiers are written in the old numerals: Tier I, II, III … */
+export function romanTier(n) {
+  let v = Math.max(0, Math.floor(Number(n) || 0));
+  if (v <= 0) return '—';
+  const table = [[1000, 'M'], [900, 'CM'], [500, 'D'], [400, 'CD'], [100, 'C'], [90, 'XC'], [50, 'L'], [40, 'XL'], [10, 'X'], [9, 'IX'], [5, 'V'], [4, 'IV'], [1, 'I']];
+  let out = '';
+  for (const [value, sym] of table) {
+    while (v >= value) { out += sym; v -= value; }
+  }
+  return out;
+}
 
 export const ELEMENTS = {
   ember: {
@@ -304,12 +316,35 @@ export const ENEMIES = {
     xp: 11, color: 0x6f8cff, glow: 0xcbd6ff, css: '#93a8ff', shape: 'spitter', element: 'umbra', miniBoss: true,
     desc: 'A revenant of the long night. Keeps its distance and spits glass.',
   },
+  mini_tide: {
+    key: 'mini_tide', name: 'Brine Custodian', hp: 235, speed: 3.0, damage: 15, radius: 1.12,
+    xp: 13, color: 0x2f8fe0, glow: 0x9fe8ff, css: '#4fb9ff', shape: 'brute', element: 'tide', miniBoss: true,
+    desc: 'A keeper of the deep, armoured in salt. Slow, patient, and very hard to shift.',
+  },
+  mini_gale: {
+    key: 'mini_gale', name: 'Squall Matron', hp: 175, speed: 5.2, damage: 12, radius: 0.9,
+    xp: 12, color: 0x59e8ff, glow: 0xd8fbff, css: '#67ecff', shape: 'wisp', flying: true, element: 'gale', miniBoss: true,
+    desc: 'A storm given a body. Circles the arena, daring you to lead your shots.',
+  },
+  mini_lumen: {
+    key: 'mini_lumen', name: 'Dawn Inquisitor', hp: 195, speed: 3.4, damage: 16, radius: 0.9,
+    xp: 13, color: 0xffd166, glow: 0xfff0b0, css: '#ffe9a8', shape: 'spitter', ranged: true, element: 'lumen', miniBoss: true,
+    desc: 'It judges from a distance and sentences in gouts of daylight.',
+  },
+  mini_stone: {
+    key: 'mini_stone', name: 'Granite Sentinel', hp: 270, speed: 2.4, damage: 21, radius: 1.2,
+    xp: 14, color: 0x8a6a45, glow: 0xffd39a, css: '#d49a55', shape: 'brute', element: 'stone', miniBoss: true,
+    desc: 'A standing stone that learned to walk. Every plate is a door that does not open.',
+  },
   boss: {
     key: 'boss', name: 'Rift Warden', hp: 560, speed: 3.0, damage: 22, radius: 1.9,
     xp: 30, color: 0xb44dff, glow: 0xff8af0, css: '#c879ff', shape: 'boss', boss: true, element: 'umbra',
     desc: 'A warden of the rift. Charges, volleys and calls the dark to its side.',
   },
 };
+
+/* Every mini-boss the horde can crown, in rotation. */
+export const MINI_BOSS_KEYS = ['mini_warden', 'mini_shade', 'mini_tide', 'mini_gale', 'mini_lumen', 'mini_stone'];
 
 export const BOSSES = [
   { name: 'Rift Warden', color: 0xb44dff, glow: 0xff8af0, css: '#c879ff', title: 'The First Wound', element: 'umbra' },
@@ -530,9 +565,15 @@ export function buildWave(wave, pacts = {}, difficulty = null, bonus = null, the
     // An attuned arena sends the elements that beat it.
     const counters = theme ? countersOf(theme) : [];
     const biased = counters.length ? pool.filter(e => counters.includes(ENEMIES[e.key]?.element)) : [];
-    // Every third wave sends a mini-boss ahead of the horde.
+    // Every third wave sends a mini-boss ahead of the horde — six kinds, in rotation.
+    let miniIndex = 0;
     if (wave >= 3 && wave % 3 === 0) {
-      entries.push({ type: wave % 2 ? 'mini_warden' : 'mini_shade', delay: 2.1 });
+      miniIndex = (Math.floor(wave / 3) - 1 + (d.rank || 0)) % MINI_BOSS_KEYS.length;
+      entries.push({ type: MINI_BOSS_KEYS[miniIndex], delay: 2.1 });
+    }
+    // From wave six, the fourth wave of each cycle crowns a second one.
+    if (wave >= 6 && wave % 4 === 0) {
+      entries.push({ type: MINI_BOSS_KEYS[(miniIndex + 3) % MINI_BOSS_KEYS.length], delay: 3.6 });
     }
     // A longer trickle instead of a wall: same fight, less of a stampede.
     const duration = Math.min(26, 5 + total * 0.7);
@@ -587,6 +628,12 @@ export function buildLaneWave(wave, pacts = {}, openLanes = [0, 1, 2], difficult
     }
   }
 
+  // A crowned mini-boss walks a lane every third wave, ahead of the creep.
+  if (!isBoss && wave >= 3 && wave % 3 === 0) {
+    const mini = MINI_BOSS_KEYS[(Math.floor(wave / 3) - 1 + (d.rank || 0)) % MINI_BOSS_KEYS.length];
+    entries.push({ type: mini, lane: lanes[Math.floor(Math.random() * lanes.length)], delay: 1.6 });
+  }
+
   // One warden per boss wave, marching down a random open lane.
   if (isBoss) {
     entries.push({
@@ -615,6 +662,11 @@ export function buildHuntWave(wave, pacts = {}, difficulty = null, bonus = null)
   const dmgMult = (1 + 0.1 * (wave - 1)) * (1 + 0.1 * p.fury) * (d.enemyDamage || 1);
   const speedMult = Math.min(1.8, (1 + 0.03 * (wave - 1) + p.haste * 0.05) * (d.enemySpeed || 1) * (b.speed || 1));
   const entries = [{ type: 'boss', delay: 1.6, bossIndex }];
+  // The warden's court: a crowned sub-boss walks with every hunt after the first.
+  if (wave >= 2) {
+    const mini = MINI_BOSS_KEYS[(wave - 2 + (d.rank || 0)) % MINI_BOSS_KEYS.length];
+    entries.push({ type: mini, delay: 2.7 });
+  }
   const escorts = Math.round((6 + wave * 2 + p.density * 2) * (d.spawn || 1) * (b.spawn || 1));
   for (let i = 0; i < escorts; i++) {
     entries.push({

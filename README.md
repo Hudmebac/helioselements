@@ -1,6 +1,6 @@
 <div align="center">
 
-<sub>B R O W S E R &nbsp; R O G U E L I T E &nbsp; · &nbsp; v 1 . 8 . 2</sub>
+<sub>B R O W S E R &nbsp; R O G U E L I T E &nbsp; · &nbsp; v 1 . 9 . 0</sub>
 
 # ☀ HELIOS ELEMENTS
 
@@ -15,7 +15,7 @@ One tab, no install, no account — a 3D roguelite that runs where you already a
 
 <br/>
 
-<img src="https://img.shields.io/badge/version-1.8.2-f5c26b?style=flat-square&labelColor=141726" alt="version 1.8.2">
+<img src="https://img.shields.io/badge/version-1.9.0-f5c26b?style=flat-square&labelColor=141726" alt="version 1.9.0">
 <img src="https://img.shields.io/badge/touch-ready-67ecff?style=flat-square&labelColor=141726" alt="touch ready">
 <img src="https://img.shields.io/badge/modes-8-67ecff?style=flat-square&labelColor=141726" alt="8 modes">
 <img src="https://img.shields.io/badge/engine-Three.js-8a5cff?style=flat-square&labelColor=141726" alt="Three.js">
@@ -294,6 +294,17 @@ The **Play** button at the top of this README points at the game, and `/site/` r
 ## Changelog
 
 <details open>
+<summary><b>v1.9.0 — Ascension</b></summary>
+
+- **Victory now leads somewhere.** The results screen offers **Ascend**: carry the same guardian, boons, weapon ranks, relics and shards into the next tier — **I, II, III, IV, V and beyond** — with the mission rebuilt for the new tier. Each tier compounds **+10% enemy health and damage** (+2% speed).
+- **Six sub-bosses** now walk the horde: Cinder Herald, Glass Revenant, Brine Custodian, Squall Matron, Dawn Inquisitor and Granite Sentinel — rotating every third wave, a second from wave six, and their own in lanes and hunts.
+- **Enemy art:** orbiting elemental shards, crawler back-spines, brute horns and lit chests, spitter lens fins, and a rune aura on every crowned sub-boss.
+- **Guardian art:** the weapon in hand changes silhouette with the firing hand — maul, fan, lance or caster orb — with a glowing grip rune and two elemental motes in orbit.
+- Desktop’s next-wave countdown now clears the hosted badge’s corner.
+
+</details>
+
+<details>
 <summary><b>v1.8.2 — Clear of the badge</b></summary>
 
 - The right thumb cluster sits **48px higher in portrait and 44px in landscape**, clear of the fixed badge the hosted site puts in the bottom-right corner; the Begin Wave pill rises with the pad.
@@ -354,7 +365,7 @@ The **Play** button at the top of this README points at the game, and `/site/` r
 
 </details>
 
-**Earlier — v1.8.1:** mouse drag movement. **v1.8.0:** touch controls, the portrait camera and finger-sized menus. **v1.7.7:** the final loadout readout on the results screen. **v1.7.6:** Kindling and Dawn Gifts, two arms and a ward, ranks drafted rather than handed out, dissolving bodies, two new wardens. **v1.7.5:** three menu depths and the empty-arena wave gate. **v1.7.4:** the Descent multiplier (+15% per rank, paid on the rank *played*) and **Settings → Save** export/import. Before that: the Descent itself, Solar Caravan's eight-point road, level boons, Eclipse Pacts, Skill Runs, Warden Duel, and the Codex.
+**Earlier — v1.8.2:** Netlify-badge clearance. **v1.8.1:** mouse drag movement. **v1.8.0:** touch controls, the portrait camera and finger-sized menus. **v1.7.7:** the final loadout readout on the results screen. **v1.7.6:** Kindling and Dawn Gifts, two arms and a ward, ranks drafted rather than handed out, dissolving bodies, two new wardens. **v1.7.5:** three menu depths and the empty-arena wave gate. **v1.7.4:** the Descent multiplier (+15% per rank, paid on the rank *played*) and **Settings → Save** export/import. Before that: the Descent itself, Solar Caravan's eight-point road, level boons, Eclipse Pacts, Skill Runs, Warden Duel, and the Codex.
 
 ---
 
@@ -371,6 +382,6 @@ The **Play** button at the top of this README points at the game, and `/site/` r
 <br/>
 
 **Built with** Three.js (MIT) · Cinzel & Inter (OFL) · everything else hand-built — renderer, audio synthesis, UI and lore.<br/>
-<sub>Helios Elements v1.8.2 · no install, no account, no telemetry.</sub>
+<sub>Helios Elements v1.9.0 · no install, no account, no telemetry.</sub>
 
 </div>
