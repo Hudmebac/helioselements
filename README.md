@@ -15,7 +15,7 @@ One tab, no install, no account — a 3D roguelite that runs where you already a
 
 <br/>
 
-<img src="https://img.shields.io/badge/version-1.9.7-f5c26b?style=flat-square&labelColor=141726" alt="version 1.9.7">
+<img src="https://img.shields.io/badge/version-1.9.8-f5c26b?style=flat-square&labelColor=141726" alt="version 1.9.8">
 <img src="https://img.shields.io/badge/touch-ready-67ecff?style=flat-square&labelColor=141726" alt="touch ready">
 <img src="https://img.shields.io/badge/modes-8-67ecff?style=flat-square&labelColor=141726" alt="8 modes">
 <img src="https://img.shields.io/badge/engine-Three.js-8a5cff?style=flat-square&labelColor=141726" alt="Three.js">
@@ -304,6 +304,16 @@ The **Play** button at the top of this README points at the game, and `/site/` r
 ## Changelog
 
 <details open>
+<summary><b>v1.9.8 — The tightening ring</b></summary>
+
+- **Compounding levels, deliberately capped:** the essence needed for the next level is now 20% higher than the previous wave, compounding each wave. The curve caps at **5× base from wave 10**, and wave-clear essence rises to **12 + 6 per wave** so drafts keep arriving through twenty waves.
+- **Rarer relics:** elites have a **5%** relic chance and can only drop one per wave; Sunless Vaults surface every **sixth** cleared wave instead of every fourth. Wardens still always offer a relic.
+- **Damage sticks:** wave-clear healing falls to **7%** max health, warden kills heal **9%**, and core repairs cost **3 shards for 24%**. Passive core regeneration and wave-clear core repairs are lower, so health caches, lifesteal and defending the objective matter more.
+- **Every mode leans in:** lane gates have more health, hunts and duels bring tougher champions, the caravan moves slower and bleeds faster, ritual circles take longer, and Blitz loses three seconds from its clock.
+
+</details>
+
+<details>
 <summary><b>v1.9.7 — Caches on the ring</b></summary>
 
 - **Arena upgrades:** each wave lays out three glowing caches. **Solar Bloom** heals, **Titan Seed** grants temporary size with wider shots and pickup reach, **War Ember** grants temporary damage, and **Dawn Mote** grants bonus XP. Walk over them to collect.
@@ -457,6 +467,6 @@ The **Play** button at the top of this README points at the game, and `/site/` r
 <br/>
 
 **Built with** Three.js (MIT) · Cinzel & Inter (OFL) · everything else hand-built — renderer, audio synthesis, UI and lore.<br/>
-<sub>Helios Elements v1.9.7 · no install, no account, no telemetry.</sub>
+<sub>Helios Elements v1.9.8 · no install, no account, no telemetry.</sub>
 
 </div>

@@ -3,7 +3,7 @@
    Elements, fusions, enemies, boons and wave composition.
    ============================================================ */
 
-export const VERSION = '1.9.7';
+export const VERSION = '1.9.8';
 
 /* Three camera stops, from the whole ring to the guardian's own eyes. */
 export const CAMERA_VIEWS = [
@@ -550,8 +550,8 @@ export function buildWave(wave, pacts = {}, difficulty = null, bonus = null, the
   const b = bonus || {};
   const density = p.density;
   const isBoss = wave % 5 === 0;
-  const hpMult = (1 + 0.21 * (wave - 1) + Math.max(0, wave - 10) * 0.06) * 1.14 * (1 + 0.12 * p.vitality) * (d.enemyHp || 1) * (b.hp || 1);
-  const dmgMult = (1 + 0.10 * (wave - 1)) * (1 + 0.10 * p.fury) * (d.enemyDamage || 1);
+  const hpMult = (1 + 0.21 * (wave - 1) + Math.max(0, wave - 10) * 0.06) * 1.18 * (1 + 0.12 * p.vitality) * (d.enemyHp || 1) * (b.hp || 1);
+  const dmgMult = (1 + 0.11 * (wave - 1)) * (1 + 0.10 * p.fury) * (d.enemyDamage || 1);
   const speedMult = Math.min(2.1, (1 + 0.015 * (wave - 1)) * (1 + 0.05 * p.haste) * (d.enemySpeed || 1) * (b.speed || 1));
   const entries = [];
 
@@ -564,7 +564,7 @@ export function buildWave(wave, pacts = {}, difficulty = null, bonus = null, the
       entries.push({ type: i % 3 === 0 ? 'wisp' : 'crawler', delay: 4 + i * 0.55 });
     }
   } else {
-    const total = Math.min(56, Math.round((6 + wave * 1.7) * (1 + density * 0.16) * (d.spawn || 1) * (b.spawn || 1)));
+    const total = Math.min(56, Math.round((6 + wave * 1.8) * (1 + density * 0.16) * (d.spawn || 1) * (b.spawn || 1)));
     const pool = [{ key: 'crawler', w: 100 }];
     if (wave >= 2) pool.push({ key: 'wisp', w: Math.min(60, 20 + wave * 4) });
     if (wave >= 3) pool.push({ key: 'spitter', w: Math.min(64, 16 + wave * 4) });
@@ -706,12 +706,14 @@ export function buildDuelWave(wave, pacts = {}, difficulty = null, bonus = null)
   };
 }
 
-// Slower than it used to be: more fighting between drafts, fewer chains of cards.
-// Each wave adds a 20% premium to the base requirement, so late waves take
-// noticeably more essence without turning the last levels into a grind wall.
+// Each wave compounds the previous requirement by 20%. The multiplier is
+// capped at 5x from wave ten: without the cap, wave twenty would ask for
+// 38x base essence and the draft cadence would collapse into a grind wall.
+export const XP_WAVE_CAP = 5;
 export function xpToNext(level, wave = 1) {
   const base = 20 + level * 13 + Math.pow(level, 1.5) * 2.4;
-  return Math.round(base * (1 + 0.2 * Math.max(0, wave - 1)));
+  const waveMult = Math.min(XP_WAVE_CAP, Math.pow(1.2, Math.max(0, wave - 1)));
+  return Math.round(base * waveMult);
 }
 
 /* ------------------------------------------------------------
@@ -1225,10 +1227,10 @@ export const SIEGE = {
   waveShards: 2,
   bossShards: 3,
   earlyCallShards: 1,
-  repairCost: 2,
-  repairPct: 0.3,
-  repairRate: 55,
-  coreClearHeal: 0.06,
+  repairCost: 3,
+  repairPct: 0.24,
+  repairRate: 45,
+  coreClearHeal: 0.03,
   /* Defending the core pays. Stand inside the Aegis to slow the breach and
      hit harder; keep the Sunforge above the hold line and earn extra shards. */
   aegisRadius: 8.5,
@@ -1236,7 +1238,7 @@ export const SIEGE = {
   aegisDamage: 0.3,
   aegisDr: 0.25,
   breachRadius: 11,
-  coreRegen: 0.9,
+  coreRegen: 0.55,
   coreRegenDelay: 6,
   holdPct: 0.75,
   holdShards: 1,
@@ -1255,14 +1257,14 @@ export const SIEGE = {
 
 export const LANE = {
   goalGates: 3,
-  gateHp: 750,
+  gateHp: 850,
   gateRadius: 2.0,
   laneRadius: 27,
   padRadii: [11.5, 18.5],
   startShards: 6,
   waveShards: 2,
   gateShardReward: 2,
-  gateClearHeal: 0.04,
+  gateClearHeal: 0.025,
   siphon: 0.06,
   lanes: [
     { key: 'top', name: 'Top Lane', short: 'TOP', angle: Math.PI * 1.17, css: '#ff9a5a' },
@@ -1273,8 +1275,8 @@ export const LANE = {
 
 export const HUNT = {
   goalWave: 4,
-  bossHpMult: 1.3,
-  interTimer: 4.6,
+  bossHpMult: 1.45,
+  interTimer: 4.2,
 };
 
 export const ESCORT = {
@@ -1282,15 +1284,15 @@ export const ESCORT = {
   // Points are [x, z] on the oval (radius 36 → 43.9 × 30.2), kept clear of the walls.
   route: [[6, 2], [-24, 12], [-24, -16], [2, -24], [28, -10], [24, 16], [-2, 22], [30, 6]],
   hp: 800,
-  speed: 3.2,
+  speed: 3.0,
   escortRadius: 6.5,
   contestedRadius: 4.2,
-  repairRate: 34,
+  repairRate: 30,
   repairRadius: 5.8,
   damageInterval: 0.9,
-  damagePerEnemy: 6,
-  waveDamage: 1.1,
-  decay: 6,
+  damagePerEnemy: 7,
+  waveDamage: 1.2,
+  decay: 7,
   /* Integrity is the pay ledger. Above the safe line the run pays in full;
      below it every crack takes marks off the final purse. */
   revenueFloor: 0.4,
@@ -1313,25 +1315,25 @@ export const RITUAL = {
   shrineCount: 3,
   shrineRadius: 13,
   standRadius: 3.4,
-  chargeTime: 9,
-  decay: 0.035,
-  contestDecay: 0.2,
+  chargeTime: 10,
+  decay: 0.045,
+  contestDecay: 0.24,
   interTimer: 6,
 };
 
 export const BLITZ = {
   goalWave: 12,
-  waveTime: 34,
-  killBonus: 0.4,
+  waveTime: 31,
+  killBonus: 0.35,
   bossBonus: 5,
-  bossTimeMult: 1.05,
-  interTimer: 3.2,
+  bossTimeMult: 1.0,
+  interTimer: 2.8,
 };
 
 export const DUEL = {
   goalWave: 4,
-  bossHpMult: 1.75,
-  interTimer: 5,
+  bossHpMult: 1.95,
+  interTimer: 4.6,
 };
 
 export const DEFENSES = {

@@ -106,6 +106,7 @@ export class Game {
     this.swaps = 0;
     this.vault = null;
     this._storedToastAt = -9;
+    this._eliteRelicWave = -1;
 
     this._bindInput();
   }
@@ -405,6 +406,7 @@ export class Game {
     this.relicDraft = null;
     this.relicReturnState = 'playing';
     this._storedToastAt = -9;
+    this._eliteRelicWave = -1;
     if (this.save.rewards?.charged_start) this.player.charge = Math.max(this.player.charge, 20);
 
     this.audio.setIntensity(0.22);
@@ -733,7 +735,7 @@ export class Game {
   onWaveCleared() {
     this.audio.waveClear();
     const cleared = this.wave;
-    const reward = 10 + cleared * 5;
+    const reward = 12 + cleared * 6;
     const hasCore = !!this.structures?.core;
     let earned = 0;
 
@@ -770,7 +772,7 @@ export class Game {
 
     this.phase = 'intermission';
     this.wave = cleared + 1;
-    if (cleared >= 3 && cleared % 4 === 3 && cleared % 5 !== 0) {
+    if (cleared >= 3 && cleared % 6 === 3 && cleared % 5 !== 0) {
       if (this.vault) this.retireVault();
       this.spawnVault();
     }
@@ -779,7 +781,7 @@ export class Game {
       ritual: RITUAL.interTimer, blitz: BLITZ.interTimer, duel: DUEL.interTimer, trial: 7,
     };
     this.interTimer = nextTimers[this.mode] ?? 7;
-    this.player.heal(this.player.maxHp * 0.12);
+    this.player.heal(this.player.maxHp * 0.07);
     this.player.gainCharge(cleared % 5 === 0 ? 14 : 4);
     this.gainXp(reward);
     if (this.waveBonus) {
@@ -1068,7 +1070,7 @@ export class Game {
     if (enemy.isBoss) {
       this.runStats.bosses++;
       this.player.gainCharge(26);
-      this.player.heal(this.player.maxHp * 0.15);
+      this.player.heal(this.player.maxHp * 0.09);
       // Hardcore's answer to a Forge that will not mend the core: felling a warden does.
       const bossCoreHeal = this.difficultyMeta().bossCoreHeal || 0;
       if (bossCoreHeal > 0 && this.structures?.core?.alive) {
@@ -1085,7 +1087,10 @@ export class Game {
     } else {
       if (enemy.elite) {
         this.runStats.elites++;
-        if (!enemy.vaultGuardian && Math.random() < 0.35) this.queueRelicDraft('elite', 350);
+        if (!enemy.vaultGuardian && this._eliteRelicWave !== this.wave && Math.random() < 0.05) {
+          this._eliteRelicWave = this.wave;
+          this.queueRelicDraft('elite', 350);
+        }
       }
       if (enemy.vaultGuardian) {
         this.runStats.vaults++;
@@ -1150,7 +1155,7 @@ export class Game {
     if (this.skillRun) {
       const mend = () => {
         if (runId !== this.runId) return;
-        this.player?.heal(this.player.maxHp * 0.12);
+        this.player?.heal(this.player.maxHp * 0.08);
       };
       if (delay > 0) setTimeout(mend, delay); else mend();
       return;
@@ -1158,7 +1163,7 @@ export class Game {
     const enqueue = () => {
       if (runId !== this.runId || this.state === 'gameover') return;
       if (this.pendingRelicDrafts.length >= 2) {
-        this.player?.heal(12);
+        this.player?.heal(8);
         return;
       }
       this.pendingRelicDrafts.push(source);
@@ -1174,7 +1179,7 @@ export class Game {
     const source = this.pendingRelicDrafts.shift();
     const cards = this.rollRelicCards(source);
     if (!cards.length) {
-      this.player.heal(this.player.maxHp * 0.15);
+      this.player.heal(this.player.maxHp * 0.1);
       this.ui.toast('THE HOARD IS EMPTY · THE LIGHT MENDS YOU', '#ffd98a');
       this._openNextRelicDraft();
       return;

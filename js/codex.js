@@ -18,7 +18,7 @@
 import {
   VERSION, MODES, ELEMENTS, FUSIONS, BOSSES, PACTS, DIFFICULTIES, DESCENT,
   SIEGE, LANE, ESCORT, RITUAL, BLITZ, DUEL, CONTROL_ACTIONS, keyLabel,
-  RELIC_SLOTS, RARITY, KEYBINDS, KINDLING, WEAPON_RANK, WARD_MAX_RANK, WARDS,
+  RELIC_SLOTS, RARITY, KEYBINDS, KINDLING, WEAPON_RANK, WARD_MAX_RANK, WARDS, XP_WAVE_CAP,
 } from './data.js';
 
 export const META = {
@@ -31,7 +31,7 @@ export const META = {
     'Helios Elements is a fast, elemental survival roguelite that runs in your browser. Choose one of six sigils, fuse it into a hybrid form, and hold the Sunforge against the Eclipse for twenty waves — or walk a reliquary home, seal three circles, beat a burning clock, or take the ring against four champions.',
   longDescription: [
     `Every run of Helios Elements starts with one choice: which shard of the sun you carry. Ember burns and detonates. Tide pierces and mends. Gale chains. Stone crushes. Lumen lances through ranks. Umbra hunts and feeds. Six sigils, six rhythms, six ways to survive.`,
-    `Level up and the sun offers boons — damage, tempo, projectiles, crit, lifesteal, orbits. Take a second sigil at level three and the two collapse into a hybrid: Magma, Storm, Frost, Void, Verdant. Wardens arrive every fifth wave, elites drop relics, and shards buy towers you will have to repair by hand while the horde walks in.`,
+    `Level up and the sun offers boons — damage, tempo, projectiles, crit, lifesteal, orbits. Take a second sigil at level three and the two collapse into a hybrid: Magma, Storm, Frost, Void, Verdant. Wardens arrive every fifth wave, wardens and Sunless Vaults offer relics, and shards buy towers you will have to repair by hand while the horde walks in.`,
     `Eight missions change the question. Defend a core. Break three rift gates. Walk a reliquary down a pilgrim road. Hold three ember circles. Outrun a sunset. Stand alone in the ring. Then complete a mission and the Descent takes you one step deeper — the same arena, a little meaner, until you decide to step back.`,
   ],
   keywords: [
@@ -201,7 +201,7 @@ export const GUIDE = {
         'On a phone or tablet the same three buttons sit under your right thumb, with the Forge and a hold-to-repair button beside them, and a floating stick under the left. Drag anywhere in the lower-left of the arena and the stick appears under your thumb; release and it recentres. Begin Wave appears between waves, and pause lives in the top-right corner.',
         'On a desktop you can play one-handed as well: hold the left mouse button anywhere on the arena and drag. The same ring appears, the guardian follows the drag exactly as it follows a thumb, and letting go stops him. WASD and the mouse still work together, so you can steer with one and nudge with the other.',
         'The camera has three stops: Distant, Close and First person. Scroll the mouse wheel up to pull in and down to pull back out, click the View pill in the top-right, or press V. On a phone or tablet, the View button under Pause shows the current stop and advances on each tap. Close is a fixed closer angle that follows your position but never rotates. First person is a cockpit view — the guardian’s body is hidden behind a framed glass canopy, side pillars, a reticle and an instrument panel that shows the flight controls. The glass tones down arena glare so enemies stay readable up close, and fallen enemies burst away instead of leaving bodies on the ground. In first person W/S move forward and back along the view, while A/D turn the cockpit left and right; there is no strafing in the cockpit. Distant and Close keep their existing world-axis controls.',
-        'Every wave scatters three glowing arena caches. Walk over one to claim an upgrade: Solar Bloom restores health, Titan Seed makes you larger for a short time with wider shots and pickup reach, War Ember adds temporary damage, and Dawn Mote grants bonus essence. The essence needed for the next level climbs 20% each wave, so deeper waves take more kills and more caches to keep the drafts coming.',
+        `Every wave scatters three glowing arena caches. Walk over one to claim an upgrade: Solar Bloom restores health, Titan Seed makes you larger for a short time with wider shots and pickup reach, War Ember adds temporary damage, and Dawn Mote grants bonus essence. The essence needed for the next level compounds by 20% each wave, then holds at ${XP_WAVE_CAP}× base from wave ten so late drafts still arrive.`,
       ],
       controls: true,
       note: `Every key can be rebound in Settings. The defaults are ${KEYBINDS.map(([k, v]) => k + ' for ' + v.toLowerCase()).slice(0, 4).join('; ')}. Settings → Interface → Touch controls (Auto, On, Off) decides whether the thumb layer appears; Auto turns it on for touch screens.`,
@@ -253,7 +253,7 @@ export const GUIDE = {
       kicker: 'The hoard',
       title: 'Relics',
       body: [
-        `Elites sometimes drop a relic draft; wardens usually do; Sunless Vaults always can. There are three slots — ${Object.values(RELIC_SLOTS).map(s => s.name.toLowerCase()).join(', ')} — and a relic can be ranked up when you meet it again.`,
+        `Wardens and Sunless Vault guardians always offer a relic draft; elites rarely do, and only once per wave. There are three slots — ${Object.values(RELIC_SLOTS).map(s => s.name.toLowerCase()).join(', ')} — and a relic can be ranked up when you meet it again.`,
         `Relics are where a build becomes a build. A run with three ranked signets and no fusion is a different animal from a run with one crown and nothing else.`,
       ],
     },
@@ -410,6 +410,17 @@ export const FAQ = [
    CHANGELOG — newest first. Add an entry every release.
    ------------------------------------------------------------ */
 export const CHANGELOG = [
+  {
+    version: '1.9.8',
+    date: '2026-11-24',
+    title: 'The tightening ring',
+    items: [
+      `The next level now costs 20% more than the wave before, compounding each wave. The curve caps at ${XP_WAVE_CAP}× base from wave ten, and wave-clear essence rises to 12 + 6 per wave so drafts still arrive at a steady pace through twenty waves.`,
+      'Relics are rarer: elites have a 5% chance and can only drop one relic per wave, and Sunless Vaults surface every sixth cleared wave instead of every fourth. Wardens still always offer one.',
+      'Damage sticks: wave-clear healing falls from 12% to 7% of max health, warden kills heal 9% instead of 15%, and empty relic drafts mend less. Solar Bloom caches and lifesteal matter more.',
+      'Objectives ask more: core repairs cost 3 shards for 24%, passive core regen and wave-clear core healing are lower, lane gates have more health, and every mode gets a sharper clock or tougher objective.',
+    ],
+  },
   {
     version: '1.9.7',
     date: '2026-11-24',
