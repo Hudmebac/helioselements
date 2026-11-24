@@ -266,6 +266,19 @@ export class Enemy {
       // boss — every warden has its own silhouette so the name on the banner
       // matches the shape in the arena.
       const bossKind = ((this.bossIndex % BOSSES.length) + BOSSES.length) % BOSSES.length;
+      const seraph = bossKind === 5;
+      this.seraph = seraph;
+      if (seraph) {
+        // Stormglass reads as pale glass, not a white flare: keep the body
+        // darker than its wings and let the rim separate the silhouette.
+        bodyMat.color.setHex(0x2f7388);
+        bodyMat.emissive.setHex(0x4aaec7);
+        bodyMat.emissiveIntensity = 0.24;
+        this.baseEmissive = 0.24;
+        bodyMat.roughness = 0.66;
+        bodyMat.metalness = 0.22;
+        accentMat.color.setHex(0x70d2ea);
+      }
       let body;
       let coreY = 1.6;
       let ringRadius = 1.35;
@@ -341,7 +354,7 @@ export class Enemy {
         }
         coreY = 1.7;
         ringRadius = 1.55;
-        haloScale = 9;
+        haloScale = 8.2;
       } else { // Rift Warden — the original rift-carved obelisk
         body = new THREE.Mesh(geo('boss', () => new THREE.CylinderGeometry(0.55, 1.0, 3.2, 6)), bodyMat);
         body.position.y = 1.2;
@@ -357,8 +370,12 @@ export class Enemy {
       group.add(body);
       this.body = body;
 
-      const core = new THREE.Mesh(geo('bossCore', () => new THREE.SphereGeometry(0.34, 16, 12)), new THREE.MeshBasicMaterial({ color: 0xffffff, toneMapped: false }));
-      core.position.y = coreY;
+      const core = new THREE.Mesh(geo('bossCore', () => new THREE.SphereGeometry(0.34, 16, 12)), new THREE.MeshBasicMaterial({
+        color: seraph ? 0x63d8f7 : 0xffffff,
+        toneMapped: seraph,
+      }));
+      core.position.set(0, coreY, seraph ? 0.66 : 0);
+      if (seraph) core.scale.setScalar(0.85);
       group.add(core);
       this.bossCore = core;
       for (let i = 0; i < 2; i++) {
@@ -374,7 +391,7 @@ export class Enemy {
       }
       const halo = new THREE.Sprite(new THREE.SpriteMaterial({
         map: glowTexture('rgba(255,255,255,.85)', 'rgba(255,255,255,.18)', 'rgba(255,255,255,0)'),
-        color: this.glow, transparent: true, opacity: 0.6,
+        color: this.glow, transparent: true, opacity: seraph ? 0.32 : 0.6,
         blending: THREE.AdditiveBlending, depthWrite: false, toneMapped: false,
       }));
       halo.scale.set(haloScale, haloScale, 1);
@@ -645,10 +662,13 @@ export class Enemy {
       this.body.rotation.y += dt * 0.4;
       if (this.key === 'wisp') this.body.rotation.z = Math.sin(game.time * 2 + this.phase) * 0.2;
     }
-    if (this.halo) this.halo.material.opacity = 0.45 + Math.sin(game.time * 3 + this.phase) * 0.12;
+    if (this.halo) {
+      const haloBase = this.seraph ? 0.24 : 0.45;
+      this.halo.material.opacity = haloBase + Math.sin(game.time * 3 + this.phase) * (this.seraph ? 0.04 : 0.12);
+    }
     if (this.haloRing) this.haloRing.rotation.z += dt * 1.4;
     if (this.bossRingA) { this.bossRingA.rotation.z += dt * 0.8; this.bossRingB.rotation.z -= dt * 0.6; }
-    if (this.bossCore) this.bossCore.scale.setScalar(1 + Math.sin(game.time * 4) * 0.12);
+    if (this.bossCore) this.bossCore.scale.setScalar((this.seraph ? 0.85 : 1) * (1 + Math.sin(game.time * 4) * 0.12));
     if (this.eliteRing) this.eliteRing.rotation.z += dt * 1.2;
     if (this.orbiters) {
       for (const o of this.orbiters) {
