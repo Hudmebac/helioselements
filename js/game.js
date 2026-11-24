@@ -1036,8 +1036,8 @@ export class Game {
     const per = Math.max(1, Math.round(value / orbs));
     for (let i = 0; i < orbs; i++) this.pickups.spawnEssence(enemy.pos, per);
 
-    this.corpses.add(enemy);
-
+    // Bodies vanish into the kill burst; leaving them on the ground turns the
+    // arena into clutter, especially in first person.
     const shardChance = enemy.isBoss || enemy.miniBoss ? 1 : enemy.elite ? 0.35 : enemy.key === 'brute' ? 0.2 : 0.055;
     if (Math.random() < shardChance) {
       this.pickups.spawnShard(enemy.pos);

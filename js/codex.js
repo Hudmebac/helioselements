@@ -200,7 +200,7 @@ export const GUIDE = {
         `You fire automatically at whatever is nearest, so your hands are for movement, timing and the three buttons that matter: Dash, Surge, Ultimate.`,
         'On a phone or tablet the same three buttons sit under your right thumb, with the Forge and a hold-to-repair button beside them, and a floating stick under the left. Drag anywhere in the lower-left of the arena and the stick appears under your thumb; release and it recentres. Begin Wave appears between waves, and pause lives in the top-right corner.',
         'On a desktop you can play one-handed as well: hold the left mouse button anywhere on the arena and drag. The same ring appears, the guardian follows the drag exactly as it follows a thumb, and letting go stops him. WASD and the mouse still work together, so you can steer with one and nudge with the other.',
-        'The camera has three stops: Distant, Close and First person. Scroll the mouse wheel up to pull in and down to pull back out, click the View pill in the top-right, or press V. On a phone or tablet, the View button under Pause shows the current stop and advances on each tap. Close is a fixed closer angle that follows your position but never rotates. First person is a cockpit view — the guardian’s body is hidden and a canopy frame and reticle sit over the arena. In first person W/S move forward and back along the view, while A/D turn the cockpit left and right; there is no strafing in the cockpit. Distant and Close keep their existing world-axis controls.',
+        'The camera has three stops: Distant, Close and First person. Scroll the mouse wheel up to pull in and down to pull back out, click the View pill in the top-right, or press V. On a phone or tablet, the View button under Pause shows the current stop and advances on each tap. Close is a fixed closer angle that follows your position but never rotates. First person is a cockpit view — the guardian’s body is hidden behind a framed glass canopy, side pillars, a reticle and an instrument panel that shows the flight controls. The glass tones down arena glare so enemies stay readable up close, and fallen enemies burst away instead of leaving bodies on the ground. In first person W/S move forward and back along the view, while A/D turn the cockpit left and right; there is no strafing in the cockpit. Distant and Close keep their existing world-axis controls.',
       ],
       controls: true,
       note: `Every key can be rebound in Settings. The defaults are ${KEYBINDS.map(([k, v]) => k + ' for ' + v.toLowerCase()).slice(0, 4).join('; ')}. Settings → Interface → Touch controls (Auto, On, Off) decides whether the thumb layer appears; Auto turns it on for touch screens.`,
@@ -409,6 +409,16 @@ export const FAQ = [
    CHANGELOG — newest first. Add an entry every release.
    ------------------------------------------------------------ */
 export const CHANGELOG = [
+  {
+    version: '1.9.6',
+    date: '2026-11-24',
+    title: 'Seal the canopy',
+    items: [
+      'First person now reads as a cockpit window: a framed glass canopy with heavy side pillars, a sealed-canopy readout and a metal instrument panel showing Yaw, Thrust, Surge, Dash and Ultimate controls.',
+      'The canopy glass dims and desaturates the arena in first person, toning down the glare from close enemies so the view stays readable.',
+      'Killed enemies now vanish into their death burst instead of leaving bodies on the ground, removing corpse clutter in every camera view.',
+    ],
+  },
   {
     version: '1.9.5',
     date: '2026-11-24',

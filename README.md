@@ -15,7 +15,7 @@ One tab, no install, no account — a 3D roguelite that runs where you already a
 
 <br/>
 
-<img src="https://img.shields.io/badge/version-1.9.5-f5c26b?style=flat-square&labelColor=141726" alt="version 1.9.5">
+<img src="https://img.shields.io/badge/version-1.9.6-f5c26b?style=flat-square&labelColor=141726" alt="version 1.9.6">
 <img src="https://img.shields.io/badge/touch-ready-67ecff?style=flat-square&labelColor=141726" alt="touch ready">
 <img src="https://img.shields.io/badge/modes-8-67ecff?style=flat-square&labelColor=141726" alt="8 modes">
 <img src="https://img.shields.io/badge/engine-Three.js-8a5cff?style=flat-square&labelColor=141726" alt="Three.js">
@@ -150,7 +150,7 @@ Every run opens on an **empty arena** and begins on its own after **three second
 
 You can also play with the mouse alone: **hold the left mouse button anywhere on the arena and drag** — the same floating ring as on a phone appears, the guardian follows the drag, and releasing stops him. It combines with WASD, so you can steer with the keys and nudge with the mouse.
 
-**Camera:** scroll the mouse wheel **up** to pull in through **Distant → Close → First person**, and **down** to pull back out. The **View** pill in the top-right does the same with a click, or press <kbd>V</kbd>. Close is a fixed closer angle on the ring: it follows your position but never rotates with you. First person puts you at the guardian's eye line behind a cockpit canopy and reticle; the arena, enemies and auto-aim stay exactly as they were. In first person **W/S** move forward and back along the cockpit's view, while **A/D** turn the view left and right instead of strafing. The choice is remembered between runs.
+**Camera:** scroll the mouse wheel **up** to pull in through **Distant → Close → First person**, and **down** to pull back out. The **View** pill in the top-right does the same with a click, or press <kbd>V</kbd>. Close is a fixed closer angle on the ring: it follows your position but never rotates with you. First person puts you at the guardian's eye line inside a framed cockpit window, with a reticle and an instrument panel showing the flight controls; the canopy glass tones down arena glare so nearby enemies stay readable. In first person **W/S** move forward and back along the cockpit's view, while **A/D** turn the view left and right instead of strafing. The choice is remembered between runs.
 
 **Drafts:** every card can be passed over. **Skip** banks one **Swap** and moves on without a pick; **Swap** spends a banked skip for three fresh cards without losing the level. Swap stays disabled until you have skipped, its button shows how many you hold, and the bank survives the end of a run until you spend it. Rank cards wear a gold **RANK UP** line and print the **R1 → R2** step under the piece name. Mending is two-handed — holding <kbd>E</kbd> on a damaged structure silences both weapons until you let go.
 
@@ -300,6 +300,15 @@ The **Play** button at the top of this README points at the game, and `/site/` r
 ## Changelog
 
 <details open>
+<summary><b>v1.9.6 — Seal the canopy</b></summary>
+
+- **A real cockpit window:** first person now has a framed glass canopy with heavy side pillars and a metal instrument panel showing **Yaw**, **Thrust**, **Surge**, **Dash** and **Ultimate** controls, plus the sealed canopy readout.
+- **Toned-down glare:** the canopy glass dims and desaturates the arena in first person, so close enemies no longer blow out the view.
+- **No ground clutter:** killed enemies burst away on death instead of leaving bodies behind, keeping the arena clear in every camera view.
+
+</details>
+
+<details>
 <summary><b>v1.9.5 — Turn the cockpit</b></summary>
 
 - **First-person turning:** **A/D** and the arrow keys rotate the cockpit left and right instead of strafing. **W/S** still move along the view, and the arena's auto-aim keeps firing independently.
@@ -435,6 +444,6 @@ The **Play** button at the top of this README points at the game, and `/site/` r
 <br/>
 
 **Built with** Three.js (MIT) · Cinzel & Inter (OFL) · everything else hand-built — renderer, audio synthesis, UI and lore.<br/>
-<sub>Helios Elements v1.9.5 · no install, no account, no telemetry.</sub>
+<sub>Helios Elements v1.9.6 · no install, no account, no telemetry.</sub>
 
 </div>

@@ -50,10 +50,27 @@ export class UI {
   _build() {
     this.root.insertAdjacentHTML('beforeend', `
       <div class="cockpit" id="cockpit" aria-hidden="true">
+        <div class="cockpit-glass"></div>
         <div class="cockpit-frame"></div>
+        <i class="cockpit-pillar left"></i><i class="cockpit-pillar right"></i>
         <i class="cockpit-strut left"></i><i class="cockpit-strut right"></i>
         <div class="cockpit-reticle"><i class="t"></i><i class="b"></i><i class="l"></i><i class="r"></i></div>
-        <div class="cockpit-tag"><span>◉ FIRST PERSON</span><b id="cockpit-element">EMBER</b></div>
+        <div class="cockpit-dash">
+          <span class="dash-bolt left"></span>
+          <span class="dash-grip left"><i></i></span>
+          <div class="dash-main">
+            <div class="dash-readout"><span>◉ SOLAR COCKPIT · CANOPY SEALED</span><b id="cockpit-element">EMBER</b></div>
+            <div class="dash-controls">
+              <span class="dash-control"><i>A</i><i>D</i><em>YAW</em></span>
+              <span class="dash-control"><i>W</i><i>S</i><em>THRUST</em></span>
+              <span class="dash-control"><i>Q</i><em>SURGE</em></span>
+              <span class="dash-control"><i>SPC</i><em>DASH</em></span>
+              <span class="dash-control"><i>R</i><em>ULT</em></span>
+            </div>
+          </div>
+          <span class="dash-grip right"><i></i></span>
+          <span class="dash-bolt right"></span>
+        </div>
       </div>
       <div class="hud" id="hud">
         <div class="hud-vitals" id="hud-vitals">
