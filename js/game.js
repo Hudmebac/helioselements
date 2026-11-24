@@ -13,7 +13,7 @@ import {
   PACTS, normalizePacts, pactRanks, pactReward,
   DIFFICULTIES, normalizeDifficulty, difficultyUnlocked, DESCENT,
   CONTROL_ACTIONS, defaultKeys, keyLabel,
-  ACHIEVEMENTS, REWARDS, menuDepth, KINDLING, romanTier, CAMERA_VIEWS,
+  ACHIEVEMENTS, REWARDS, menuDepth, KINDLING, romanTier, CAMERA_VIEWS, HIT_RNG,
 } from './data.js';
 import { Player } from './player.js';
 import { EnemyManager } from './enemies.js';
@@ -99,6 +99,7 @@ export class Game {
     this.relicReturnState = 'playing';
     this.relicChoiceCount = 3;
     this.rerolls = 0;
+    this.swaps = 0;
     this.vault = null;
     this._storedToastAt = -9;
 
@@ -262,6 +263,8 @@ export class Game {
         if (code === 'Digit1') this.chooseCard(0);
         else if (code === 'Digit2') this.chooseCard(1);
         else if (code === 'Digit3') this.chooseCard(2);
+        else if (code === 'KeyS') this.skipCard();
+        else if (code === 'KeyX') this.swapCards();
         return;
       }
       if (this.state !== 'playing' || !this.player) return;
@@ -325,6 +328,7 @@ export class Game {
     this.runDescent = this.descentRank();
     this.relicChoiceCount = 3 + (this.save.rewards?.relic_choice ? 1 : 0) + (diff.relicChoices || 0);
     this.rerolls = (this.save.rewards?.boon_reroll ? 1 : 0) + (diff.rerolls || 0);
+    this.swaps = 0;
     this.starterKey = formKey;
     const modeMeta = MODES[this.mode];
     this.arenaElement = ARENAS[modeMeta.arena]?.element || null;
@@ -988,10 +992,11 @@ export class Game {
     enemy.flash();
 
     if (!opts.dot && !opts.silent) {
-      const kind = opts.crit ? 'crit' : elMult > 1 ? 'strong' : elMult < 1 ? 'weak' : '';
+      const kind = opts.crit ? 'crit' : opts.graze ? 'graze' : elMult > 1 ? 'strong' : elMult < 1 ? 'weak' : '';
+      const tag = opts.crit ? ' CRIT' : opts.graze ? ' GRAZE' : '';
       this.fx.number(
         new THREE.Vector3(enemy.pos.x, enemy.baseY + enemy.radius * 1.4, enemy.pos.z),
-        String(Math.round(dmg)),
+        String(Math.round(dmg)) + tag,
         kind
       );
     }
@@ -1464,6 +1469,62 @@ export class Game {
     return true;
   }
 
+  /* Skip banks one swap for the run. A swap spends that bank to roll a fresh
+     trio without giving up the level that opened the draft. */
+  skipCard() {
+    if (this.state !== 'levelup') return false;
+    this.swaps++;
+    this.audio.ui();
+    this.ui.toast('DRAFT SKIPPED · SWAP BANKED (' + this.swaps + ')', '#9fe8ff');
+    this._afterDraft();
+    return true;
+  }
+
+  swapCards() {
+    if (this.state !== 'levelup' || this.swaps <= 0) return false;
+    this.swaps--;
+    const before = this.cards.map(c => [c.kind, c.id || c.weaponKey || c.wardKey || c.elementKey || c.piece || c.name].join(':')).sort().join('|');
+    for (let i = 0; i < 4; i++) {
+      this.cards = this.rollCards();
+      const after = this.cards.map(c => [c.kind, c.id || c.weaponKey || c.wardKey || c.elementKey || c.piece || c.name].join(':')).sort().join('|');
+      if (after !== before) break;
+    }
+    this.audio.ui();
+    this.ui.showLevelUp(this, this.cards);
+    this.ui.toast('SWAP USED · 3 NEW OPTIONS · ' + this.swaps + ' STORED', '#9fe8ff');
+    return true;
+  }
+
+  _afterDraft() {
+    this.pendingLevels = Math.max(0, this.pendingLevels - 1);
+    this.ui.refreshBoons(this.player);
+    if (this.pendingLevels > 0) {
+      this.cards = this.rollCards();
+      this.ui.showLevelUp(this, this.cards);
+    } else {
+      this.state = 'playing';
+      this.ui.hideLevelUp();
+      if (this.player) this.player.invuln = Math.max(this.player.invuln, 0.9);
+      this.engine.pulseExposure(0.18);
+      this._openNextRelicDraft();
+    }
+  }
+
+  rollPlayerHit() {
+    const r = Math.random();
+    if (r < HIT_RNG.playerMiss) return { kind: 'miss', mult: 0 };
+    if (r < HIT_RNG.playerMiss + HIT_RNG.playerGraze) return { kind: 'graze', mult: HIT_RNG.grazeMult };
+    return { kind: 'hit', mult: 1 };
+  }
+
+  rollEnemyHit() {
+    const r = Math.random();
+    if (r < HIT_RNG.enemyMiss) return { kind: 'miss', mult: 0 };
+    if (r < HIT_RNG.enemyMiss + HIT_RNG.enemyGraze) return { kind: 'graze', mult: HIT_RNG.grazeMult };
+    if (r > 1 - HIT_RNG.enemyCrit) return { kind: 'crit', mult: HIT_RNG.critMult };
+    return { kind: 'hit', mult: 1 };
+  }
+
   rollCards() {
     const cards = [];
     const p = this.player;
@@ -1558,10 +1619,11 @@ export class Game {
           : 'Rank ' + next + ' of ' + WEAPON_RANK.max + '. +' + dmgStep + '% weapon damage, and ' + weaponRarityFor(next).toUpperCase() + ' rarity.';
       return {
         kind: 'loadout', action: 'rank', piece: it.piece,
-        name: '+1 Rank · ' + it.name,
+        rankUp: true, fromRank: it.rank, toRank: next,
+        name: it.name,
         desc,
         icon: it.icon, rarity, css: it.css,
-        tag: it.slot, left: 'RANK ' + it.rank + ' → ' + next,
+        tag: 'RANK UP · ' + it.slot, left: 'R' + it.rank + ' → R' + next,
         right: isWard ? 'WARD UP'
           : isSide ? '+' + dmgStep + '% · ' + tempoStep + '% RATE'
           : (weaponRarityFor(next) === weaponRarityFor(it.rank) ? '+' + dmgStep + '% DMG' : weaponRarityFor(next).toUpperCase()),
@@ -1671,18 +1733,22 @@ export class Game {
     if (!p) return false;
     if (piece === 'ward') {
       const key = p.ward?.key;
-      if (!key || !p.rankWard()) return false;
+      if (!key) return false;
+      const oldRank = p.ward.rank;
+      if (!p.rankWard()) return false;
       const def = WARDS[key];
       this.audio.fusion();
       this.fx.ring(p.pos, def.color, { r0: (def.radius || 4) * 0.4, r1: def.radius || 4, life: 0.55, opacity: 0.7 });
-      this.ui.toast('WARD RANKED · ' + def.name.toUpperCase() + ' R' + p.ward.rank, def.css);
+      this.ui.toast('WARD RANK UP · ' + def.name.toUpperCase() + ' · R' + oldRank + ' → R' + p.ward.rank, def.css);
     } else {
+      const oldRank = piece === 'side' ? p.sideWeaponRank : p.weaponRank;
       if (!p.rankWeapon(piece)) return false;
       const w = piece === 'side' ? p.sideForm?.weapon : p.form.weapon;
+      const newRank = piece === 'side' ? p.sideWeaponRank : p.weaponRank;
       this.audio.levelUp();
       this.fx.ring(p.pos, w?.css ? p.form.glow : 0xffd98a, { r0: 0.4, r1: 3.2, life: 0.45, opacity: 0.6 });
       this.ui.toast(
-        'RANK UP · ' + (w?.name || 'WEAPON').toUpperCase() + ' R' + (piece === 'side' ? p.sideWeaponRank : p.weaponRank) +
+        'RANK UP · ' + (w?.name || 'WEAPON').toUpperCase() + ' · R' + oldRank + ' → R' + newRank +
         ' · +' + Math.round(WEAPON_RANK.perRank * 100) + '% DMG' +
         (piece === 'side' ? ' · +' + Math.round(WEAPON_RANK.sidearmRankTempo * 100) + '% RATE' : ''),
         w?.css || '#ffd98a'
@@ -1788,19 +1854,7 @@ export class Game {
     }
     this.player.syncRelicVitals();
     this.audio.ui();
-    this.pendingLevels = Math.max(0, this.pendingLevels - 1);
-    this.ui.refreshBoons(this.player);
-
-    if (this.pendingLevels > 0) {
-      this.cards = this.rollCards();
-      this.ui.showLevelUp(this, this.cards);
-    } else {
-      this.state = 'playing';
-      this.ui.hideLevelUp();
-      if (this.player) this.player.invuln = Math.max(this.player.invuln, 0.9);
-      this.engine.pulseExposure(0.18);
-      this._openNextRelicDraft();
-    }
+    this._afterDraft();
   }
 
   applyBoon(card) {

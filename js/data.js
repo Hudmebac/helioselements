@@ -3,7 +3,7 @@
    Elements, fusions, enemies, boons and wave composition.
    ============================================================ */
 
-export const VERSION = '1.9.1';
+export const VERSION = '1.9.2';
 
 /* Three camera stops, from the whole ring to the guardian's own eyes. */
 export const CAMERA_VIEWS = [
@@ -567,7 +567,7 @@ export function buildWave(wave, pacts = {}, difficulty = null, bonus = null, the
     const total = Math.min(56, Math.round((6 + wave * 1.7) * (1 + density * 0.16) * (d.spawn || 1) * (b.spawn || 1)));
     const pool = [{ key: 'crawler', w: 100 }];
     if (wave >= 2) pool.push({ key: 'wisp', w: Math.min(60, 20 + wave * 4) });
-    if (wave >= 3) pool.push({ key: 'spitter', w: Math.min(45, 10 + wave * 3) });
+    if (wave >= 3) pool.push({ key: 'spitter', w: Math.min(64, 16 + wave * 4) });
     if (wave >= 4) pool.push({ key: 'brute', w: Math.min(55, 8 + wave * 3.4) });
     // An attuned arena sends the elements that beat it.
     const counters = theme ? countersOf(theme) : [];
@@ -712,6 +712,20 @@ export function xpToNext(level) { return Math.round(20 + level * 13 + Math.pow(l
 /* ------------------------------------------------------------
    WEAPON RANKS — one weapon, grown by levels, replaced by choice.
    ------------------------------------------------------------ */
+/* A small combat gamble on every clean hit. Player shots can miss or graze;
+   enemy blows can miss, graze, or land a critical. DoTs and area effects do
+   not roll — only the attacks that actually connect. */
+export const HIT_RNG = {
+  playerMiss: 0.04,
+  playerGraze: 0.10,
+  playerCrit: 0.05,
+  enemyMiss: 0.08,
+  enemyGraze: 0.12,
+  enemyCrit: 0.05,
+  grazeMult: 0.55,
+  critMult: 1.6,
+};
+
 export const WEAPON_RANK = {
   max: 5,                 // one weapon, five ranks — earned in drafts
   perRank: 0.20,          // +20% damage per rank held — a rank must beat a common boon

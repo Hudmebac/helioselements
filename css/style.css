@@ -325,6 +325,8 @@
     animation: dmgFloat .82s ease-out forwards; font-variant-numeric: tabular-nums;
   }
   .dmg.crit { font-size: 21px; color: #ffbe5c; }
+  .dmg.graze { font-size: 12px; color: #8fd8ff; letter-spacing: .06em; }
+  .dmg.miss { font-size: 12px; color: #aeb7cc; letter-spacing: .14em; }
   .dmg.heal { color: #8dffb0; }
   .dmg.shield { color: #8fe3ff; }
   @keyframes dmgFloat {
@@ -583,7 +585,26 @@
     width: 18px; height: 18px; display: grid; place-content: center;
   }
   .boon-card:hover .pick-hint { color: var(--rc); border-color: var(--rc); }
-  .levelup-foot { font-size: 8px; letter-spacing: .22em; text-transform: uppercase; color: rgba(255,255,255,.3); }
+  .boon-card.rank-up {
+    border-color: rgba(255, 217, 138, .55);
+    box-shadow: inset 0 0 44px -20px #ffd98a, 0 0 0 1px rgba(255, 217, 138, .14);
+  }
+  .boon-card.rank-up .boon-rarity { color: #ffd98a; }
+  .rank-delta {
+    display: flex; align-items: center; gap: 7px; width: max-content; margin-top: 8px;
+    padding: 4px 9px; border-radius: 7px; border: 1px solid rgba(255, 217, 138, .35);
+    background: rgba(255, 217, 138, .09); font-size: 11px; letter-spacing: .12em; color: #ffd98a;
+  }
+  .rank-delta em { font-style: normal; font-size: 7px; letter-spacing: .2em; color: rgba(255, 217, 138, .72); }
+  .rank-delta b { font-family: var(--font-display); font-size: 15px; font-weight: 600; }
+  .rank-delta i { font-style: normal; color: rgba(255, 217, 138, .7); }
+  .levelup-foot {
+    display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 10px;
+    font-size: 8px; letter-spacing: .22em; text-transform: uppercase; color: rgba(255,255,255,.3);
+  }
+  .skip-btn { border-color: rgba(255, 217, 138, .4); color: #ffd98a; }
+  .swap-btn { border-color: rgba(143, 216, 255, .4); color: #9fe8ff; }
+  .swap-btn:disabled { opacity: .35; cursor: not-allowed; }
 
   /* ---------- PAUSE / GAMEOVER / MODAL ---------- */
   .screen.pause, .screen.gameover { display: none; place-content: center; }

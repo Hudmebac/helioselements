@@ -442,7 +442,9 @@ export class UI {
           </div>
           <div class="boon-grid" id="boon-grid"></div>
           <div class="levelup-foot">
-            <span>Press 1 · 2 · 3 to choose</span>
+            <span>Press 1 · 2 · 3 · S skip · X swap</span>
+            <button class="btn small skip-btn" data-act="skip" id="levelup-skip">Skip · +1 Swap</button>
+            <button class="btn small swap-btn" data-act="swap" id="levelup-swap" disabled>Swap · 0</button>
             <button class="btn small reroll-btn" data-act="reroll" id="levelup-reroll">Reroll</button>
           </div>
         </div>
@@ -929,6 +931,14 @@ export class UI {
       case 'reroll':
         this.audio.ui();
         this.game.rerollCards();
+        break;
+      case 'skip':
+        this.audio.ui();
+        this.game.skipCard();
+        break;
+      case 'swap':
+        this.audio.ui();
+        this.game.swapCards();
         break;
       case 'forge':
         this.audio.forgeOpen();
@@ -2543,10 +2553,13 @@ export class UI {
         : c.kind === 'loadout'
           ? `<span>${c.left || ''}</span><b>${c.right || ''}</b>`
           : `<span>STACK ${c.stack} / ${c.max}</span><b>${c.max > 1 ? 'STACKABLE' : 'UNIQUE'}</b>`;
-      return `<button class="boon-card" data-card="${i}" style="--rc:${css}">
+      const rank = c.rankUp
+        ? `<span class="rank-delta"><em>RANK</em><b>R${c.fromRank}</b><i>→</i><b>R${c.toRank}</b></span>`
+        : '';
+      return `<button class="boon-card${c.rankUp ? ' rank-up' : ''}" data-card="${i}" style="--rc:${css}">
         <span class="boon-rarity">${rarity}</span>
         <span class="boon-icon">${c.icon}</span>
-        <h3>${c.name}</h3>
+        <h3>${c.name}${rank}</h3>
         <p>${c.desc}</p>
         <div class="boon-stock">${stock}</div>
         <span class="pick-hint">${i + 1}</span>
@@ -2556,6 +2569,14 @@ export class UI {
     if (reroll) {
       reroll.hidden = game.rerolls <= 0;
       reroll.textContent = 'Reroll · ' + game.rerolls;
+    }
+    const swap = document.getElementById('levelup-swap');
+    if (swap) {
+      swap.disabled = game.swaps <= 0;
+      swap.textContent = 'Swap · ' + game.swaps;
+      swap.title = game.swaps > 0
+        ? 'Spend 1 stored swap for three fresh options'
+        : 'Skip a draft first to store a swap';
     }
     document.getElementById('screen-levelup').classList.add('active');
     this.hud.classList.remove('on');

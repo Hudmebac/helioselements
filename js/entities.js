@@ -108,7 +108,9 @@ export class Projectiles {
     p.trailColor = cfg.glow ?? cfg.color;
     p.color = cfg.color;
     p.isEnemy = !!cfg.isEnemy;
+    p.element = cfg.element || null;
     p.fromTower = !!cfg.fromTower;
+    p.playerShot = !!cfg.playerShot;
     p.hit.clear();
     p.trailT = 0;
     this.list.push(p);
@@ -154,7 +156,16 @@ export class Projectiles {
         if (player && player.alive && !player.invulnerable) {
           const dx = pos.x - player.pos.x, dz = pos.z - player.pos.z;
           if (dx * dx + dz * dz < 1.25) {
-            player.takeDamage(p.damage, null);
+            // Enemy fire can miss cleanly or only graze. A miss never resets
+            // the player's invulnerability window, because it never landed.
+            const roll = game.rollEnemyHit?.() || { kind: 'hit', mult: 1 };
+            if (roll.mult <= 0) {
+              this.fx.number(new THREE.Vector3(player.pos.x, 1.9, player.pos.z), 'MISS', 'miss');
+              this.fx.trail(pos, p.glow ?? p.color, 0.18, 0.25);
+              this._kill(i);
+              continue;
+            }
+            player.takeDamage(p.damage * roll.mult, null, { kind: roll.kind, element: p.element });
             this.fx.burst(pos, p.color, { count: 9, speed: 3.4, size: 0.18, life: 0.4 });
             this.fx.ring(pos, p.glow ?? p.color, { r0: 0.2, r1: 1.2, life: 0.2, opacity: 0.5 });
             this._kill(i);
@@ -205,8 +216,23 @@ export class Projectiles {
   _applyHit(p, enemy, game) {
     p.hit.add(enemy);
     const pos = p.mesh.position.clone();
-    game.damageEnemy(enemy, p.damage, {
-      crit: p.crit, color: p.color, lifesteal: p.lifesteal, hitPos: pos, element: p.element,
+    // A shot that touches an enemy can still miss or only graze. Critical
+    // damage was rolled when the shot left the weapon; a graze overrides it.
+    const roll = p.playerShot && game.rollPlayerHit
+      ? game.rollPlayerHit()
+      : { kind: 'hit', mult: 1 };
+    if (roll.mult <= 0) {
+      game.fx.number(
+        new THREE.Vector3(enemy.pos.x, enemy.baseY + enemy.radius * 1.4, enemy.pos.z),
+        'MISS', 'miss'
+      );
+      game.fx.trail(pos, p.glow ?? p.color, 0.14, 0.22);
+      return true;
+    }
+    const hitDamage = p.damage * roll.mult;
+    game.damageEnemy(enemy, hitDamage, {
+      crit: p.crit && roll.kind !== 'graze', graze: roll.kind === 'graze',
+      color: p.color, lifesteal: p.lifesteal, hitPos: pos, element: p.element,
     });
     if (p.healOnHit > 0 && game.player) game.player.heal(p.healOnHit, true);
     if (p.ignite && !enemy.dead) enemy.applyBurn(p.ignite.dps, p.ignite.duration);
@@ -219,7 +245,7 @@ export class Projectiles {
 
     if (p.aoe > 0) {
       const radius = p.aoe * (1 + (game.player?.stats.aoeBonus || 0));
-      game.areaDamage(pos, radius, p.damage * 0.55, {
+      game.areaDamage(pos, radius, hitDamage * 0.55, {
         exclude: enemy, color: p.glow ?? p.color, isSplash: true, lifesteal: p.lifesteal, element: p.element,
       });
       this.fx.ring(pos, p.color, { r0: 0.4, r1: radius, life: 0.35, opacity: 0.55 });

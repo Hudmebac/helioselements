@@ -6,7 +6,7 @@
 import { arenaClamp, glowTexture, shadowTexture, sigilTexture } from './engine.js';
 import {
   relicById, SIEGE, elementMult, WEAPON_RANK, weaponRarityFor, weaponFor, applyWeapon,
-  WARDS, WARD_MAX_RANK,
+  WARDS, WARD_MAX_RANK, HIT_RNG,
 } from './data.js';
 
 export class Player {
@@ -735,12 +735,13 @@ export class Player {
     this.sentinels.push({ mesh, halo, angle: Math.random() * 6.28, cd: Math.random() * 0.5 });
   }
 
-  takeDamage(amount, source = null) {
+  takeDamage(amount, source = null, opts = {}) {
     if (!this.alive || this.invulnerable) return;
     const rb = this.relicBonuses();
     amount *= this.stats.damageTaken * Math.max(0.15, 1 - (rb.damageReduction || 0));
     // Elemental affinity: the founding sigil decides what hurts you more.
-    if (source?.element) amount *= elementMult(source.element, this.game.defendElement());
+    const element = opts.element || source?.element;
+    if (element) amount *= elementMult(element, this.game.defendElement());
     // Sunforge Aegis — guarding the core hardens you.
     if (this.game.coreGuard) amount *= 1 - SIEGE.aegisDr;
     this.game.runStats.damageTaken += amount;
@@ -761,7 +762,9 @@ export class Player {
 
     if (amount > 0.4) {
       this.stats.hp -= amount;
-      this.game.fx.number(new THREE.Vector3(this.pos.x, 1.9, this.pos.z), '-' + Math.round(amount), '');
+      const kind = opts.kind === 'crit' || opts.kind === 'graze' ? opts.kind : '';
+      const tag = kind === 'crit' ? ' CRIT' : kind === 'graze' ? ' GRAZE' : '';
+      this.game.fx.number(new THREE.Vector3(this.pos.x, 1.9, this.pos.z), '-' + Math.round(amount) + tag, kind);
       this.game.audio.hurt();
       this.game.engine.addShake(0.75);
       this.game.fx.flash('hit');
@@ -878,9 +881,17 @@ export class Player {
       this.aim.copy(this.dir);
     }
 
+    // Repairing is a two-handed job: holding the mend channel silences both
+    // arms until the guardian lets go of the structure.
+    const repairing = !!this.game.repairTarget && !!this.game.isDown?.('repair');
+    if (repairing) {
+      this.fireTimer = 0;
+      this.sideTimer = 0;
+    }
+
     // attack — the weapon in the firing hand
     this.fireTimer -= dt;
-    if (this.fireTimer <= 0) {
+    if (!repairing && this.fireTimer <= 0) {
       const tgt = target || this.game.enemies.nearest(this.pos, 17);
       if (tgt) {
         this.attack(tgt);
@@ -893,7 +904,7 @@ export class Player {
     // the second arm: its own tempo, half a step behind the first
     if (this.sideForm) {
       this.sideTimer -= dt;
-      if (this.sideTimer <= 0) {
+      if (!repairing && this.sideTimer <= 0) {
         // The second arm picks its own target — one the firing hand is not
         // already shooting when there is a choice — and aims at it itself, so
         // the two weapons cover different sides of the crowd.
@@ -1008,7 +1019,7 @@ export class Player {
     const base = f.stats.damage * s.damageMult * (1 + (rb.damage || 0)) * (1 + (this.game.giftBoost || 0))
       * rankMult * rarityMult * (cfg.boost || 1) * (cfg.damageScale || 1) * closeMult;
     const count = Math.max(1, (f.stats.projectiles || 1) + s.extraProjectiles + (rb.projectiles || 0) + (ce.projectiles || 0) * cr);
-    const critChance = (f.stats.crit || 0) + s.crit + (rb.crit || 0) + (ce.crit || 0) * cr;
+    const critChance = HIT_RNG.playerCrit + (f.stats.crit || 0) + s.crit + (rb.crit || 0) + (ce.crit || 0) * cr;
     const pierce = (f.stats.pierce || 0) + s.extraPierce + (rb.pierce || 0) + (ce.pierce || 0) * cr;
     const aoe = (f.stats.aoe || 0) + (rb.aoe || 0) + (ce.aoe || 0) * cr;
     const homing = (f.stats.homing || 0) + (rb.homing || 0) + (ce.homing || 0) * cr;
@@ -1041,7 +1052,7 @@ export class Player {
         halo: shape === 'boulder' ? 2.9 : 2.4,
         stretch: f.stats.aoe ? 1 : 1.8,
         pierce, homing, aoe, chain, knockback: knock,
-        ignite, slow: f.slow || null,
+        ignite, slow: f.slow || null, playerShot: true,
         lifesteal, healOnHit, crit, life: WEAPON_RANK.baseRange * (s.range || 1) * (cfg.rangeMult || 1),
       });
       this.game.fx.trail(start, f.glow, 0.22, 0.2);

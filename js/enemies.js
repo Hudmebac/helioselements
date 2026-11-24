@@ -129,6 +129,7 @@ export class Enemy {
 
     // boss timers
     this.volleyT = 3.2;
+    this.volleyCd = 2.2 + Math.random() * 2.4;
     this.chargeT = 6.5;
     this.summonT = 11;
     this.chargeWind = 0;
@@ -495,16 +496,33 @@ export class Enemy {
     // clamp
     arenaClamp(this.pos, 0.8);
 
+    // Elite and crowned enemies answer with a bolt of their own, even when
+    // their body is built for melee.
+    this.volleyCd -= dt;
+    if (!this.isBoss && !this.type.ranged && (this.elite || this.miniBoss)
+      && this.volleyCd <= 0 && player.alive && playerDist < 16) {
+      this.volleyCd = (this.miniBoss ? 3.2 : 4.4) + Math.random() * 1.2;
+      this._fireAtPlayer(game, this.miniBoss ? 3 : 1, this.miniBoss ? 0.18 : 0, this.miniBoss ? 0.6 : 0.5);
+    }
+
     // contact — the player can body-block a creature headed for the core
     this.attackCd -= dt;
     const contactRange = this.radius + 0.95;
     if (playerDist < contactRange && this.attackCd <= 0 && this.chargeWind <= 0) {
-      player.takeDamage(this.damage, this);
+      const roll = game.rollEnemyHit?.() || { kind: 'hit', mult: 1 };
+      if (roll.mult <= 0) {
+        fx.number(new THREE.Vector3(player.pos.x, 1.9, player.pos.z), 'MISS', 'miss');
+        fx.trail(new THREE.Vector3((this.pos.x + player.pos.x) / 2, 0.8, (this.pos.z + player.pos.z) / 2), this.glow, 0.14, 0.22);
+      } else {
+        player.takeDamage(this.damage * roll.mult, this, { kind: roll.kind });
+      }
       this.attackCd = this.isBoss ? 1.1 : 0.9;
-      const kb = this.isBoss ? 3.4 : 1.2;
-      const pnx = playerDx / playerDist, pnz = playerDz / playerDist;
-      player.vel.x -= pnx * kb;
-      player.vel.z -= pnz * kb;
+      if (roll.mult > 0) {
+        const kb = this.isBoss ? 3.4 : 1.2;
+        const pnx = playerDx / playerDist, pnz = playerDz / playerDist;
+        player.vel.x -= pnx * kb;
+        player.vel.z -= pnz * kb;
+      }
     }
 
     // structures under attack
@@ -566,7 +584,9 @@ export class Enemy {
     const dx = game.player.pos.x - this.pos.x;
     const dz = game.player.pos.z - this.pos.z;
     const playerDist = Math.hypot(dx, dz);
-    const bodyBlock = this.isBoss ? 6.5 : this.radius + 2.2;
+    // Ranged creatures claim the player from further out; they would rather
+    // shoot a guardian than plink a tower all night.
+    const bodyBlock = this.isBoss ? 6.5 : this.type.ranged ? 15 : this.radius + 2.2;
     return playerDist <= bodyBlock ? playerTarget : structure;
   }
 
@@ -596,17 +616,33 @@ export class Enemy {
 
     this.shootCd = (this.shootCd ?? 1.8) - dt;
     if (this.shootCd <= 0 && dist < 17) {
-      this.shootCd = 2.5 + Math.random() * 0.8;
-      const dir = new THREE.Vector3(nx, 0, nz);
+      this.shootCd = (this.miniBoss ? 1.9 : 1.8) + Math.random() * 0.7;
+      this._fireAtPlayer(game, this.miniBoss ? 3 : 1, this.miniBoss ? 0.16 : 0, 0.85);
+    }
+  }
+
+  _fireAtPlayer(game, count = 1, spread = 0, damageScale = 0.7) {
+    const player = game.player;
+    if (!player?.alive) return false;
+    const dx = player.pos.x - this.pos.x;
+    const dz = player.pos.z - this.pos.z;
+    if (Math.hypot(dx, dz) > 17) return false;
+    const base = Math.atan2(dx, dz);
+    for (let i = 0; i < count; i++) {
+      const a = base + (i - (count - 1) / 2) * spread;
       game.projectiles.fire({
         pos: new THREE.Vector3(this.pos.x, this.baseY, this.pos.z),
-        dir, speed: 10.5, damage: this.damage * 0.85,
-        color: this.glow, size: 1.1, isEnemy: true, life: 3.2,
-        trail: true, glow: this.color,
+        dir: new THREE.Vector3(Math.sin(a), 0, Math.cos(a)),
+        speed: 10.5, damage: this.damage * damageScale,
+        color: this.glow, size: count > 1 ? 0.92 : 1.05,
+        isEnemy: true, life: 3.2, trail: true, glow: this.color, element: this.element,
       });
-      game.audio.shoot('stone');
-      game.fx.burst(new THREE.Vector3(this.pos.x, this.baseY, this.pos.z), this.glow, { count: 4, speed: 2, size: 0.16, life: 0.3 });
     }
+    game.audio.shoot('stone');
+    game.fx.burst(new THREE.Vector3(this.pos.x, this.baseY, this.pos.z), this.glow, {
+      count: count > 1 ? 7 : 4, speed: 2.4, size: 0.16, life: 0.3,
+    });
+    return true;
   }
 
   _bossUpdate(dt, game, nx, nz, dist, speed) {
@@ -670,7 +706,7 @@ export class Enemy {
           pos: new THREE.Vector3(this.pos.x, 1.5, this.pos.z),
           dir: new THREE.Vector3(Math.cos(a), 0, Math.sin(a)),
           speed: 9.5, damage: this.damage * 0.55, color: this.glow,
-          size: 1.15, isEnemy: true, life: 4, trail: true, glow: this.color,
+          size: 1.15, isEnemy: true, life: 4, trail: true, glow: this.color, element: this.element,
         });
       }
       game.audio.surge('umbra');

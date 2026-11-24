@@ -222,6 +222,7 @@ export const GUIDE = {
       body: [
         `Kills drop essence; essence levels you. Every level opens a draft of three boons — damage, tempo, projectiles, pierce, crit, lifesteal, movement, health, shields, thorns, orbs.`,
         `Boons stack up to their own limit, and the card tells you which rarity you are being offered: common, rare, epic, legendary. Some runs give you rerolls; spend them on a draft you cannot use.`,
+        `A draft you cannot use can be skipped with ${keyLabel('KeyS')} or the Skip button. Every skip banks one Swap; ${keyLabel('KeyX')} or the Swap button spends a banked skip on three fresh cards without giving up the level. Swap is disabled until you have skipped at least once, and the button always shows how many you hold.`,
         `You can store a level-up with ${keyLabel('KeyL')} and open it later, which is how you avoid drafting in the middle of a warden's charge.`,
       ],
     },
@@ -242,6 +243,8 @@ export const GUIDE = {
         `You carry two weapons and one defence: a firing hand, a second arm that fires on its own beat for ${Math.round(WEAPON_RANK.sidearmDamage * 100)}% damage at ${Math.round(WEAPON_RANK.sidearmRange * 100)}% reach, and a ward — ${Object.values(WARDS).map(w => w.name).join(', ')}. Drafts offer an empty slot before anything else, and two options each time, so the pick is yours.`,
         `Ranks are earned, not handed out. A weapon holds ${WEAPON_RANK.max} ranks worth +${Math.round(WEAPON_RANK.perRank * 100)}% damage each, and the second arm's ranks also buy ${Math.round(WEAPON_RANK.sidearmRankTempo * 100)}% fire rate and ${Math.round(WEAPON_RANK.sidearmRankReach * 100)}% reach; a ward holds ${WARD_MAX_RANK}, and each of its ranks multiplies its whole effect — the card prints the numbers. Every level's draft offers a rank to the piece that is furthest behind, so focusing one arm to legendary costs the other its growth. The firing hand cannot be left behind, though: while it sits below one rank per ${WEAPON_RANK.step} levels, its rank card is guaranteed in the draft. Rarity follows rank — common, rare, epic, legendary — and at levels ${WEAPON_RANK.swapLevels.join(', ')} a rival weapon is offered outright, or the second arm is promoted into the firing hand and the old blade drops one slot instead of being lost. A replacement starts again at rank 1: a swap is a commitment.`,
         `Range is short on purpose. A shot loosed at a target within ${WEAPON_RANK.closeRange} paces hits ${Math.round((WEAPON_RANK.closeBonus - 1) * 100)}% harder, which rewards standing your ground instead of kiting; Long Shot (+15%) and Far Sight (+25%) are the boons that buy reach back. The HUD shows the firing hand, its rank and rarity, then the second arm and the ward.`,
+        `A rank card is not a new weapon: it says RANK UP at the top and prints the exact R1 → R2 step under the piece name. The rank-up toast repeats it, so a growth pick never has to be guessed from a percentage.`,
+        `Your shots are not guaranteed: a 5% base critical (1.8x), 4% miss cleanly and 10% graze for 55% damage, while enemy blows miss 8%, graze 12% and crit for 160% 5% of the time. The floating number names the result — CRIT, GRAZE or MISS — so a lucky or unlucky exchange is legible.`,
       ],
     },
     {
@@ -259,7 +262,7 @@ export const GUIDE = {
       title: 'Shards, the Forge and repairs',
       body: [
         `Clearing waves, felling wardens and calling waves early all pay sun shards. Shards buy towers on the pedestals around the core (${keyLabel('KeyB')} opens the Forge) and upgrades for the towers you already own.`,
-        `Hold ${keyLabel('KeyE')} near the core or a damaged tower to repair it by hand. It is free and it is slow, and standing still with your hands full is exactly what the horde wants.`,
+        `Hold ${keyLabel('KeyE')} near the core or a damaged tower to repair it by hand. It is free and it is slow, and standing still with your hands full is exactly what the horde wants. Mending takes both hands: neither weapon fires until you let go.`,
         `Towers hold; they do not win. In Sunfall Lanes only your own fire can break a Rift Gate, and in the Siege only your own fire kills the warden.`,
       ],
     },
@@ -270,6 +273,7 @@ export const GUIDE = {
       body: [
         `Every fifth wave is a warden: ${BOSSES.map(b => b.name).join(', ')}. Deeper difficulty tiers start further along that list, so a Hardcore run meets different wardens than a Solar one.`,
         `Every third wave sends a crowned sub-boss ahead of the horde — one of six: Cinder Herald, Glass Revenant, Brine Custodian, Squall Matron, Dawn Inquisitor or Granite Sentinel. They rotate with the wave and the difficulty rank, a second one joins from wave six, and they hit like elites, carry far more health, and always drop a shard.`,
+        `Shooters are a real share of the horde now: Spitters arrive more often from wave three, prefer the guardian to a tower, and elites and crowned sub-bosses throw their own bolts or a three-shot fan. Kill the ones with lenses first.`,
         `Kills can shed kindling — a burning mote that drifts to you if you are close and pulls itself in if you are not. Elites drop three and wardens drop four. Collect ${KINDLING.need} and the dawn answers with a Dawn Gift: +${Math.round(KINDLING.boostDamage * 100)}% damage for ${KINDLING.boostTime} seconds, plus what the mission actually needs — two shards and a mended core in Sunforge, four seconds on the clock in Blitz, reliquary repairs in Caravan, a circle charge in Ritual. Every second gift sends a wisp to fight beside you.`,
         `Bodies no longer carpet the arena. Fallen enemies ash out in a few seconds — a puff of ash, a sink, and they are gone.`,
         `From wave two, a wave can arrive blessed: more enemies for more shards, faster enemies for more marks, or a thinner horde with a smaller purse. The bonus is shown in the wave pill before the wave starts.`,
@@ -405,6 +409,18 @@ export const FAQ = [
    CHANGELOG — newest first. Add an entry every release.
    ------------------------------------------------------------ */
 export const CHANGELOG = [
+  {
+    version: '1.9.2',
+    date: '2026-11-24',
+    title: 'Skip, swap, and the near miss',
+    items: [
+      'Mending takes both hands: while you hold the repair channel on a damaged structure, neither weapon fires. Let go and the firing hand picks the fight back up immediately.',
+      'Every shot can miss. Player fire has a 5% base crit chance, misses 4% of the time and grazes for 55% damage 10% of the time; enemy blows miss 8%, graze 12%, and crit for 160% damage 5% of the time. Floating text now reads CRIT, GRAZE or MISS so the roll is visible.',
+      'The horde shoots back more often. Spitters are more common from wave three and claim the player from 15 paces instead of hugging a tower; elites and crowned sub-bosses also throw a bolt or a three-shot fan at the guardian.',
+      'Rank cards are unmistakable: the card wears RANK UP and prints a large R1 → R2 delta beside the piece name, and the rank-up toast repeats the old and new rank.',
+      'Drafts can be skipped. Skip banks one Swap and advances the draft without a pick; Swap spends a stored skip to roll three fresh options without using up the level. Swap stays disabled until you have skipped. S skips and X swaps on the keyboard.',
+    ],
+  },
   {
     version: '1.9.1',
     date: '2026-11-24',
