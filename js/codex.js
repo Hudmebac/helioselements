@@ -200,7 +200,7 @@ export const GUIDE = {
         `You fire automatically at whatever is nearest, so your hands are for movement, timing and the three buttons that matter: Dash, Surge, Ultimate.`,
         'On a phone or tablet the same three buttons sit under your right thumb, with the Forge and a hold-to-repair button beside them, and a floating stick under the left. Drag anywhere in the lower-left of the arena and the stick appears under your thumb; release and it recentres. Begin Wave appears between waves, and pause lives in the top-right corner.',
         'On a desktop you can play one-handed as well: hold the left mouse button anywhere on the arena and drag. The same ring appears, the guardian follows the drag exactly as it follows a thumb, and letting go stops him. WASD and the mouse still work together, so you can steer with one and nudge with the other.',
-        'The camera has three stops: Distant, Close and First person. Scroll the mouse wheel down to pull in and up to pull back out, click the View pill in the top-right, or press V. On a phone or tablet, the View button under Pause shows the current stop and advances on each tap. First person is a cockpit view — the guardian’s body is hidden and a canopy frame and reticle sit over the arena.',
+        'The camera has three stops: Distant, Close and First person. Scroll the mouse wheel down to pull in and up to pull back out, click the View pill in the top-right, or press V. On a phone or tablet, the View button under Pause shows the current stop and advances on each tap. First person is a cockpit view — the guardian’s body is hidden and a canopy frame and reticle sit over the arena. In first person the movement keys follow the view: W goes where you are looking, S backs away, and A/D strafe; Distant and Close keep their existing world-axis controls.',
       ],
       controls: true,
       note: `Every key can be rebound in Settings. The defaults are ${KEYBINDS.map(([k, v]) => k + ' for ' + v.toLowerCase()).slice(0, 4).join('; ')}. Settings → Interface → Touch controls (Auto, On, Off) decides whether the thumb layer appears; Auto turns it on for touch screens.`,
@@ -409,6 +409,15 @@ export const FAQ = [
    CHANGELOG — newest first. Add an entry every release.
    ------------------------------------------------------------ */
 export const CHANGELOG = [
+  {
+    version: '1.9.3',
+    date: '2026-11-24',
+    title: 'Look where you walk',
+    items: [
+      'First person now moves relative to the cockpit view: W follows the camera’s forward, S backs away, and A/D strafe across the screen. The fixed Distant and over-the-shoulder views keep their existing world-axis controls.',
+      'When no target is held, the cockpit keeps its last look direction instead of turning to follow a strafe, so moving sideways no longer swings the view around with it.',
+    ],
+  },
   {
     version: '1.9.2',
     date: '2026-11-24',

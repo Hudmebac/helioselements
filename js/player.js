@@ -834,6 +834,20 @@ export class Player {
     if (this.game.isDown('down') || keys['ArrowDown']) iz += 1;
     if (this.game.isDown('left') || keys['ArrowLeft']) ix -= 1;
     if (this.game.isDown('right') || keys['ArrowRight']) ix += 1;
+    // In the cockpit the camera is the frame of reference: forward follows the
+    // way the guardian is looking, not the arena's fixed north. The over-
+    // shoulder and distant views keep their existing world axes.
+    if (this.game.viewMode === 'first' && (ix || iz)) {
+      const lookLen = Math.hypot(this.aim.x, this.aim.z) || 1;
+      const fx = this.aim.x / lookLen;
+      const fz = this.aim.z / lookLen;
+      const rx = -fz;
+      const rz = fx;
+      const side = ix;
+      const forward = -iz;
+      ix = rx * side + fx * forward;
+      iz = rz * side + fz * forward;
+    }
     const mag = Math.hypot(ix, iz);
     if (mag > 0) { ix /= mag; iz /= mag; }
     const speed = this.form.stats.moveSpeed * this.stats.moveMult * (1 + (this.relicBonuses().move || 0));
@@ -877,7 +891,10 @@ export class Player {
       const dist = Math.hypot(dx, dz);
       const lead = Math.min(0.5, dist / Math.max(6, this.form.stats.projSpeed || 15));
       this.aim.set(dx + (target.vx || 0) * lead, 0, dz + (target.vz || 0) * lead).normalize();
-    } else if (mag > 0) {
+    } else if (mag > 0 && this.game.viewMode !== 'first') {
+      // In first person the view stays where it was looking when the last
+      // target fell; letting it chase the movement vector would turn a strafe
+      // into a slow spiral.
       this.aim.copy(this.dir);
     }
 
