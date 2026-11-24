@@ -142,6 +142,14 @@ export class Projectiles {
       p.mesh.position.addScaledVector(p.dir, p.speed * dt);
       p.mesh.quaternion.setFromUnitVectors(_z, p.dir);
       p.mesh.rotation.z += dt * 4;
+      // A cockpit shot is born at the eye line, where its halo would cover the
+      // canopy for the first metre. It stays hidden until it clears the pilot.
+      if (p.playerShot) {
+        const near = player && game.viewMode === 'first'
+          ? (p.mesh.position.x - player.pos.x) ** 2 + (p.mesh.position.z - player.pos.z) ** 2 < 1.69
+          : false;
+        p.mesh.visible = !near;
+      }
 
       if (p.trail) {
         p.trailT -= dt;

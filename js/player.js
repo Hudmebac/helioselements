@@ -10,6 +10,14 @@ import {
 } from './data.js';
 
 const FIRST_PERSON_TURN = 2.6;
+/* The cockpit's gunsight. Shots leave along the canopy's own line and only
+   acquire targets inside this cone, so the pilot always sees the tracer that
+   lands. The sealed canopy pays for the missing strafe with its optics:
+   longer reach and a steadier firing solution. */
+const COCKPIT_LOCK_CONE = 0.62;      // cos ≈ 52° either side of the reticle
+const COCKPIT_LOCK_RANGE = 24;
+const COCKPIT_RANGE_BONUS = 1.2;
+const COCKPIT_CRIT_BONUS = 0.1;
 const SENTINEL_ORBIT_RADIUS = 4.2;
 const SENTINEL_TARGET_RANGE = 10;
 
@@ -23,6 +31,11 @@ export class Player {
     this.dir = new THREE.Vector3(0, 0, 1);
     this.aim = new THREE.Vector3(0, 0, 1);
     this.lookYaw = 0;
+    this.cockpitLocked = false;
+    this._sightX = 0;
+    this._sightZ = 1;
+    // Built once: the per-frame aim query must not allocate a new closure.
+    this._sightTest = (e) => this._inCockpitSight(e);
     this.alive = true;
     this.invuln = 0;
     this.t = 0;
@@ -836,6 +849,29 @@ export class Player {
     this.lookYaw = Math.atan2(this.aim.x, this.aim.z);
   }
 
+  /* True when an enemy sits inside the cockpit's gunsight cone. The canopy
+     can turn freely; the guns only answer what is in front of the glass. */
+  _inCockpitSight(e) {
+    const dx = e.pos.x - this.pos.x, dz = e.pos.z - this.pos.z;
+    const d = Math.hypot(dx, dz) || 1;
+    return (dx * this._sightX + dz * this._sightZ) / d >= COCKPIT_LOCK_CONE;
+  }
+
+  /* A lane gate is a target too, but the cockpit still only answers one that
+     sits inside the sights; the gate with the most health left in front wins. */
+  _cockpitGateTarget() {
+    const gates = this.game.structures?.gates;
+    if (!gates) return null;
+    let best = null, bestD = COCKPIT_LOCK_RANGE * COCKPIT_LOCK_RANGE;
+    for (const g of gates) {
+      if (!g.alive || !this._inCockpitSight(g)) continue;
+      const dx = g.pos.x - this.pos.x, dz = g.pos.z - this.pos.z;
+      const d = dx * dx + dz * dz;
+      if (d < bestD) { bestD = d; best = g; }
+    }
+    return best;
+  }
+
   update(dt) {
     if (!this.alive) return;
     const rb = this.relicBonuses();
@@ -917,17 +953,27 @@ export class Player {
     if (arenaClamp(this.pos, 1.2)) this.vel.multiplyScalar(0.4);
     this.game.structures?.pushOut?.(this.pos, 0.62);
 
-    // aim — lead moving targets by their velocity
-    const target = this.game.enemies.nearest(this.pos, 17) || this.game.structures?.gateTarget?.(this.pos, 17) || null;
+    // aim — lead moving targets by their velocity. In the cockpit the gunsight
+    // only acquires what the canopy is pointed at: an enemy behind the pilot
+    // used to pull every tracer off-screen, so the weapons looked silent even
+    // while they were killing things.
+    this._sightX = Math.sin(this.lookYaw);
+    this._sightZ = Math.cos(this.lookYaw);
+    const target = firstPerson
+      ? (this.game.enemies.nearest(this.pos, COCKPIT_LOCK_RANGE, this._sightTest) || this._cockpitGateTarget())
+      : (this.game.enemies.nearest(this.pos, 17) || this.game.structures?.gateTarget?.(this.pos, 17) || null);
+    this.cockpitLocked = firstPerson && !!target;
     if (target) {
       const dx = target.pos.x - this.pos.x;
       const dz = target.pos.z - this.pos.z;
       const dist = Math.hypot(dx, dz);
       const lead = Math.min(0.5, dist / Math.max(6, this.form.stats.projSpeed || 15));
       this.aim.set(dx + (target.vx || 0) * lead, 0, dz + (target.vz || 0) * lead).normalize();
-    } else if (mag > 0 && this.game.viewMode !== 'first') {
-      // In first person auto-aim holds its last line while the cockpit turns
-      // independently, so a turn never feeds back into the movement vector.
+    } else if (firstPerson) {
+      // Nothing in the sights: keep the guns on the reticle line so the canopy
+      // never fires into the dark behind the pilot.
+      this.aim.set(this._sightX, 0, this._sightZ);
+    } else if (mag > 0) {
       this.aim.copy(this.dir);
     }
 
@@ -942,7 +988,7 @@ export class Player {
     // attack — the weapon in the firing hand
     this.fireTimer -= dt;
     if (!repairing && this.fireTimer <= 0) {
-      const tgt = target || this.game.enemies.nearest(this.pos, 17);
+      const tgt = target || (firstPerson ? null : this.game.enemies.nearest(this.pos, 17));
       if (tgt) {
         this.attack(tgt);
         this.fireTimer = Math.max(0.075, this.form.stats.interval * this.stats.intervalMult / (1 + (rb.interval || 0)));
@@ -958,9 +1004,11 @@ export class Player {
         // The second arm picks its own target — one the firing hand is not
         // already shooting when there is a choice — and aims at it itself, so
         // the two weapons cover different sides of the crowd.
-        const tgt = this.game.enemies.nearest(this.pos, 15, e => e !== target)
-          || this.game.enemies.nearest(this.pos, 15)
-          || this.game.structures?.gateTarget?.(this.pos, 15) || null;
+        const tgt = firstPerson
+          ? (this.game.enemies.nearest(this.pos, COCKPIT_LOCK_RANGE, this._sightTest) || this._cockpitGateTarget())
+          : (this.game.enemies.nearest(this.pos, 15, e => e !== target)
+            || this.game.enemies.nearest(this.pos, 15)
+            || this.game.structures?.gateTarget?.(this.pos, 15) || null);
         if (tgt) {
           // A second-arm rank buys rate and reach as well as damage (fireVolley
           // pays the damage), so growing it competes with growing the firing hand.
@@ -1064,6 +1112,7 @@ export class Player {
   /* One volley from one arm. The second arm calls this with its own stats. */
   fireVolley(f, cfg = {}) {
     const s = this.stats;
+    const cockpit = this.game.viewMode === 'first';
     const rb = this.relicBonuses();
     const crown = this.relicCrown();
     const ce = crown?.effect || {};
@@ -1074,7 +1123,8 @@ export class Player {
     const base = f.stats.damage * s.damageMult * (1 + (rb.damage || 0)) * this.damageBoost
       * rankMult * rarityMult * (cfg.boost || 1) * (cfg.damageScale || 1) * closeMult;
     const count = Math.max(1, (f.stats.projectiles || 1) + s.extraProjectiles + (rb.projectiles || 0) + (ce.projectiles || 0) * cr);
-    const critChance = HIT_RNG.playerCrit + (f.stats.crit || 0) + s.crit + (rb.crit || 0) + (ce.crit || 0) * cr;
+    const critChance = HIT_RNG.playerCrit + (f.stats.crit || 0) + s.crit + (rb.crit || 0) + (ce.crit || 0) * cr
+      + (cockpit ? COCKPIT_CRIT_BONUS : 0);
     const pierce = (f.stats.pierce || 0) + s.extraPierce + (rb.pierce || 0) + (ce.pierce || 0) * cr;
     const aoe = (f.stats.aoe || 0) + (rb.aoe || 0) + (ce.aoe || 0) * cr;
     const homing = (f.stats.homing || 0) + (rb.homing || 0) + (ce.homing || 0) * cr;
@@ -1101,7 +1151,11 @@ export class Player {
       const dir = new THREE.Vector3(Math.sin(a), 0, Math.cos(a));
       const crit = Math.random() < critChance;
       const damage = base * (crit ? critMult : 1);
-      const start = new THREE.Vector3(this.pos.x + dir.x * 0.75, 0.92, this.pos.z + dir.z * 0.75);
+      // In the cockpit the guardian's body is hidden, so his shots leave from
+      // the canopy's sight line instead of from an invisible hand on the floor.
+      const start = cockpit
+        ? new THREE.Vector3(this.pos.x + dir.x * 0.6, 1.42, this.pos.z + dir.z * 0.6)
+        : new THREE.Vector3(this.pos.x + dir.x * 0.75, 0.92, this.pos.z + dir.z * 0.75);
       this.game.projectiles.fire({
         pos: start, dir, speed: f.stats.projSpeed, damage,
         color: f.color, glow: f.glow, size: shotSize, shape,
@@ -1110,16 +1164,26 @@ export class Player {
         pierce, homing, aoe, chain, knockback: knock,
         hitPad: this.game.areaSizeActive ? 0.16 : 0,
         ignite, slow: f.slow || null, playerShot: true,
-        lifesteal, healOnHit, crit, life: WEAPON_RANK.baseRange * (s.range || 1) * (cfg.rangeMult || 1),
+        lifesteal, healOnHit, crit,
+        life: WEAPON_RANK.baseRange * (s.range || 1) * (cfg.rangeMult || 1) * (cockpit ? COCKPIT_RANGE_BONUS : 1),
       });
       this.game.fx.trail(start, f.glow, 0.22, 0.2);
     }
-    const muzzle = new THREE.Vector3(this.pos.x + aimX * 0.8, 1.02, this.pos.z + aimZ * 0.8);
+    const muzzle = cockpit
+      ? new THREE.Vector3(this.pos.x + aimX * 0.7, 1.38, this.pos.z + aimZ * 0.7)
+      : new THREE.Vector3(this.pos.x + aimX * 0.8, 1.02, this.pos.z + aimZ * 0.8);
     this.recoil = Math.max(this.recoil, cfg.small ? 0.45 : 1);
     if (!cfg.small) this.game.audio.shoot(f.key);
-    this.game.fx.burst(muzzle, f.glow, { count: cfg.small ? 6 : 10, speed: 4.6, size: cfg.small ? 0.18 : 0.24, life: 0.3, up: 1 });
-    this.game.fx.burst(muzzle, 0xffffff, { count: 3, speed: 5.2, size: 0.13, life: 0.2, up: 0.5 });
-    this.game.fx.ring(muzzle, f.glow, { r0: 0.15, r1: cfg.small ? 0.8 : 1.15, life: 0.22, opacity: 0.5 });
+    if (cockpit) {
+      // At arm's length the usual muzzle ring and its white core would swallow
+      // the whole canopy, so the cockpit only gets a small spark on the sight
+      // line. The tracer itself carries the shot away from the glass.
+      this.game.fx.burst(muzzle, f.glow, { count: 4, speed: 3, size: 0.1, life: 0.18, up: 0.4 });
+    } else {
+      this.game.fx.burst(muzzle, f.glow, { count: cfg.small ? 6 : 10, speed: 4.6, size: cfg.small ? 0.18 : 0.24, life: 0.3, up: 1 });
+      this.game.fx.burst(muzzle, 0xffffff, { count: 3, speed: 5.2, size: 0.13, life: 0.2, up: 0.5 });
+      this.game.fx.ring(muzzle, f.glow, { r0: 0.15, r1: cfg.small ? 0.8 : 1.15, life: 0.22, opacity: 0.5 });
+    }
     this.game.engine.addShake(cfg.small ? 0.02 : 0.04);
   }
 

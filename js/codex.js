@@ -202,7 +202,7 @@ export const GUIDE = {
         `You fire automatically at whatever is nearest, so your hands are for movement, timing and the three buttons that matter: Dash, Surge, Ultimate.`,
         'On a phone or tablet the same three buttons sit under your right thumb, with the Forge and a hold-to-repair button beside them, and a floating stick under the left. Drag anywhere in the lower-left of the arena and the stick appears under your thumb; release and it recentres. Begin Wave appears between waves, and pause lives in the top-right corner.',
         'On a desktop you can play one-handed as well: hold the left mouse button anywhere on the arena and drag. The same ring appears, the guardian follows the drag exactly as it follows a thumb, and letting go stops him. WASD and the mouse still work together, so you can steer with one and nudge with the other.',
-        'The camera has three stops: Distant, Close and First person. Scroll the mouse wheel up to pull in and down to pull back out, click the View pill in the top-right, or press V. On a phone or tablet, the View button under Pause shows the current stop and advances on each tap. Close is a fixed closer angle that follows your position but never rotates. First person is a cockpit view — the guardian’s body is hidden behind a framed glass canopy, side pillars, a reticle and an instrument panel that shows the flight controls. The glass tones down arena glare so enemies stay readable up close, and fallen enemies burst away instead of leaving bodies on the ground. In first person W/S move forward and back along the view, while A/D turn the cockpit left and right; there is no strafing in the cockpit. Distant and Close keep their existing world-axis controls.',
+        'The camera has three stops: Distant, Close and First person. Scroll the mouse wheel up to pull in and down to pull back out, click the View pill in the top-right, or press V. On a phone or tablet, the View button under Pause shows the current stop and advances on each tap. Close is a fixed closer angle that follows your position but never rotates. First person is a cockpit view — the guardian’s body is hidden behind a framed glass canopy, side pillars, a reticle and an instrument panel that shows the flight controls. The glass tones down arena glare so enemies stay readable up close, and fallen enemies burst away instead of leaving bodies on the ground. In first person W/S move forward and back along the view, while A/D turn the cockpit left and right; there is no strafing in the cockpit. The canopy’s gunsight only fires at what the reticle covers — the ring lights up when a target is locked — and the sealed canopy’s optics pay for the missing strafe with +20% weapon range and +10% critical chance. Distant and Close keep their existing world-axis controls.',
         `Every wave scatters three glowing arena caches. Walk over one to claim an upgrade: Solar Bloom restores health, Titan Seed makes you larger for a short time with wider shots and pickup reach, War Ember adds temporary damage, and Dawn Mote grants bonus essence. The essence needed for the next level compounds by 20% each wave, then holds at ${XP_WAVE_CAP}× base from wave ten so late drafts still arrive.`,
       ],
       controls: true,
@@ -418,6 +418,18 @@ export const FAQ = [
    CHANGELOG — newest first. Add an entry every release.
    ------------------------------------------------------------ */
 export const CHANGELOG = [
+  {
+    version: '1.13.1',
+    date: '2026-11-24',
+    title: 'The Canopy Sight',
+    items: [
+      'First person now fires where the canopy is pointed. Auto-aim used to lock enemies anywhere around the guardian, so in the cockpit every tracer left 130° or more off-screen and the weapons looked silent even while they were killing.',
+      'The gunsight only acquires targets inside a 52° cone out to 24 units, holds fire when nothing is in the reticle, and sends shots from the canopy’s sight line instead of the hidden body’s hand.',
+      'The reticle dims when there is no lock and flares gold when a target is in the sights, and the instrument panel prints LOCK or NO LOCK beside the optics readout.',
+      'An enemy that reaches the canopy is hidden at contact range, so a body against the glass can no longer swallow the whole view. Its health bar, damage numbers and the gunsight still track it.',
+      'The sealed canopy now carries a benefit: +20% weapon range and +10% critical chance in first person, applied to both arms, to offset the lost strafe and slower turn.',
+    ],
+  },
   {
     version: '1.13.0',
     date: '2026-11-24',

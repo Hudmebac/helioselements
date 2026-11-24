@@ -150,7 +150,7 @@ Every run opens on an **empty arena** and begins on its own after **three second
 
 You can also play with the mouse alone: **hold the left mouse button anywhere on the arena and drag** — the same floating ring as on a phone appears, the guardian follows the drag, and releasing stops him. It combines with WASD, so you can steer with the keys and nudge with the mouse.
 
-**Camera:** scroll the mouse wheel **up** to pull in through **Distant → Close → First person**, and **down** to pull back out. The **View** pill in the top-right does the same with a click, or press <kbd>V</kbd>. Close is a fixed closer angle on the ring: it follows your position but never rotates with you. First person puts you at the guardian's eye line inside a framed cockpit window, with a reticle and an instrument panel showing the flight controls; the canopy glass tones down arena glare so nearby enemies stay readable. In first person **W/S** move forward and back along the cockpit's view, while **A/D** turn the view left and right instead of strafing. The choice is remembered between runs.
+**Camera:** scroll the mouse wheel **up** to pull in through **Distant → Close → First person**, and **down** to pull back out. The **View** pill in the top-right does the same with a click, or press <kbd>V</kbd>. Close is a fixed closer angle on the ring: it follows your position but never rotates with you. First person puts you at the guardian's eye line inside a framed cockpit window, with a reticle and an instrument panel showing the flight controls; the canopy glass tones down arena glare so nearby enemies stay readable. In first person **W/S** move forward and back along the cockpit's view, while **A/D** turn the view left and right instead of strafing. The canopy's gunsight only fires at what the reticle covers — the ring dims without a lock and flares gold when a target is in it — and the sealed canopy's optics add **+20% weapon range and +10% critical chance** to both arms, paying for the lost strafe and slower turn. The choice is remembered between runs.
 
 **Arena caches:** every wave scatters three glowing caches across the ring. Walk over one to claim its upgrade: **Solar Bloom** restores health, **Titan Seed** makes you 35% larger for 12 seconds (with wider shots and a wider pickup reach), **War Ember** adds 35% damage for 12 seconds, and **Dawn Mote** grants a burst of essence. The cache labels and coloured beacons tell you what you are running toward.
 
@@ -306,6 +306,16 @@ The **Play** button at the top of this README points at the game, and `/site/` r
 ## Changelog
 
 <details open>
+<summary><b>v1.13.1 — The Canopy Sight</b></summary>
+
+- **The cockpit fires where you look:** auto-aim used to lock enemies anywhere around the guardian, so first-person tracers left 130° or more off-screen and the guns looked silent. The gunsight now acquires only what is inside a 52° cone out to 24 units, holds fire when the reticle is empty, and fires from the canopy's sight line instead of the hidden body.
+- **Lock feedback:** the reticle dims with no target and flares gold on a lock, and the instrument panel prints **LOCK** or **NO LOCK** beside the optics readout.
+- **A clear canopy:** shots stay hidden for their first metre so their halo cannot wash out the glass, the muzzle flash is a small spark instead of a full-screen ring, and an enemy at contact range no longer engulfs the camera.
+- **A reason to fly it:** the sealed canopy grants **+20% weapon range and +10% critical chance** to both arms, offsetting the lost strafe and slower turn.
+
+</details>
+
+<details>
 <summary><b>v1.13.0 — Read the Silhouette</b></summary>
 
 - **Refined horde silhouettes:** crawlers gain a carapace, mandibles and tail; wisps gain an inner core, shard ring and trailing shards; brutes gain a head, pauldrons, forearms and jaw; spitters gain a muzzle, side pods and tendrils.

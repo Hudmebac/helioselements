@@ -89,6 +89,18 @@ export class EnemyManager {
       }
       e.update(dt, game);
       if (!e.dead) alive.push(e);
+      // In the cockpit an enemy that reaches the glass engulfs the whole view.
+      // Its body is hidden at contact range; the gunsight, health bar and
+      // damage numbers still track it. A vanished enemy stays hidden.
+      if (!e.dead && !e.invisible) {
+        if (game.viewMode === 'first' && game.player) {
+          const dx = e.pos.x - game.player.pos.x, dz = e.pos.z - game.player.pos.z;
+          const near = (e.radius + 0.55) ** 2;
+          e.group.visible = dx * dx + dz * dz > near;
+        } else {
+          e.group.visible = true;
+        }
+      }
     }
     this.list = alive;
     if (this.boss && (this.boss.dead || !this.list.includes(this.boss))) this.boss = null;

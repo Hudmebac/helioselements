@@ -64,6 +64,7 @@ export class UI {
           <span class="dash-grip left"><i></i></span>
           <div class="dash-main">
             <div class="dash-readout"><span>◉ SOLAR COCKPIT · CANOPY SEALED</span><b id="cockpit-element">EMBER</b></div>
+            <div class="dash-optics" id="cockpit-optics">◎ NO LOCK · +20% RANGE · +10% CRIT</div>
             <div class="dash-controls">
               <span class="dash-control"><i>A</i><i>D</i><em>YAW</em></span>
               <span class="dash-control"><i>W</i><i>S</i><em>THRUST</em></span>
@@ -582,6 +583,8 @@ export class UI {
       viewGlyph: document.getElementById('view-glyph'),
       cockpit: document.getElementById('cockpit'),
       cockpitElement: document.getElementById('cockpit-element'),
+      cockpitOptics: document.getElementById('cockpit-optics'),
+      cockpitReticle: document.querySelector('.cockpit-reticle'),
       phase: document.getElementById('hud-phase'),
       best: document.getElementById('hud-best'),
       bossWrap: document.getElementById('boss-wrap'),
@@ -2379,6 +2382,15 @@ export class UI {
     if (this.el.cockpitElement && game.viewMode === 'first') {
       const cockpitName = (form.name || 'GUARDIAN').toUpperCase();
       if (this.el.cockpitElement.textContent !== cockpitName) this.el.cockpitElement.textContent = cockpitName;
+    }
+    if (this.el.cockpitReticle) {
+      this.el.cockpitReticle.classList.toggle('locked', !!game.player?.cockpitLocked);
+    }
+    if (this.el.cockpitOptics) {
+      const locked = !!game.player?.cockpitLocked;
+      const optics = locked ? '◎ LOCK · +20% RANGE · +10% CRIT' : '◎ NO LOCK · +20% RANGE · +10% CRIT';
+      if (this.el.cockpitOptics.textContent !== optics) this.el.cockpitOptics.textContent = optics;
+      this.el.cockpitOptics.classList.toggle('locked', locked);
     }
     this.el.level.textContent = 'LV ' + game.level;
 

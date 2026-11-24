@@ -1318,6 +1318,15 @@ body.view-first #grain { opacity: .17; }
   transform: translate(-50%, -50%); border-radius: 50%;
   border: 1px solid rgba(255, 232, 190, .56);
   box-shadow: 0 0 20px rgba(245, 194, 107, .28), inset 0 0 12px rgba(245, 194, 107, .12);
+  opacity: .62; transition: opacity .16s, transform .16s, border-color .16s, box-shadow .16s;
+}
+/* The guns only answer what is inside the reticle, so the ring lights up the
+   moment the canopy has a target and dims when it does not. */
+.cockpit-reticle.locked {
+  opacity: 1;
+  border-color: rgba(255, 216, 148, .96);
+  box-shadow: 0 0 28px rgba(245, 194, 107, .6), inset 0 0 16px rgba(245, 194, 107, .34);
+  transform: translate(-50%, -50%) scale(1.1);
 }
 .cockpit-reticle::after {
   content: ''; position: absolute; left: 50%; top: 50%; width: 4px; height: 4px;
@@ -1360,6 +1369,8 @@ body.view-first #grain { opacity: .17; }
   font-size: 8px; font-weight: 700; letter-spacing: .18em; color: var(--muted);
 }
 .dash-readout b { color: var(--gold-hi); font-size: 9px; letter-spacing: .14em; }
+.dash-optics { font-size: 7px; font-weight: 700; letter-spacing: .16em; color: var(--muted); }
+.dash-optics.locked { color: var(--gold-hi); }
 .dash-controls { display: flex; align-items: center; justify-content: center; gap: 16px; }
 .dash-control { display: flex; align-items: center; gap: 4px; }
 .dash-control i {
