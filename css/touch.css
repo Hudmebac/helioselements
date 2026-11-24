@@ -299,3 +299,20 @@ body.tc-on .levelup-btn { display: none !important; }
   .dawn-earned { grid-template-columns: 1fr; }
   .stat-tile b { font-size: 20px; }
 }
+
+/* Camera cycle for thumbs. It sits under Pause and above the wave rail. */
+.touch.mouse-on .tc-view { display: none !important; }
+.touch .tc-view {
+  position: absolute; width: auto; min-width: 86px; height: 30px; padding: 0 11px;
+  top: calc(max(10px, env(safe-area-inset-top)) + 52px);
+  right: max(10px, env(safe-area-inset-right));
+  display: flex; align-items: center; justify-content: center; gap: 6px;
+  border-radius: 11px;
+  color: var(--gold-hi); background: var(--glass) !important;
+  border: 1px solid var(--line) !important;
+}
+.touch .tc-view i { font-size: 11px; line-height: 1; color: var(--gold); }
+.touch .tc-view span { font-size: 7px; font-weight: 800; letter-spacing: .14em; color: var(--gold-hi); }
+@media (max-height: 540px) {
+  .tc-view { top: calc(max(6px, env(safe-area-inset-top)) + 52px); height: 26px; }
+}

@@ -13,7 +13,7 @@ import {
   PACTS, normalizePacts, pactRanks, pactReward,
   DIFFICULTIES, normalizeDifficulty, difficultyUnlocked, DESCENT,
   CONTROL_ACTIONS, defaultKeys, keyLabel,
-  ACHIEVEMENTS, REWARDS, menuDepth, KINDLING, romanTier,
+  ACHIEVEMENTS, REWARDS, menuDepth, KINDLING, romanTier, CAMERA_VIEWS,
 } from './data.js';
 import { Player } from './player.js';
 import { EnemyManager } from './enemies.js';
@@ -32,6 +32,10 @@ export class Game {
     this.audio = audio;
     this.save = save;
     this.ui = null;
+    this.viewMode = CAMERA_VIEWS.some(v => v.id === save.settings?.view) ? save.settings.view : 'distant';
+    this.engine.setView(this.viewMode);
+    this._wheelAcc = 0;
+    this._wheelAt = 0;
 
     this.enemies = new EnemyManager(engine.scene, fx, audio);
     this.projectiles = new Projectiles(engine.scene, fx, audio);
@@ -106,6 +110,8 @@ export class Game {
     if (!this.save.seenWelcome) this.ui.showWelcome();
     else this.ui.showTitle(this.save);
     this.engine.setAccent(0xf5c26b);
+    this.ui.setView(this.viewMode);
+    document.body.classList.toggle('view-first', this.viewMode === 'first');
   }
 
   markWelcomeSeen() {
@@ -271,15 +277,34 @@ export class Game {
         this.openForge();
       } else if (code === this.keyFor('levelup')) {
         this.openLevelUp();
+      } else if (code === 'KeyV') {
+        this.cycleView(1);
       }
     };
 
     this._onKeyUp = (e) => { this.keys[e.code] = false; };
     this._onBlur = () => { this.keys = {}; };
 
+    // The wheel is a camera control during a run: down pulls in, up pulls out.
+    this._onWheel = (e) => {
+      if (this.state !== 'playing' || e.ctrlKey) return;
+      const step = e.deltaMode === 1 ? e.deltaY * 16 : e.deltaY;
+      if (!step) return;
+      e.preventDefault();
+      const now = performance.now();
+      this._wheelAcc += step;
+      if (now < this._wheelAt) return;
+      if (Math.abs(this._wheelAcc) < 24) return;
+      const dir = this._wheelAcc > 0 ? 1 : -1;
+      this._wheelAcc = 0;
+      this._wheelAt = now + 260;
+      this.cycleView(dir, false);
+    };
+
     window.addEventListener('keydown', this._onKeyDown);
     window.addEventListener('keyup', this._onKeyUp);
     window.addEventListener('blur', this._onBlur);
+    window.addEventListener('wheel', this._onWheel, { passive: false });
   }
 
   /* ---------------- RUN LIFECYCLE ---------------- */
@@ -378,6 +403,7 @@ export class Game {
     this.engine.addShake(0.4);
 
     this.ui.enterGame(this);
+    this._applyViewVisibility();
     this.ui.refreshRelics(this.player);
     if (this.mode === 'siege') {
       this.ui.banner('THE SUNFORGE BURNS', 'DEFEND THE CORE', `Survive 20 waves · ${keyLabel(this.keyFor('forge'))} to forge · ${keyLabel(this.keyFor('repair'))} to repair`);
@@ -555,6 +581,7 @@ export class Game {
 
     this.player.alive = true;
     this.player.group.visible = true;
+    this._applyViewVisibility();
     this.player.invuln = 2.4;
     this.player.heal(this.player.stats.maxHp * 0.35);
     this.player.gainCharge(20);
@@ -2197,6 +2224,7 @@ export class Game {
     this.runTime += dt;
     if (this.giftT > 0) this.giftT = Math.max(0, this.giftT - dt);
     this.player.update(dt);
+    this._applyViewVisibility();
     this.updateCoreGuard(dt);
     this.structures?.update(dt, this);
     // Objectives cannot be drained or pre-charged before the first wave exists.
@@ -2259,7 +2287,47 @@ export class Game {
       mode: this.state === 'welcome' ? 'welcome' : this.state === 'menu' ? 'menu' : 'game',
       target: this.player ? this.player.pos : null,
       velocity: this.player ? this.player.vel : null,
+      aim: this.player ? this.player.aim : null,
     };
+  }
+
+  /* ---------------- CAMERA VIEW ---------------- */
+
+  setView(mode, opts = {}) {
+    const view = CAMERA_VIEWS.find(v => v.id === mode);
+    if (!view) return false;
+    const changed = this.viewMode !== view.id;
+    this.viewMode = view.id;
+    this.engine.setView(view.id);
+    this.save.settings = { ...this.save.settings, view: view.id };
+    if (opts.persist !== false) persist(this.save);
+    this.ui?.setView?.(view.id);
+    this.touch?.syncView?.();
+    document.body.classList.toggle('view-first', view.id === 'first');
+    this._applyViewVisibility();
+    if (changed && !opts.silent) {
+      this.audio.ui();
+      const hint = view.id === 'first'
+        ? 'COCKPIT VIEW · SCROLL DOWN FOR DISTANT, UP FOR CLOSE'
+        : 'VIEW · ' + view.name.toUpperCase() + ' · ' + view.hint.toUpperCase();
+      this.ui?.toast(hint, view.id === 'first' ? '#ffe0a3' : '#ffd98a');
+    }
+    return true;
+  }
+
+  cycleView(dir = 1, wrap = true) {
+    const i = CAMERA_VIEWS.findIndex(v => v.id === this.viewMode);
+    let j = i + (dir >= 0 ? 1 : -1);
+    if (j < 0 || j >= CAMERA_VIEWS.length) {
+      if (!wrap) return false;
+      j = (j + CAMERA_VIEWS.length) % CAMERA_VIEWS.length;
+    }
+    return this.setView(CAMERA_VIEWS[j].id);
+  }
+
+  _applyViewVisibility() {
+    if (!this.player) return;
+    this.player.group.visible = !!this.player.alive && this.viewMode !== 'first';
   }
 
   applySettings(settings) {
@@ -2275,6 +2343,8 @@ export class Game {
     this.engine.setQuality(settings.quality);
     this.fx.settings.numbers = settings.numbers;
     this.fx.shakeScale = settings.shake;
+    const view = CAMERA_VIEWS.some(v => v.id === settings.view) ? settings.view : this.viewMode;
+    this.setView(view, { silent: true, persist: false });
     this.touch?.refresh();
   }
 }

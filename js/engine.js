@@ -3,7 +3,7 @@
    Renderer, solar arena, cinematic camera, quality control.
    ============================================================ */
 
-import { ARENAS } from './data.js';
+import { ARENAS, CAMERA_VIEWS } from './data.js';
 
 const TAU = Math.PI * 2;
 
@@ -162,6 +162,7 @@ export class Engine {
     this.sigilRings = [];
     this.camHeight = 27.5;
     this.camBack = 23.5;
+    this.viewMode = 'distant';
     this._buildSky();
     this._buildLights();
     this.setArena('sanctum', { instant: true });
@@ -1191,6 +1192,14 @@ export class Engine {
     this.themeTarget.set(hex);
   }
 
+  /* Distant, Close or First person. The game owns the preference; the engine
+     only smooths the camera toward whichever stop was chosen. */
+  setView(mode) {
+    if (!CAMERA_VIEWS.some(v => v.id === mode)) return false;
+    this.viewMode = mode;
+    return true;
+  }
+
   setQuality(q) {
     this.quality = q;
     const r = this.renderer;
@@ -1328,6 +1337,34 @@ export class Engine {
       this.camera.position.lerp(_desired, k);
       _lookNow.lerp(_look, Math.min(1, dt * 2));
       this.camera.lookAt(_lookNow);
+    } else if (this.viewMode === 'first') {
+      // Eye height, looking where the auto-aim is pointing, with a little
+      // head bob so the cockpit feels alive.
+      const aim = opts.aim || _zero;
+      _aim.set(aim.x, 0, aim.z);
+      if (_aim.lengthSq() < 0.0001) _aim.set(vel.x, 0, vel.z);
+      if (_aim.lengthSq() < 0.0001) _aim.set(0, 0, 1);
+      _aim.normalize();
+      _desired.set(target.x, 1.58 + Math.sin(this.time * 5.4) * 0.015, target.z);
+      this.camera.position.lerp(_desired, 1 - Math.exp(-dt * 22));
+      _look.set(target.x + _aim.x * 11, 1.44, target.z + _aim.z * 11);
+      _lookNow.lerp(_look, 1 - Math.exp(-dt * 11));
+      this.camera.lookAt(_lookNow);
+    } else if (this.viewMode === 'close') {
+      const aim = opts.aim || _zero;
+      const speed = Math.hypot(vel.x, vel.z);
+      _aim.set(speed > 0.35 ? vel.x : aim.x, 0, speed > 0.35 ? vel.z : aim.z);
+      if (_aim.lengthSq() < 0.0001) _aim.set(0, 0, 1);
+      _aim.normalize();
+      _desired.set(
+        target.x - _aim.x * this.camBack * 0.6,
+        this.camHeight * 0.46,
+        target.z - _aim.z * this.camBack * 0.6
+      );
+      _look.set(target.x + _aim.x * 4.5, 1.25, target.z + _aim.z * 4.5);
+      this.camera.position.lerp(_desired, 1 - Math.exp(-dt * 6.5));
+      _lookNow.lerp(_look, 1 - Math.exp(-dt * 8));
+      this.camera.lookAt(_lookNow);
     } else {
       _desired.set(target.x * 0.86, this.camHeight, target.z * 0.86 + this.camBack);
       _look.set(target.x + vel.x * 0.22, 1.15, target.z + vel.z * 0.22);
@@ -1357,7 +1394,8 @@ export class Engine {
     // camera punch
     this.fovPunch *= Math.exp(-dt * 7);
     if (this.fovPunch < 0.01) this.fovPunch = 0;
-    const fov = this.baseFov + this.fovPunch;
+    const viewFov = this.viewMode === 'first' ? 9 : this.viewMode === 'close' ? 3 : 0;
+    const fov = this.baseFov + viewFov + this.fovPunch;
     if (Math.abs(this.camera.fov - fov) > 0.01) {
       this.camera.fov = fov;
       this.camera.updateProjectionMatrix();
@@ -1374,3 +1412,4 @@ const _zero = new THREE.Vector3();
 const _desired = new THREE.Vector3();
 const _look = new THREE.Vector3();
 const _lookNow = new THREE.Vector3(0, 2, 0);
+const _aim = new THREE.Vector3();

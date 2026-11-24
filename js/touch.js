@@ -5,6 +5,8 @@
    screens) and only shows while a run is actually being played.
    ============================================================ */
 
+import { CAMERA_VIEWS } from './data.js';
+
 const STICK_RADIUS = 52;
 const DEADZONE = 0.16;
 
@@ -67,6 +69,7 @@ export class TouchControls {
       <button class="tc-call" data-touch-act="callwave" hidden>BEGIN WAVE</button>
       <button class="tc-level" data-touch-act="levelup" hidden>LEVEL UP</button>
       <button class="tc-pause" data-touch-act="pause" aria-label="Pause">❚❚</button>
+      <button class="tc-view" data-touch-act="view" aria-label="Cycle camera view"><i id="tc-view-glyph">▣</i><span id="tc-view-label">DISTANT</span></button>
     `;
     host.appendChild(el);
     this.root = el;
@@ -77,6 +80,9 @@ export class TouchControls {
     this.levelEl = el.querySelector('.tc-level');
     this.repairEl = el.querySelector('.tc-btn.repair');
     this.surgeIcon = el.querySelector('.tc-btn.surge i');
+    this.viewEl = el.querySelector('.tc-view');
+    this.viewLabel = el.querySelector('#tc-view-label');
+    this.viewGlyph = el.querySelector('#tc-view-glyph');
     this.buttons = {
       dash: el.querySelector('.tc-btn.dash'),
       surge: el.querySelector('.tc-btn.surge'),
@@ -86,6 +92,7 @@ export class TouchControls {
     this.mounted = true;
     this._bind();
     this._bindMouse();
+    this.syncView();
   }
 
   _bind() {
@@ -216,6 +223,11 @@ export class TouchControls {
       if (g.state === 'playing') g.pause();
       return;
     }
+    if (act === 'view') {
+      if (g.state === 'playing') g.cycleView(1);
+      this.syncView();
+      return;
+    }
     if (g.state !== 'playing' || !g.player) return;
     if (act === 'dash') g.player.tryDash();
     else if (act === 'surge') g.player.trySurge();
@@ -257,10 +269,18 @@ export class TouchControls {
     this.sync();
   }
 
+  syncView() {
+    const view = CAMERA_VIEWS.find(v => v.id === this.game.viewMode) || CAMERA_VIEWS[0];
+    if (this.viewEl) this.viewEl.title = 'Camera: ' + view.name + '. Tap to cycle.';
+    if (this.viewLabel) this.viewLabel.textContent = view.label;
+    if (this.viewGlyph) this.viewGlyph.textContent = view.icon;
+  }
+
   sync() {
     const g = this.game;
     const p = g.player;
     if (!p) return;
+    this.syncView();
     const { dash, surge, ult, forge } = this.buttons;
 
     this._setCool(dash, Math.ceil(p.dashCdTimer || 0), (p.dashCdTimer || 0) > 0);

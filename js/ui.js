@@ -9,7 +9,7 @@ import {
   WAVE_BONUSES, SKILL_RUN, WEAPONS, strongAgainst, weakTo,
   DIFFICULTIES, DIFFICULTY_ORDER, normalizeDifficulty, difficultyUnlocked,
   ACHIEVEMENTS, REWARDS, CONTROL_ACTIONS, keyLabel, DESCENT,
-  MENU_DEPTHS, MENU_DEPTH_ORDER, menuDepth, KINDLING, romanTier,
+  MENU_DEPTHS, MENU_DEPTH_ORDER, menuDepth, KINDLING, romanTier, CAMERA_VIEWS,
 } from './data.js';
 import { LORE, GUIDE } from './codex.js';
 import { saveText, importSave } from './store.js';
@@ -49,6 +49,12 @@ export class UI {
      ============================================================ */
   _build() {
     this.root.insertAdjacentHTML('beforeend', `
+      <div class="cockpit" id="cockpit" aria-hidden="true">
+        <div class="cockpit-frame"></div>
+        <i class="cockpit-strut left"></i><i class="cockpit-strut right"></i>
+        <div class="cockpit-reticle"><i class="t"></i><i class="b"></i><i class="l"></i><i class="r"></i></div>
+        <div class="cockpit-tag"><span>◉ FIRST PERSON</span><b id="cockpit-element">EMBER</b></div>
+      </div>
       <div class="hud" id="hud">
         <div class="hud-vitals" id="hud-vitals">
           <div class="sigil-chip" id="hud-sigil">✦</div>
@@ -110,6 +116,7 @@ export class UI {
           <button class="icon-btn" data-act="sound" id="sound-btn" title="Toggle sound">♪</button>
           <button class="icon-btn" data-act="pause" title="Pause (Esc)">❚❚</button>
         </div>
+        <button class="icon-btn view-btn" data-act="view" id="view-btn" title="Camera view — click, scroll or press V"><b class="view-glyph" id="view-glyph">▣</b><em id="view-label">DISTANT</em></button>
 
         <div class="hud-boons" id="hud-boons"></div>
         <div class="hud-relics" id="hud-relics"></div>
@@ -546,6 +553,11 @@ export class UI {
       shieldFill: document.getElementById('hud-shield-fill'),
       wave: document.getElementById('hud-wave'),
       tier: document.getElementById('hud-tier'),
+      viewBtn: document.getElementById('view-btn'),
+      viewLabel: document.getElementById('view-label'),
+      viewGlyph: document.getElementById('view-glyph'),
+      cockpit: document.getElementById('cockpit'),
+      cockpitElement: document.getElementById('cockpit-element'),
       phase: document.getElementById('hud-phase'),
       best: document.getElementById('hud-best'),
       bossWrap: document.getElementById('boss-wrap'),
@@ -958,6 +970,9 @@ export class UI {
       case 'save-import-run':
         this._importText(document.getElementById('save-import-text')?.value || '');
         break;
+      case 'view':
+        this.game.cycleView(1);
+        break;
       case 'sound':
         this._toggleSound();
         break;
@@ -1117,6 +1132,7 @@ export class UI {
   showWelcome(replay = false) {
     this.game.state = 'welcome';
     this.hud.classList.remove('on');
+    this.el.cockpit?.classList.remove('on');
     this._showScreen('welcome');
     this._tryWelcomeVideo();
     if (!replay) this.audio.open();
@@ -1300,6 +1316,7 @@ export class UI {
     this.boss = null;
     this.mode = MODES[this.save.mode] ? this.save.mode : this.mode;
     this.hud.classList.remove('on');
+    this.el.cockpit?.classList.remove('on');
     this.hideForge();
     this.hideGameOver();
     this._showScreen('title');
@@ -1310,6 +1327,7 @@ export class UI {
 
   showSelect() {
     this.hud.classList.remove('on');
+    this.el.cockpit?.classList.remove('on');
     this._showScreen('select');
     this.difficulty = normalizeDifficulty(this.game.save?.difficulty || this.save.difficulty);
     this.selectMode(this.mode, true);
@@ -1445,6 +1463,7 @@ export class UI {
     this._showScreen(null);
     this.hideForge();
     this.hud.classList.add('on');
+    this.setView(game.viewMode);
     this.mode = game.mode || this.mode;
     const hasCore = !!game.structures?.core;
     this.hud.classList.toggle('siege', hasCore);
@@ -2100,6 +2119,24 @@ export class UI {
   /* ============================================================
      HUD
      ============================================================ */
+
+  /* Keeps the desktop pill, the cockpit frame and the touch label in step
+     whenever the camera changes. */
+  setView(mode) {
+    const view = CAMERA_VIEWS.find(v => v.id === mode) || CAMERA_VIEWS[0];
+    if (this.el.viewLabel) this.el.viewLabel.textContent = view.label;
+    if (this.el.viewGlyph) this.el.viewGlyph.textContent = view.icon;
+    if (this.el.viewBtn) {
+      this.el.viewBtn.title = 'Camera: ' + view.name + ' — click, scroll or press V';
+      this.el.viewBtn.setAttribute('aria-label', 'Camera view: ' + view.name + '. Click to cycle.');
+    }
+    const inRun = ['playing', 'paused', 'gameover', 'forge', 'levelup', 'relic'].includes(this.game?.state);
+    if (this.el.cockpit) this.el.cockpit.classList.toggle('on', view.id === 'first' && inRun);
+    if (this.el.cockpitElement) {
+      this.el.cockpitElement.textContent = (this.game?.player?.form?.name || 'GUARDIAN').toUpperCase();
+    }
+  }
+
   updateHud(game) {
     const p = game.player;
     if (!p) return;
@@ -2232,6 +2269,10 @@ export class UI {
     this.el.form.textContent = form.name;
     this.el.role.textContent = form.role;
     document.getElementById('hud-vitals').style.setProperty('--ec', form.css);
+    if (this.el.cockpitElement && game.viewMode === 'first') {
+      const cockpitName = (form.name || 'GUARDIAN').toUpperCase();
+      if (this.el.cockpitElement.textContent !== cockpitName) this.el.cockpitElement.textContent = cockpitName;
+    }
     this.el.level.textContent = 'LV ' + game.level;
 
     const hpPct = Math.max(0, p.stats.hp / p.stats.maxHp) * 100;

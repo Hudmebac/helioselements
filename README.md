@@ -1,6 +1,6 @@
 <div align="center">
 
-<sub>B R O W S E R &nbsp; R O G U E L I T E &nbsp; · &nbsp; v 1 . 9 . 0</sub>
+<sub>B R O W S E R &nbsp; R O G U E L I T E &nbsp; · &nbsp; v 1 . 9 . 1</sub>
 
 # ☀ HELIOS ELEMENTS
 
@@ -15,7 +15,7 @@ One tab, no install, no account — a 3D roguelite that runs where you already a
 
 <br/>
 
-<img src="https://img.shields.io/badge/version-1.9.0-f5c26b?style=flat-square&labelColor=141726" alt="version 1.9.0">
+<img src="https://img.shields.io/badge/version-1.9.1-f5c26b?style=flat-square&labelColor=141726" alt="version 1.9.1">
 <img src="https://img.shields.io/badge/touch-ready-67ecff?style=flat-square&labelColor=141726" alt="touch ready">
 <img src="https://img.shields.io/badge/modes-8-67ecff?style=flat-square&labelColor=141726" alt="8 modes">
 <img src="https://img.shields.io/badge/engine-Three.js-8a5cff?style=flat-square&labelColor=141726" alt="Three.js">
@@ -150,6 +150,8 @@ Every run opens on an **empty arena** and begins on its own after **three second
 
 You can also play with the mouse alone: **hold the left mouse button anywhere on the arena and drag** — the same floating ring as on a phone appears, the guardian follows the drag, and releasing stops him. It combines with WASD, so you can steer with the keys and nudge with the mouse.
 
+**Camera:** scroll the mouse wheel down to pull in through **Distant → Close → First person**, and up to pull back out. The **View** pill in the top-right does the same with a click, or press <kbd>V</kbd>. First person puts you at the guardian's eye line behind a cockpit canopy and reticle; the arena, enemies and auto-aim stay exactly as they were. The choice is remembered between runs.
+
 | Keys | Action |
 |:---|:---|
 | <kbd>Space</kbd> / <kbd>Shift</kbd> | **Dash** — brief invulnerability, and Burst Dash turns it into a bomb |
@@ -159,9 +161,10 @@ You can also play with the mouse alone: **hold the left mouse button anywhere on
 | <kbd>E</kbd> (hold) | **Repair** the Sunforge, a tower or a lane pad |
 | <kbd>Enter</kbd> | **Begin wave 1** · then **call the next wave early** — more danger, more shards |
 | <kbd>L</kbd> | Open a stored level-up draft |
+| <kbd>V</kbd> | Cycle the camera: **Distant → Close → First person** (the wheel works too) |
 | <kbd>Esc</kbd> / <kbd>P</kbd> | Pause |
 
-**On a phone or tablet** the game grows a thumb layout. Drag anywhere in the lower-left of the arena and a floating stick appears under your thumb; the right-hand pad carries **Dash**, **Surge**, the **Ultimate** (with its charge), the **Forge**, a **hold-to-repair** button, and **Begin / Call Wave** between waves. Pause is in the top-right corner. Portrait pulls the camera back and lifts it, folds the HUD into a top rail, and hides the keyboard hints; menus, drafts, the Forge and the Codex get finger-sized targets and scroll. **Settings → Interface → Touch controls** can force the layer on or off — Auto turns it on for touch screens.
+**On a phone or tablet** the game grows a thumb layout. Drag anywhere in the lower-left of the arena and a floating stick appears under your thumb; the right-hand pad carries **Dash**, **Surge**, the **Ultimate** (with its charge), the **Forge**, a **hold-to-repair** button, and **Begin / Call Wave** between waves. Pause is in the top-right corner, and the **View** button beneath it cycles **Distant → Close → First person**. Portrait pulls the camera back and lifts it, folds the HUD into a top rail, and hides the keyboard hints; menus, drafts, the Forge and the Codex get finger-sized targets and scroll. **Settings → Interface → Touch controls** can force the layer on or off — Auto turns it on for touch screens.
 
 All twelve actions are rebindable in **Settings → Controls**. **Settings → Interface → Menus** sets how much the game asks of you: *Simple* (four missions, one difficulty), *Default* (six missions, four difficulties, weapon choice) or *Complex* (all eight missions, Eclipse Pacts, Skill Runs, the full Codex).
 
@@ -294,6 +297,14 @@ The **Play** button at the top of this README points at the game, and `/site/` r
 ## Changelog
 
 <details open>
+<summary><b>v1.9.1 — Three ways to see</b></summary>
+
+- **Camera views:** the run now has three stops — **Distant** (the whole ring), **Close** (over the guardian's shoulder) and **First person** (a cockpit canopy, reticle and first-person eye line). Mouse wheel down pulls in, up pulls back out.
+- **Fast controls:** a **View** pill in the top-right (or <kbd>V</kbd>) cycles the camera on desktop; on a phone the **View** button under Pause shows and cycles **Distant / Close / First person**. The last view is remembered between runs.
+
+</details>
+
+<details>
 <summary><b>v1.9.0 — Ascension</b></summary>
 
 - **Victory now leads somewhere.** The results screen offers **Ascend**: carry the same guardian, boons, weapon ranks, relics and shards into the next tier — **I, II, III, IV, V and beyond** — with the mission rebuilt for the new tier. Each tier compounds **+10% enemy health and damage** (+2% speed).
@@ -365,7 +376,7 @@ The **Play** button at the top of this README points at the game, and `/site/` r
 
 </details>
 
-**Earlier — v1.8.2:** Netlify-badge clearance. **v1.8.1:** mouse drag movement. **v1.8.0:** touch controls, the portrait camera and finger-sized menus. **v1.7.7:** the final loadout readout on the results screen. **v1.7.6:** Kindling and Dawn Gifts, two arms and a ward, ranks drafted rather than handed out, dissolving bodies, two new wardens. **v1.7.5:** three menu depths and the empty-arena wave gate. **v1.7.4:** the Descent multiplier (+15% per rank, paid on the rank *played*) and **Settings → Save** export/import. Before that: the Descent itself, Solar Caravan's eight-point road, level boons, Eclipse Pacts, Skill Runs, Warden Duel, and the Codex.
+**Earlier — v1.9.0:** ascension tiers, six sub-bosses and richer art. **v1.8.2:** Netlify-badge clearance. **v1.8.1:** mouse drag movement. **v1.8.0:** touch controls, the portrait camera and finger-sized menus. **v1.7.7:** the final loadout readout on the results screen. **v1.7.6:** Kindling and Dawn Gifts, two arms and a ward, ranks drafted rather than handed out, dissolving bodies, two new wardens. **v1.7.5:** three menu depths and the empty-arena wave gate. **v1.7.4:** the Descent multiplier (+15% per rank, paid on the rank *played*) and **Settings → Save** export/import. Before that: the Descent itself, Solar Caravan's eight-point road, level boons, Eclipse Pacts, Skill Runs, Warden Duel, and the Codex.
 
 ---
 
@@ -382,6 +393,6 @@ The **Play** button at the top of this README points at the game, and `/site/` r
 <br/>
 
 **Built with** Three.js (MIT) · Cinzel & Inter (OFL) · everything else hand-built — renderer, audio synthesis, UI and lore.<br/>
-<sub>Helios Elements v1.9.0 · no install, no account, no telemetry.</sub>
+<sub>Helios Elements v1.9.1 · no install, no account, no telemetry.</sub>
 
 </div>

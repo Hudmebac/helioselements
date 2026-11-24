@@ -1134,3 +1134,83 @@
   color: var(--gold-hi); padding: 2px 7px; border-radius: 20px;
   border: 1px solid rgba(245, 194, 107, .32); background: rgba(245, 194, 107, .08);
 }
+
+/* Camera view pill — the fast control for Distant, Close and First person. */
+.view-btn {
+  width: auto; min-width: 38px; padding: 0 11px 0 10px;
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  border-radius: 20px;
+}
+.view-btn .view-glyph {
+  font-size: 12px; font-weight: 400; line-height: 1; color: var(--gold);
+  text-shadow: 0 0 12px rgba(245, 194, 107, .5);
+}
+.view-btn em {
+  font-style: normal; font-size: 7px; font-weight: 700; letter-spacing: .13em;
+  color: var(--gold-hi); white-space: nowrap;
+}
+@media (max-width: 1180px) {
+  .view-btn { width: 38px; min-width: 38px; padding: 0; }
+  .view-btn em { display: none; }
+}
+
+/* First-person cockpit: a canopy frame, a reticle and a small plate.
+   It sits under the HUD and above the world, and never takes a pointer. */
+.cockpit {
+  position: absolute; inset: 0; z-index: 0;
+  opacity: 0; pointer-events: none;
+  transition: opacity .35s var(--ease);
+}
+.cockpit.on { opacity: 1; }
+.cockpit-frame {
+  position: absolute; inset: 0;
+  background:
+    radial-gradient(120% 92% at 50% 44%, transparent 54%, rgba(2, 4, 10, .44) 100%),
+    linear-gradient(180deg, rgba(3, 5, 12, .86) 0, rgba(3, 5, 12, .2) 6%, transparent 12%, transparent 82%, rgba(3, 5, 12, .46) 93%, rgba(3, 5, 12, .86) 100%),
+    linear-gradient(90deg, rgba(3, 5, 12, .52), transparent 4%, transparent 96%, rgba(3, 5, 12, .52));
+  box-shadow: inset 0 0 140px rgba(0, 0, 0, .52);
+}
+.cockpit-frame::before,
+.cockpit-frame::after {
+  content: ''; position: absolute; top: -17%; width: 55%; height: 40%;
+  border-bottom: 2px solid rgba(245, 194, 107, .18);
+  border-radius: 0 0 55% 0;
+}
+.cockpit-frame::before { left: -12%; transform: rotate(13deg); }
+.cockpit-frame::after { right: -12%; transform: rotate(-13deg) scaleX(-1); }
+.cockpit-strut {
+  position: absolute; top: -6%; width: 1px; height: 38%;
+  background: linear-gradient(180deg, rgba(245, 194, 107, .05), rgba(245, 194, 107, .5));
+  transform-origin: top center;
+}
+.cockpit-strut.left { left: 17%; transform: rotate(22deg); }
+.cockpit-strut.right { right: 17%; transform: rotate(-22deg); }
+.cockpit-reticle {
+  position: absolute; left: 50%; top: 49%; width: 26px; height: 26px;
+  transform: translate(-50%, -50%); border-radius: 50%;
+  border: 1px solid rgba(255, 228, 179, .34);
+  box-shadow: 0 0 18px rgba(245, 194, 107, .16);
+}
+.cockpit-reticle i {
+  position: absolute; display: block; background: rgba(255, 237, 205, .8);
+  box-shadow: 0 0 6px rgba(245, 194, 107, .55);
+}
+.cockpit-reticle .t { left: 50%; top: -5px; width: 1px; height: 4px; transform: translateX(-50%); }
+.cockpit-reticle .b { left: 50%; bottom: -5px; width: 1px; height: 4px; transform: translateX(-50%); }
+.cockpit-reticle .l { left: -5px; top: 50%; width: 4px; height: 1px; transform: translateY(-50%); }
+.cockpit-reticle .r { right: -5px; top: 50%; width: 4px; height: 1px; transform: translateY(-50%); }
+.cockpit-tag {
+  position: absolute; left: 50%; bottom: 104px; transform: translateX(-50%);
+  display: flex; align-items: center; gap: 8px; padding: 5px 12px; border-radius: 20px;
+  background: rgba(6, 9, 18, .55); border: 1px solid rgba(245, 194, 107, .2);
+  backdrop-filter: blur(8px);
+  font-size: 7px; font-weight: 700; letter-spacing: .2em; color: var(--muted);
+  text-transform: uppercase; white-space: nowrap;
+}
+.cockpit-tag b { color: var(--gold-hi); font-size: 8px; letter-spacing: .14em; }
+body.tc-on .cockpit-tag { display: none; }
+
+/* The view pill sits under the top-right icon row, not inside it, so the
+   camera control never squeezes the shard, kindle and weapon chips. */
+.hud > .view-btn { top: 70px; right: 18px; }
+body.tc-on .hud > .view-btn { display: none; }

@@ -200,6 +200,7 @@ export const GUIDE = {
         `You fire automatically at whatever is nearest, so your hands are for movement, timing and the three buttons that matter: Dash, Surge, Ultimate.`,
         'On a phone or tablet the same three buttons sit under your right thumb, with the Forge and a hold-to-repair button beside them, and a floating stick under the left. Drag anywhere in the lower-left of the arena and the stick appears under your thumb; release and it recentres. Begin Wave appears between waves, and pause lives in the top-right corner.',
         'On a desktop you can play one-handed as well: hold the left mouse button anywhere on the arena and drag. The same ring appears, the guardian follows the drag exactly as it follows a thumb, and letting go stops him. WASD and the mouse still work together, so you can steer with one and nudge with the other.',
+        'The camera has three stops: Distant, Close and First person. Scroll the mouse wheel down to pull in and up to pull back out, click the View pill in the top-right, or press V. On a phone or tablet, the View button under Pause shows the current stop and advances on each tap. First person is a cockpit view — the guardian’s body is hidden and a canopy frame and reticle sit over the arena.',
       ],
       controls: true,
       note: `Every key can be rebound in Settings. The defaults are ${KEYBINDS.map(([k, v]) => k + ' for ' + v.toLowerCase()).slice(0, 4).join('; ')}. Settings → Interface → Touch controls (Auto, On, Off) decides whether the thumb layer appears; Auto turns it on for touch screens.`,
@@ -404,6 +405,15 @@ export const FAQ = [
    CHANGELOG — newest first. Add an entry every release.
    ------------------------------------------------------------ */
 export const CHANGELOG = [
+  {
+    version: '1.9.1',
+    date: '2026-11-24',
+    title: 'Three ways to see',
+    items: [
+      'The camera has three stops. Distant is the whole ring; Close comes down over the guardian’s shoulder and follows the way he is moving; First person puts you at his eye line, hides his body and frames the arena behind a cockpit canopy, side struts and a reticle.',
+      'Mouse wheel down pulls in through the stops and up pulls back out. The View pill in the top-right (or V) cycles them on desktop, and on a phone the View button under Pause shows Distant, Close or First person and advances on each tap. The last view is remembered for the next run.',
+    ],
+  },
   {
     version: '1.9.0',
     date: '2026-11-24',
