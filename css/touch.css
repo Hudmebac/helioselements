@@ -10,6 +10,14 @@
   display: none; pointer-events: none;
 }
 body.tc-on .touch.on { display: block; }
+/* A mouse drag shows the stick alone — no pad, no wave button, no pause. */
+.touch.mouse-on { display: block; }
+.touch.mouse-on .tc-zone,
+.touch.mouse-on .tc-pad,
+.touch.mouse-on .tc-call,
+.touch.mouse-on .tc-level,
+.touch.mouse-on .tc-pause { display: none !important; }
+.touch.mouse-on .tc-stick { opacity: 1; }
 .touch * { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
 .touch button, .touch .tc-zone {
   pointer-events: auto; touch-action: none; -webkit-tap-highlight-color: transparent;

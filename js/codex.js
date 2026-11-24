@@ -199,6 +199,7 @@ export const GUIDE = {
       body: [
         `You fire automatically at whatever is nearest, so your hands are for movement, timing and the three buttons that matter: Dash, Surge, Ultimate.`,
         'On a phone or tablet the same three buttons sit under your right thumb, with the Forge and a hold-to-repair button beside them, and a floating stick under the left. Drag anywhere in the lower-left of the arena and the stick appears under your thumb; release and it recentres. Begin Wave appears between waves, and pause lives in the top-right corner.',
+        'On a desktop you can play one-handed as well: hold the left mouse button anywhere on the arena and drag. The same ring appears, the guardian follows the drag exactly as it follows a thumb, and letting go stops him. WASD and the mouse still work together, so you can steer with one and nudge with the other.',
       ],
       controls: true,
       note: `Every key can be rebound in Settings. The defaults are ${KEYBINDS.map(([k, v]) => k + ' for ' + v.toLowerCase()).slice(0, 4).join('; ')}. Settings → Interface → Touch controls (Auto, On, Off) decides whether the thumb layer appears; Auto turns it on for touch screens.`,
@@ -402,6 +403,15 @@ export const FAQ = [
    CHANGELOG — newest first. Add an entry every release.
    ------------------------------------------------------------ */
 export const CHANGELOG = [
+  {
+    version: '1.8.1',
+    date: '2026-11-24',
+    title: 'One hand on the mouse',
+    items: [
+      'Mouse movement: hold the left mouse button anywhere on the arena and drag. The guardian moves with the drag exactly as he moves with a thumb — the same ring appears under the cursor, the same 52-pixel throw is the full speed, and releasing stops him. It needs no setting and works whether or not the touch pad is on.',
+      'WASD and the mouse drag share the same movement, so you can hold a direction with the keys and nudge with the mouse, or play the whole run with the mouse alone.',
+    ],
+  },
   {
     version: '1.8.0',
     date: '2026-11-24',

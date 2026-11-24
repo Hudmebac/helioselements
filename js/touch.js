@@ -85,6 +85,7 @@ export class TouchControls {
     };
     this.mounted = true;
     this._bind();
+    this._bindMouse();
   }
 
   _bind() {
@@ -124,6 +125,20 @@ export class TouchControls {
     el.addEventListener('pointerleave', release);
   }
 
+  /* A mouse drag on the arena works exactly like a thumb: same ring, same
+     vector, same release. It is independent of the touch setting, so a PC
+     can be played one-handed without turning the pad on. */
+  _bindMouse() {
+    const canvas = document.getElementById('game-canvas');
+    if (!canvas) return;
+    canvas.addEventListener('pointerdown', (e) => {
+      if (e.pointerType !== 'mouse' || e.button !== 0) return;
+      if (this.stickId !== null || this.game.state !== 'playing') return;
+      e.preventDefault();
+      this.startStick(e);
+    });
+  }
+
   /* ---------------- SETTING ---------------- */
 
   refresh() {
@@ -143,11 +158,13 @@ export class TouchControls {
   /* ---------------- MOVEMENT ---------------- */
 
   startStick(e) {
-    if (!this.visible) return;
-    if (e.pointerType === 'mouse' && this.preference !== 'on') return;
+    const mouse = e.pointerType === 'mouse';
+    if (!this.visible && !mouse) return;
     if (this.stickId !== null) return;
+    if (this.game.state !== 'playing') return;
     e.preventDefault();
     this.stickId = e.pointerId;
+    if (mouse && this.root) this.root.classList.add('mouse-on');
     const margin = 66;
     this.originX = Math.max(margin, Math.min(window.innerWidth - margin, e.clientX));
     this.originY = Math.max(margin, Math.min(window.innerHeight - margin, e.clientY));
@@ -175,6 +192,7 @@ export class TouchControls {
     if (this.stickId === null) return;
     if (e && e.pointerId !== undefined && e.pointerId !== this.stickId) return;
     this.stickId = null;
+    if (this.root) this.root.classList.remove('mouse-on');
     if (this.stickEl) {
       this.stickEl.classList.remove('active');
       this.stickEl.style.removeProperty('--sx');

@@ -1,6 +1,6 @@
 <div align="center">
 
-<sub>B R O W S E R &nbsp; R O G U E L I T E &nbsp; · &nbsp; v 1 . 8 . 0</sub>
+<sub>B R O W S E R &nbsp; R O G U E L I T E &nbsp; · &nbsp; v 1 . 8 . 1</sub>
 
 # ☀ HELIOS ELEMENTS
 
@@ -15,7 +15,7 @@ One tab, no install, no account — a 3D roguelite that runs where you already a
 
 <br/>
 
-<img src="https://img.shields.io/badge/version-1.8.0-f5c26b?style=flat-square&labelColor=141726" alt="version 1.8.0">
+<img src="https://img.shields.io/badge/version-1.8.1-f5c26b?style=flat-square&labelColor=141726" alt="version 1.8.1">
 <img src="https://img.shields.io/badge/touch-ready-67ecff?style=flat-square&labelColor=141726" alt="touch ready">
 <img src="https://img.shields.io/badge/modes-8-67ecff?style=flat-square&labelColor=141726" alt="8 modes">
 <img src="https://img.shields.io/badge/engine-Three.js-8a5cff?style=flat-square&labelColor=141726" alt="Three.js">
@@ -147,6 +147,8 @@ The payout uses the rank you **played**, not the one you just earned, and it is 
 <p><kbd>W</kbd> <kbd>A</kbd> <kbd>S</kbd> <kbd>D</kbd> move &nbsp;·&nbsp; aim with the mouse &nbsp;·&nbsp; attacking is automatic</p>
 
 Every run opens on an **empty arena** and begins on its own after **three seconds** — enough time to read the tier and walk the ground. Press <kbd>Enter</kbd> — or **Begin now** — to start the horde immediately.
+
+You can also play with the mouse alone: **hold the left mouse button anywhere on the arena and drag** — the same floating ring as on a phone appears, the guardian follows the drag, and releasing stops him. It combines with WASD, so you can steer with the keys and nudge with the mouse.
 
 | Keys | Action |
 |:---|:---|
@@ -292,6 +294,14 @@ The **Play** button at the top of this README points at the game, and `/site/` r
 ## Changelog
 
 <details open>
+<summary><b>v1.8.1 — One hand on the mouse</b></summary>
+
+- **Mouse movement**: hold the left mouse button anywhere on the arena and drag. The same floating ring as the phone stick appears under the cursor, the same 52px throw is full speed, and releasing stops the guardian. No setting needed, and it works whether or not the touch pad is on.
+- **Together with the keys**: mouse drag and WASD feed the same movement, so you can hold a direction and nudge with the mouse — or play an entire run with the mouse alone.
+
+</details>
+
+<details>
 <summary><b>v1.8.0 — The pocket arena</b></summary>
 
 - **Touch controls**: a floating movement stick under the left thumb — press anywhere in the lower-left of the arena and the stick comes to your thumb — plus a right-hand action pad for **Dash**, **Surge**, the **Ultimate** (showing its charge), the **Forge**, **hold-to-repair**, and **Begin / Call Wave** between waves. Pause moves to the top-right corner.
@@ -336,7 +346,7 @@ The **Play** button at the top of this README points at the game, and `/site/` r
 
 </details>
 
-**Earlier — v1.7.7:** the final loadout readout on the results screen. **v1.7.6:** Kindling and Dawn Gifts, two arms and a ward, ranks drafted rather than handed out, dissolving bodies, two new wardens. **v1.7.5:** three menu depths and the empty-arena wave gate. **v1.7.4:** the Descent multiplier (+15% per rank, paid on the rank *played*) and **Settings → Save** export/import. Before that: the Descent itself, Solar Caravan's eight-point road, level boons, Eclipse Pacts, Skill Runs, Warden Duel, and the Codex.
+**Earlier — v1.8.0:** touch controls, the portrait camera and finger-sized menus. **v1.7.7:** the final loadout readout on the results screen. **v1.7.6:** Kindling and Dawn Gifts, two arms and a ward, ranks drafted rather than handed out, dissolving bodies, two new wardens. **v1.7.5:** three menu depths and the empty-arena wave gate. **v1.7.4:** the Descent multiplier (+15% per rank, paid on the rank *played*) and **Settings → Save** export/import. Before that: the Descent itself, Solar Caravan's eight-point road, level boons, Eclipse Pacts, Skill Runs, Warden Duel, and the Codex.
 
 ---
 
@@ -353,6 +363,6 @@ The **Play** button at the top of this README points at the game, and `/site/` r
 <br/>
 
 **Built with** Three.js (MIT) · Cinzel & Inter (OFL) · everything else hand-built — renderer, audio synthesis, UI and lore.<br/>
-<sub>Helios Elements v1.8.0 · no install, no account, no telemetry.</sub>
+<sub>Helios Elements v1.8.1 · no install, no account, no telemetry.</sub>
 
 </div>

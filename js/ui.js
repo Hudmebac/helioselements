@@ -1074,7 +1074,7 @@ export class UI {
           { name: 'Move (touch)', label: 'LEFT THUMB' },
           { name: 'Dash · Surge · Ultimate', label: 'RIGHT THUMB' },
         ]
-      : [];
+      : [{ name: 'Move (mouse)', label: 'HOLD & DRAG' }];
     return touchRows.concat(rows, rest.map(a => ({ name: a.name, label: keyLabel(k(a.key)) })))
       .map(r => `<div class="control-row"><span>${r.name}</span><span class="kbd">${r.label}</span></div>`)
       .join('');
