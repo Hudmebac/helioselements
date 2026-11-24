@@ -3,7 +3,7 @@
    Elements, fusions, enemies, boons and wave composition.
    ============================================================ */
 
-export const VERSION = '1.7.7';
+export const VERSION = '1.8.0';
 
 export const ELEMENTS = {
   ember: {
@@ -735,6 +735,7 @@ export const SETTINGS_DEFAULT = {
   quality: 'high',
   musicOn: true,
   storeLevels: false,
+  touch: 'auto',
 };
 
 /* ------------------------------------------------------------

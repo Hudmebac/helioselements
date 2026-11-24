@@ -311,6 +311,7 @@ export class Engine {
   setArena(id, opts = {}) {
     const spec = ARENAS[id] || ARENAS.sanctum;
     if (!opts.instant && this.arenaId === spec.id) return;
+    this._arenaSpec = spec;
     this.arenaId = spec.id;
     ARENA_ID = spec.id;
     ARENA_RADIUS = spec.radius;
@@ -1137,8 +1138,17 @@ export class Engine {
     if (this.fill) this.fill.color.setHex(spec.accent);
     if (this.orbitA) this.orbitA.color.setHex(spec.light.orbitA ?? spec.accent);
     if (this.orbitB) this.orbitB.color.setHex(spec.light.orbitB ?? 0x7194ff);
-    this.camHeight = 24 + spec.radius * 0.11;
-    this.camBack = 20 + spec.radius * 0.1;
+    this.fitCamera();
+  }
+
+  /* A tall, narrow phone sees less of the ring: lift the camera and pull it
+     back a little so the horde does not arrive from behind the HUD. */
+  fitCamera() {
+    const spec = this._arenaSpec || ARENAS[ARENA_ID] || ARENAS.sanctum;
+    const portrait = window.innerHeight > window.innerWidth * 1.08;
+    const k = portrait ? 1.16 : 1;
+    this.camHeight = (24 + spec.radius * 0.11) * k;
+    this.camBack = (20 + spec.radius * 0.1) * k;
   }
 
   _buildLights() {
@@ -1217,6 +1227,7 @@ export class Engine {
     this.baseFov = w / h < 0.9 ? 58 : 46;
     this.camera.fov = this.baseFov;
     this.camera.updateProjectionMatrix();
+    this.fitCamera();
     this.renderer.setSize(w, h, false);
   }
 

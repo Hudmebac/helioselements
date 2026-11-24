@@ -387,7 +387,7 @@ export class UI {
             <button class="btn" data-act="credits">Credits</button>
             <button class="btn ghost" data-act="welcome-skip">Skip</button>
           </div>
-          <div class="welcome-hint">Press any key to begin · replay this prologue from Settings</div>
+          <div class="welcome-hint">Press any key, or tap Enter the Arena · replay this prologue from Settings</div>
         </div>
       </section>
 
@@ -732,7 +732,7 @@ export class UI {
     });
 
     this.root.addEventListener('click', (e) => {
-      const el = e.target.closest('[data-act], [data-elem], [data-weapon], [data-card], [data-tab], [data-quality], [data-toggle], [data-mode], [data-run], [data-build], [data-forge], [data-upgrade], [data-pact], [data-relic], [data-reward], [data-diff], [data-music], [data-menus]');
+      const el = e.target.closest('[data-act], [data-elem], [data-weapon], [data-card], [data-tab], [data-quality], [data-toggle], [data-mode], [data-run], [data-build], [data-forge], [data-upgrade], [data-pact], [data-relic], [data-reward], [data-diff], [data-music], [data-menus], [data-touch]');
       if (!el) return;
       this.audio.unlock();
 
@@ -836,6 +836,12 @@ export class UI {
       if (el.dataset.quality) {
         this.audio.ui();
         this._setSetting('quality', el.dataset.quality);
+        this._renderSettings();
+        return;
+      }
+      if (el.dataset.touch) {
+        this.audio.ui();
+        this._setSetting('touch', el.dataset.touch);
         this._renderSettings();
         return;
       }
@@ -1063,7 +1069,13 @@ export class UI {
           label: keyLabel(k(a)),
         }));
     const rest = CONTROL_ACTIONS.filter(a => !['up', 'down', 'left', 'right'].includes(a.key));
-    return rows.concat(rest.map(a => ({ name: a.name, label: keyLabel(k(a.key)) })))
+    const touchRows = this.game.touch?.enabled
+      ? [
+          { name: 'Move (touch)', label: 'LEFT THUMB' },
+          { name: 'Dash · Surge · Ultimate', label: 'RIGHT THUMB' },
+        ]
+      : [];
+    return touchRows.concat(rows, rest.map(a => ({ name: a.name, label: keyLabel(k(a.key)) })))
       .map(r => `<div class="control-row"><span>${r.name}</span><span class="kbd">${r.label}</span></div>`)
       .join('');
   }
@@ -2010,6 +2022,12 @@ export class UI {
         <div class="label"><b>Menus</b><span>${depth.desc}</span></div>
         <div class="seg depth-seg">
           ${MENU_DEPTH_ORDER.map(k => `<button class="${k === depth.key ? 'on' : ''}" data-menus="${k}">${MENU_DEPTHS[k].name}</button>`).join('')}
+        </div>
+      </div>
+      <div class="settings-row">
+        <div class="label"><b>Touch controls</b><span>Left thumb moves, right thumb acts. Auto turns them on for touch screens.</span></div>
+        <div class="seg">
+          ${['auto', 'on', 'off'].map(v => `<button class="${(s.touch || 'auto') === v ? 'on' : ''}" data-touch="${v}">${v}</button>`).join('')}
         </div>
       </div>
       <div class="settings-row">

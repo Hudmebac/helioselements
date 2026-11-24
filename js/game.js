@@ -40,6 +40,8 @@ export class Game {
     this.structures = null;
 
     this.keys = {};
+    this.touchMove = { x: 0, z: 0 };
+    this.touchHeld = new Set();
     this.time = 0;
     this.state = 'menu';
     this.player = null;
@@ -190,6 +192,7 @@ export class Game {
   }
 
   isDown(action) {
+    if (this.touchHeld?.has(action)) return true;
     const code = this.keyFor(action);
     return !!(code && this.keys[code]);
   }
@@ -2189,5 +2192,6 @@ export class Game {
     this.engine.setQuality(settings.quality);
     this.fx.settings.numbers = settings.numbers;
     this.fx.shakeScale = settings.shake;
+    this.touch?.refresh();
   }
 }

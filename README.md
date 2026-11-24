@@ -1,6 +1,6 @@
 <div align="center">
 
-<sub>B R O W S E R &nbsp; R O G U E L I T E &nbsp; · &nbsp; v 1 . 7 . 7</sub>
+<sub>B R O W S E R &nbsp; R O G U E L I T E &nbsp; · &nbsp; v 1 . 8 . 0</sub>
 
 # ☀ HELIOS ELEMENTS
 
@@ -15,7 +15,8 @@ One tab, no install, no account — a 3D roguelite that runs where you already a
 
 <br/>
 
-<img src="https://img.shields.io/badge/version-1.7.7-f5c26b?style=flat-square&labelColor=141726" alt="version 1.7.7">
+<img src="https://img.shields.io/badge/version-1.8.0-f5c26b?style=flat-square&labelColor=141726" alt="version 1.8.0">
+<img src="https://img.shields.io/badge/touch-ready-67ecff?style=flat-square&labelColor=141726" alt="touch ready">
 <img src="https://img.shields.io/badge/modes-8-67ecff?style=flat-square&labelColor=141726" alt="8 modes">
 <img src="https://img.shields.io/badge/engine-Three.js-8a5cff?style=flat-square&labelColor=141726" alt="Three.js">
 <img src="https://img.shields.io/badge/dependencies-0-73e698?style=flat-square&labelColor=141726" alt="no dependencies">
@@ -158,6 +159,8 @@ Every run opens on an **empty arena** and begins on its own after **three second
 | <kbd>L</kbd> | Open a stored level-up draft |
 | <kbd>Esc</kbd> / <kbd>P</kbd> | Pause |
 
+**On a phone or tablet** the game grows a thumb layout. Drag anywhere in the lower-left of the arena and a floating stick appears under your thumb; the right-hand pad carries **Dash**, **Surge**, the **Ultimate** (with its charge), the **Forge**, a **hold-to-repair** button, and **Begin / Call Wave** between waves. Pause is in the top-right corner. Portrait pulls the camera back and lifts it, folds the HUD into a top rail, and hides the keyboard hints; menus, drafts, the Forge and the Codex get finger-sized targets and scroll. **Settings → Interface → Touch controls** can force the layer on or off — Auto turns it on for touch screens.
+
 All twelve actions are rebindable in **Settings → Controls**. **Settings → Interface → Menus** sets how much the game asks of you: *Simple* (four missions, one difficulty), *Default* (six missions, four difficulties, weapon choice) or *Complex* (all eight missions, Eclipse Pacts, Skill Runs, the full Codex).
 
 > [!NOTE]
@@ -234,7 +237,8 @@ helioselements/
 ├── css/
 │   ├── style.css         shell, HUD, menus
 │   ├── sunforge.css      Siege and Lanes interfaces
-│   └── eclipse.css       results, Descent, codex prose
+│   ├── eclipse.css       results, Descent, codex prose
+│   └── touch.css         thumb pad, mobile HUD and finger-sized menus
 ├── js/
 │   ├── main.js           boot
 │   ├── engine.js         renderer, camera, loop
@@ -249,6 +253,7 @@ helioselements/
 │   ├── audio.js          synthesised sound, no audio files
 │   ├── store.js          save shape, normalise, export/import
 │   ├── ui.js             every screen
+│   ├── touch.js          the movement stick and action pad
 │   ├── codex.js          all copy: lore, guide, FAQ, changelog
 │   └── lib/three.min.js  vendored
 ├── site/                 redirect to /lore/ for old links
@@ -287,6 +292,16 @@ The **Play** button at the top of this README points at the game, and `/site/` r
 ## Changelog
 
 <details open>
+<summary><b>v1.8.0 — The pocket arena</b></summary>
+
+- **Touch controls**: a floating movement stick under the left thumb — press anywhere in the lower-left of the arena and the stick comes to your thumb — plus a right-hand action pad for **Dash**, **Surge**, the **Ultimate** (showing its charge), the **Forge**, **hold-to-repair**, and **Begin / Call Wave** between waves. Pause moves to the top-right corner.
+- **Auto or manual**: the thumb layer switches itself on for touch screens and stays away from a mouse. **Settings → Interface → Touch controls** (Auto / On / Off) overrides it, and keyboard and touch work side by side on the same run.
+- **Portrait play**: the camera lifts and pulls back when the screen is taller than it is wide, and the HUD folds into a top rail — vitals, XP, wave, core and objective — so both thumbs keep the arena clear.
+- **Menus for fingers**: larger tap targets on every button, tab and card, full-width panels, stacked settings rows, scrolling panels and drafts, and keyboard-only hints (1 · 2 · 3, Enter) hidden on touch screens.
+
+</details>
+
+<details>
 <summary><b>v1.7.7 — What you carried out</b></summary>
 
 - **Final loadout**: the results screen now ends a run with the loadout it actually built — three tiles for the firing hand (rank and rarity), the second arm (rank) and the ward, which prints the shield, mending and pulse numbers it was giving at its final rank. An empty slot says so, and a Skill Run reports bare hands.
@@ -321,7 +336,7 @@ The **Play** button at the top of this README points at the game, and `/site/` r
 
 </details>
 
-**Earlier — v1.7.6:** Kindling and Dawn Gifts, two arms and a ward, ranks drafted rather than handed out, dissolving bodies, two new wardens. **v1.7.5:** three menu depths and the empty-arena wave gate. **v1.7.4:** the Descent multiplier (+15% per rank, paid on the rank *played*) and **Settings → Save** export/import. Before that: the Descent itself, Solar Caravan's eight-point road, level boons, Eclipse Pacts, Skill Runs, Warden Duel, and the Codex.
+**Earlier — v1.7.7:** the final loadout readout on the results screen. **v1.7.6:** Kindling and Dawn Gifts, two arms and a ward, ranks drafted rather than handed out, dissolving bodies, two new wardens. **v1.7.5:** three menu depths and the empty-arena wave gate. **v1.7.4:** the Descent multiplier (+15% per rank, paid on the rank *played*) and **Settings → Save** export/import. Before that: the Descent itself, Solar Caravan's eight-point road, level boons, Eclipse Pacts, Skill Runs, Warden Duel, and the Codex.
 
 ---
 
@@ -338,6 +353,6 @@ The **Play** button at the top of this README points at the game, and `/site/` r
 <br/>
 
 **Built with** Three.js (MIT) · Cinzel & Inter (OFL) · everything else hand-built — renderer, audio synthesis, UI and lore.<br/>
-<sub>Helios Elements v1.7.7 · no install, no account, no telemetry.</sub>
+<sub>Helios Elements v1.8.0 · no install, no account, no telemetry.</sub>
 
 </div>

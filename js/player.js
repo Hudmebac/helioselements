@@ -719,7 +719,8 @@ export class Player {
 
     // movement
     const keys = this.game.keys;
-    let ix = 0, iz = 0;
+    let ix = this.game.touchMove?.x || 0;
+    let iz = this.game.touchMove?.z || 0;
     if (this.game.isDown('up') || keys['ArrowUp']) iz -= 1;
     if (this.game.isDown('down') || keys['ArrowDown']) iz += 1;
     if (this.game.isDown('left') || keys['ArrowLeft']) ix -= 1;

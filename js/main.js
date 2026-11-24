@@ -7,6 +7,7 @@ import { FX } from './fx.js';
 import { AudioSystem } from './audio.js';
 import { Game } from './game.js';
 import { UI } from './ui.js';
+import { TouchControls } from './touch.js';
 import { loadSave } from './store.js';
 
 const boot = document.getElementById('boot');
@@ -33,6 +34,8 @@ try {
 
   game.ui = ui;
   game.applySettings(save.settings);
+  const touch = new TouchControls(game);
+  game.touch = touch;
   game.init();
 
   const unlockAudio = () => audio.unlock();
@@ -51,6 +54,7 @@ try {
     last = now;
     try {
       game.update(dt);
+      touch.update(dt);
       fx.update(dt);
       engine.update(dt, game.cameraOpts());
       ui.updateWorldBars(game);
@@ -69,7 +73,7 @@ try {
   });
 
   // handy for debugging from the console
-  window.__helios = { game, ui, engine, fx, audio };
+  window.__helios = { game, ui, engine, fx, audio, touch };
 } catch (err) {
   fatal(err);
 }

@@ -198,9 +198,10 @@ export const GUIDE = {
       title: 'Controls',
       body: [
         `You fire automatically at whatever is nearest, so your hands are for movement, timing and the three buttons that matter: Dash, Surge, Ultimate.`,
+        'On a phone or tablet the same three buttons sit under your right thumb, with the Forge and a hold-to-repair button beside them, and a floating stick under the left. Drag anywhere in the lower-left of the arena and the stick appears under your thumb; release and it recentres. Begin Wave appears between waves, and pause lives in the top-right corner.',
       ],
       controls: true,
-      note: `Every key can be rebound in Settings. The defaults are ${KEYBINDS.map(([k, v]) => k + ' for ' + v.toLowerCase()).slice(0, 4).join('; ')}.`,
+      note: `Every key can be rebound in Settings. The defaults are ${KEYBINDS.map(([k, v]) => k + ' for ' + v.toLowerCase()).slice(0, 4).join('; ')}. Settings → Interface → Touch controls (Auto, On, Off) decides whether the thumb layer appears; Auto turns it on for touch screens.`,
     },
     {
       id: 'screen',
@@ -323,14 +324,14 @@ export const MARKETING = {
   ],
   factSheet: [
     ['Genre', 'Action survival roguelite'],
-    ['Platform', 'Desktop browser (WebGL)'],
+    ['Platform', 'Desktop, tablet and phone (WebGL)'],
     ['Price', 'Free to play'],
     ['Players', 'Single player'],
     ['Missions', '8 modes, 4 difficulty tiers, 5 descent ranks'],
     ['Menus', 'Simple, Default or Complex depth'],
     ['Kindling', '8 motes summon a mode-aware Dawn Gift'],
     ['Session', '10–25 minutes per mission'],
-    ['Controls', 'Keyboard and mouse, fully rebindable'],
+    ['Controls', 'Keyboard, mouse or touch — all rebindable'],
     ['Engine', 'Three.js / WebGL, no install'],
     ['Version', VERSION],
     ['Language', 'English'],
@@ -361,7 +362,7 @@ export const FAQ = [
   },
   {
     q: 'Does it work on mobile?',
-    a: 'It is built for a keyboard and mouse. A phone or tablet will render it, but the controls assume WASD, a mouse and a few hotkeys.',
+    a: 'Yes. On a phone or tablet the game switches to a thumb layout — a floating movement stick on the left, and Dash, Surge, Ultimate, the Forge and hold-to-repair under the right — with menus, drafts and the camera sized for the screen. Settings → Interface → Touch controls can force the layer on or off.',
   },
   {
     q: 'How long is a run?',
@@ -401,6 +402,17 @@ export const FAQ = [
    CHANGELOG — newest first. Add an entry every release.
    ------------------------------------------------------------ */
 export const CHANGELOG = [
+  {
+    version: '1.8.0',
+    date: '2026-11-24',
+    title: 'The pocket arena',
+    items: [
+      'Touch controls: a floating movement stick under the left thumb — drag anywhere in the lower-left of the arena and the stick appears where you press — and an action pad under the right with Dash, Surge, the Ultimate (showing its charge), the Forge, a hold-to-repair button and Begin/Call Wave. Pause sits in the top-right corner.',
+      'The thumb layer turns itself on for touch screens and off for a mouse. Settings → Interface → Touch controls (Auto, On, Off) overrides it, and keyboard and touch keep working together on the same run.',
+      'Portrait play gets its own view: the camera lifts and pulls back when the screen is taller than it is wide, and the in-run HUD folds into a top rail — vitals, XP, wave, core and objective — so both thumbs keep the arena clear.',
+      'Menus are sized for fingers: larger tap targets on every button, tab and card, full-width panels, stacked settings rows, scrolling panels and drafts, and the keyboard shortcuts (1 · 2 · 3, Enter) no longer printed on touch screens.',
+    ],
+  },
   {
     version: '1.7.7',
     date: '2026-11-24',
