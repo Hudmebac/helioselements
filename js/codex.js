@@ -411,6 +411,15 @@ export const FAQ = [
    ------------------------------------------------------------ */
 export const CHANGELOG = [
   {
+    version: '1.9.10',
+    date: '2026-11-24',
+    title: 'Step back up',
+    items: [
+      'The menu remembers the deepest Descent rank earned. Stepping back from 4 to 3, or down to 0, now leaves a Step Up button that returns to the rank you left.',
+      'Step Up cannot exceed the highest rank already earned, so the Descent remains a record of progress rather than a free difficulty selector. Old saves adopt their current rank as their earned maximum.',
+    ],
+  },
+  {
     version: '1.9.9',
     date: '2026-11-24',
     title: 'Clear the fallen',

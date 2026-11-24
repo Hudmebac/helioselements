@@ -23,6 +23,7 @@ export function defaultSave() {
     bestAscension: 0,
     difficulty: 'solar',
     descent: 0,
+    descentBest: 0,
     difficultyBest: { kindled: 0, solar: 0, umbral: 0, hardcore: 0 },
     difficultyWins: { kindled: 0, solar: 0, umbral: 0, hardcore: 0 },
     marks: 0,
@@ -65,6 +66,13 @@ export function normalizeSave(input) {
       bestSkill: Math.max(0, Math.floor(Number(parsed.bestSkill) || 0)),
       difficulty: normalizeDifficulty(parsed.difficulty),
       descent: Math.max(0, Math.min(DESCENT.max, Math.floor(Number(parsed.descent) || 0))),
+      descentBest: Math.max(
+        0,
+        Math.min(DESCENT.max, Math.max(
+          Math.floor(Number(parsed.descentBest) || 0),
+          Math.floor(Number(parsed.descent) || 0)
+        ))
+      ),
       difficultyBest: { ...base.difficultyBest, ...(parsed.difficultyBest || {}) },
       difficultyWins: { ...base.difficultyWins, ...(parsed.difficultyWins || {}) },
       seenWelcome: !!parsed.seenWelcome,

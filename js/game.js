@@ -132,6 +132,14 @@ export class Game {
   /* ---------------- DESCENT ---------------- */
   descentRank() { return Math.max(0, Math.min(DESCENT.max, Math.floor(this.save.descent || 0))); }
 
+  /* The deepest rank reached is kept separately so stepping back is reversible. */
+  descentBestRank() {
+    return Math.max(
+      this.descentRank(),
+      Math.min(DESCENT.max, Math.floor(this.save.descentBest || 0))
+    );
+  }
+
   /* Every completed mission raises the descent; each rank makes the next run a little harder. */
   descentMeta() {
     const rank = this.descentRank();
@@ -142,7 +150,20 @@ export class Game {
   lowerDescent() {
     const rank = this.descentRank();
     if (rank <= 0) return false;
+    // Remember the rank being left behind, even for saves created before
+    // descentBest existed.
+    this.save.descentBest = this.descentBestRank();
     this.save.descent = rank - 1;
+    persist(this.save);
+    return true;
+  }
+
+  /* Return toward the deepest rank already earned, never above it. */
+  raiseDescent() {
+    const rank = this.descentRank();
+    const best = this.descentBestRank();
+    if (rank >= best) return false;
+    this.save.descent = Math.min(best, rank + 1);
     persist(this.save);
     return true;
   }
@@ -2308,6 +2329,7 @@ export class Game {
       this.save.wins = (this.save.wins || 0) + 1;
       // Completing a mission carries you one step further down the descent.
       this.save.descent = Math.min(DESCENT.max, this.descentRank() + 1);
+      this.save.descentBest = Math.max(this.save.descentBest || 0, this.save.descent);
       this.save.modeWins = this.save.modeWins || { siege: 0, lane: 0, trial: 0, hunt: 0, escort: 0, ritual: 0, blitz: 0, duel: 0 };
       this.save.modeWins[this.mode] = (this.save.modeWins[this.mode] || 0) + 1;
       this.save.difficultyWins = this.save.difficultyWins || { kindled: 0, solar: 0, umbral: 0, hardcore: 0 };

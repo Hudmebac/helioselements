@@ -317,6 +317,7 @@ export class UI {
             <span>DESCENT <b id="descent-rank">0</b></span>
             <em id="descent-mods"></em>
             <button class="btn" data-act="stepback-menu">Step Back</button>
+            <button class="btn" data-act="stepup-menu">Step Up</button>
           </div>
         </div>
         <div class="pact-panel" id="pact-panel">
@@ -1042,6 +1043,10 @@ export class UI {
         this.audio.ui();
         if (this.game.lowerDescent()) this._renderDifficulties();
         break;
+      case 'stepup-menu':
+        this.audio.ui();
+        if (this.game.raiseDescent()) this._renderDifficulties();
+        break;
       case 'change':
         this.audio.ui();
         this.hideGameOver();
@@ -1263,16 +1268,21 @@ export class UI {
     const strip = document.getElementById('descent-strip');
     if (strip) {
       const rank = this.game.descentRank ? this.game.descentRank() : (this.save.descent || 0);
+      const bestRank = this.game.descentBestRank ? this.game.descentBestRank() : Math.max(rank, this.save.descentBest || 0);
       const meta = this.game.descentMeta ? this.game.descentMeta() : { hp: 1, damage: 1 };
-      strip.hidden = rank <= 0;
+      strip.hidden = bestRank <= 0;
       const rankEl = document.getElementById('descent-rank');
       if (rankEl) rankEl.textContent = rank;
       const modsEl = document.getElementById('descent-mods');
       if (modsEl) {
         modsEl.textContent = rank
           ? 'next descent +' + Math.round((meta.hp - 1) * 100) + '% enemy health · +' + Math.round((meta.damage - 1) * 100) + '% damage · +' + Math.round((meta.marks - 1) * 100) + '% sunmarks'
-          : '';
+          : 'stepped back · highest earned ' + bestRank;
       }
+      const backBtn = strip.querySelector('[data-act="stepback-menu"]');
+      if (backBtn) backBtn.disabled = rank <= 0;
+      const upBtn = strip.querySelector('[data-act="stepup-menu"]');
+      if (upBtn) upBtn.disabled = rank >= bestRank;
     }
     const current = document.getElementById('diff-current');
     const record = document.getElementById('diff-record');
