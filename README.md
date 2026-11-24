@@ -1,6 +1,6 @@
 <div align="center">
 
-<sub>B R O W S E R &nbsp; R O G U E L I T E &nbsp; · &nbsp; v 1 . 9 . 3</sub>
+<sub>B R O W S E R &nbsp; R O G U E L I T E &nbsp; · &nbsp; v 1 . 9 . 4</sub>
 
 # ☀ HELIOS ELEMENTS
 
@@ -15,7 +15,7 @@ One tab, no install, no account — a 3D roguelite that runs where you already a
 
 <br/>
 
-<img src="https://img.shields.io/badge/version-1.9.3-f5c26b?style=flat-square&labelColor=141726" alt="version 1.9.3">
+<img src="https://img.shields.io/badge/version-1.9.4-f5c26b?style=flat-square&labelColor=141726" alt="version 1.9.4">
 <img src="https://img.shields.io/badge/touch-ready-67ecff?style=flat-square&labelColor=141726" alt="touch ready">
 <img src="https://img.shields.io/badge/modes-8-67ecff?style=flat-square&labelColor=141726" alt="8 modes">
 <img src="https://img.shields.io/badge/engine-Three.js-8a5cff?style=flat-square&labelColor=141726" alt="Three.js">
@@ -300,6 +300,16 @@ The **Play** button at the top of this README points at the game, and `/site/` r
 ## Changelog
 
 <details open>
+<summary><b>v1.9.4 — Scars cost marks</b></summary>
+
+- **Mend the caravan by hand:** hold **E** within **5.8m** of a damaged reliquary to restore **34 integrity/s**. Repairing silences both weapons, so every second of mending is a second not spent clearing the road. The repair prompt turns green and shows its integrity.
+- **Caravan damage costs sunmarks:** full payout above **90%** integrity, sliding toward **×0.40** at zero. At zero the reliquary shatters and the run ends.
+- **Structures pay for the state of the hold:** full payout above **80%** core integrity, sliding toward **×0.50** below it. Each destroyed defense takes another **4%** off the final payout, up to a **40%** cut.
+- **See the cost before the result:** the pause screen and caravan HUD show the current payout multiplier, and the results screen explains how much integrity cost you.
+
+</details>
+
+<details>
 <summary><b>v1.9.3 — Look where you walk</b></summary>
 
 - **First-person controls:** in the cockpit, **W/S** move along the camera's forward/back and **A/D** strafe across the screen. Distant and Close keep their fixed world-axis controls.
@@ -415,6 +425,6 @@ The **Play** button at the top of this README points at the game, and `/site/` r
 <br/>
 
 **Built with** Three.js (MIT) · Cinzel & Inter (OFL) · everything else hand-built — renderer, audio synthesis, UI and lore.<br/>
-<sub>Helios Elements v1.9.3 · no install, no account, no telemetry.</sub>
+<sub>Helios Elements v1.9.4 · no install, no account, no telemetry.</sub>
 
 </div>

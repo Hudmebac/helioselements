@@ -692,11 +692,12 @@ export class Structures {
       ped.ringMat.color.set(0xf5c26b);
     }
     this.defenses = this.defenses.filter(d => d !== structure);
+    if (game.runStats) game.runStats.defensesLost = (game.runStats.defensesLost || 0) + 1;
     this.fx.burst(new THREE.Vector3(structure.pos.x, 1.2, structure.pos.z), structure.type.color, { count: 34, speed: 9, size: 0.32, life: 1, up: 3 });
     this.fx.ring(structure.pos, structure.type.color, { r0: 0.5, r1: 5, life: 0.8, opacity: 0.8 });
     this.audio?.hurt?.();
     game.engine.addShake(0.35);
-    game.ui?.toast(structure.name.toUpperCase() + ' DESTROYED', '#ff8a52');
+    game.ui?.toast(structure.name.toUpperCase() + ' DESTROYED · −' + Math.round(SIEGE.towerRevenueStep * 100) + '% FINAL PAYOUT', '#ff8a52');
     this.scene.remove(structure.group);
     structure.group.traverse((o) => {
       if (o.geometry) o.geometry.dispose?.();
@@ -956,6 +957,10 @@ export class Caravan {
     this.progress = 0;
     this.escorted = false;
     this.contested = false;
+    this.kind = 'caravan';
+    this.name = 'Solar Caravan';
+    this.radius = 1.45;
+    this.warnStep = 0;
     this._hitCd = 0;
     this._flash = 0;
     this._t = 0;
@@ -1275,6 +1280,28 @@ export class Caravan {
         game.onCaravanLost();
       }
     }
+    this._checkIntegrity(game);
+  }
+
+  _checkIntegrity(game) {
+    if (!this.alive || game.state !== 'playing') return;
+    const ratio = this.hp / Math.max(1, this.maxHp);
+    if (ratio < 0.33 && this.warnStep < 2) {
+      this.warnStep = 2;
+      game.ui?.toast('RELIQUARY CRITICAL — HOLD E TO MEND OR LOSE THE RUN', '#ff5a3a');
+      game.engine.addShake(0.5);
+      game.fx.flash('hit');
+    } else if (ratio < 0.66 && this.warnStep < 1) {
+      this.warnStep = 1;
+      game.ui?.toast('RELIQUARY CRACKING — HOLD E TO MEND · DAMAGE CUTS THE FINAL PAYOUT', '#ff8a52');
+    }
+  }
+
+  repair(amount) {
+    if (!this.alive || amount <= 0) return 0;
+    const before = this.hp;
+    this.hp = Math.min(this.maxHp, this.hp + amount);
+    return this.hp - before;
   }
 
   clear() {

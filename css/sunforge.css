@@ -69,6 +69,10 @@
     opacity: 0; pointer-events: none; transition: all .2s var(--ease); backdrop-filter: blur(10px);
   }
   .repair-prompt.on { opacity: 1; transform: translate(-50%, 0); }
+  .repair-prompt.caravan { border-color: rgba(141,255,192,.42); }
+  .repair-prompt.caravan b, .repair-prompt.caravan .key { color: #8dffc0; }
+  .repair-prompt.caravan .key { background: rgba(141,255,192,.1); border-color: rgba(141,255,192,.32); }
+  .repair-prompt.caravan .repair-meter i { background: #8dffc0; box-shadow: 0 0 8px #8dffc0; }
   .repair-prompt b { color: var(--gold-hi); font-weight: 700; }
   .repair-prompt .key {
     width: 18px; height: 18px; display: grid; place-content: center; border-radius: 5px;

@@ -1626,7 +1626,7 @@ export class UI {
         lane: 'Three lanes feed the core. Tower the lane pads to hold it, then walk out to a Rift Gate and shoot it — towers cannot damage gates, only your fire, surges and ultimates can.',
         trial: 'No core. No defenses. Survive the endless horde and push your best wave.',
         hunt: 'No core and no walls. Four wardens arrive back to back — kill every one before the arena closes.',
-        escort: 'The reliquary only moves while you stand beside it and nothing is contesting it. Enemies close to it tear it apart; it halts at five waystones until the ground is clear. Clear the road, then walk it home.',
+        escort: 'The reliquary only moves while you stand beside it and nothing is contesting it. Enemies close to it tear it apart; hold E beside it to mend it, but repairing leaves you unable to fire. Damage cuts the final sunmark payout and at zero integrity the caravan is destroyed. Clear the road, then walk it home.',
         ritual: 'Three ember circles ring the arena. Stand inside one to charge it; enemies inside stop the charge and drain it. Seal all three at once before the flame gutters out.',
         blitz: 'Every wave is on a clock. Kills and warden kills add time. Clear twelve waves before the sun sets — there are no breathers.',
         duel: 'Four crowned champions come alone, each far stronger than the last. No escorts, no walls — just the ring and your sigil.',
@@ -1875,7 +1875,8 @@ export class UI {
         <div class="section-label">The new missions</div>
         <p class="subnote" style="font-size:10.5px;line-height:1.8">
           <b>Solar Caravan</b> — the reliquary only advances while you are within ${ESCORT.escortRadius} units and no enemy is within ${ESCORT.contestedRadius} of it.
-          It has ${ESCORT.hp} integrity, takes escalating damage from every enemy crowding it, and bleeds ${ESCORT.decay} integrity per second while you are away. Clear the road, then walk it the last stretch.<br><br>
+          It has ${ESCORT.hp} integrity, takes escalating damage from every enemy crowding it, and bleeds ${ESCORT.decay} integrity per second while you are away.
+          Hold <b>E</b> beside it to mend ${ESCORT.repairRate} integrity per second, but repair takes both hands and leaves you unable to fire. Above <b>${Math.round(ESCORT.revenueSafe * 100)}%</b> integrity the run pays full sunmarks; below it the final payout falls toward <b>×${ESCORT.revenueFloor.toFixed(2)}</b>, and at zero integrity the caravan is destroyed. Clear the road, mend when you can afford to stop shooting, then walk it the last stretch.<br><br>
           <b>Ember Ritual</b> — stand inside a circle for ${RITUAL.chargeTime}s to seal it (longer on harder tiers). Enemies inside contest it and drain the charge; an unattended circle bleeds ${Math.round(RITUAL.decay * 100)}% per second.
           Sealed circles stay sealed. Seal all ${RITUAL.shrineCount} and the ritual is complete.<br><br>
           <b>Eclipse Blitz</b> — horde waves start with ${BLITZ.waveTime}s on the clock (shorter on harder tiers). Warden waves get their own sunset, scaled to the warden's health. Kills add ${BLITZ.killBonus}s and a felled warden adds ${BLITZ.bossBonus}s.
@@ -1887,7 +1888,7 @@ export class UI {
         <div class="siege-brief">
           <div class="siege-goal"><span>OBJECTIVE</span><b>Survive ${SIEGE.goalWave} waves</b><p>Wave 20 is the last warden. If the Sunforge falls, the run ends immediately.</p></div>
           <div class="siege-goal"><span>ECONOMY</span><b>Sun shards</b><p>Clear waves, fell wardens, and call waves early to earn shards. Spend them in the Forge — open it any time with B.</p></div>
-          <div class="siege-goal"><span>REPAIR</span><b>Hold E</b><p>Stand near the Sunforge or a damaged defense and hold E to mend it. Free, but it takes time and leaves you exposed.</p></div>
+          <div class="siege-goal"><span>REPAIR</span><b>Hold E</b><p>Stand near the Sunforge or a damaged defense and hold E to mend it. Free, but it takes time, leaves you exposed, and the weapons stay silent until you let go. Damage taken also cuts the final sunmark payout.</p></div>
         </div>
         <div class="section-label">The Sunforge Aegis</div>
         <p class="subnote" style="font-size:10.5px;line-height:1.8">
@@ -1895,6 +1896,7 @@ export class UI {
           take <b>25% less damage</b>, and the breach is <b>slowed 32%</b>. Clear a wave with the core above <b>${Math.round(SIEGE.holdPct * 100)}%</b> and the Forge pays an extra shard.
           The core also knits itself back together if nothing has struck it for ${SIEGE.coreRegenDelay} seconds, and it lashes out at anything within ${SIEGE.coreZapRadius} units every ${SIEGE.coreZapInterval}s.
           Below <b>${Math.round(SIEGE.lastLightPct * 100)}%</b> integrity it enters <b>Last Light</b>: holding the Aegis then grants <b>+${Math.round(SIEGE.lastLightDamage * 100)}% damage</b> and rapid ultimate charge.
+          <b>Damage costs marks.</b> The final payout is full while the core stays above <b>${Math.round(SIEGE.revenueSafe * 100)}%</b>; below that it scales down toward <b>×${SIEGE.revenueFloor.toFixed(2)}</b>. Every destroyed defense also takes <b>${Math.round(SIEGE.towerRevenueStep * 100)}%</b> off the final payout (up to a <b>40%</b> cut), so choosing between one more tower, one more repair and one more fight matters after the last wave too.
         </p>
         <div class="section-label">The lanes</div>
         <p class="subnote" style="font-size:10.5px;line-height:1.8">
@@ -2170,7 +2172,11 @@ export class UI {
         const corePct = Math.max(0, core.hp / core.maxHp) * 100;
         this.el.coreFill.style.width = corePct + '%';
         this.el.coreNum.textContent = Math.max(0, Math.ceil(core.hp)) + ' / ' + Math.round(core.maxHp);
-        if (this.el.corePct) this.el.corePct.textContent = Math.round(corePct) + '%';
+        const pay = game.objectiveRevenue?.().factor ?? 1;
+        if (this.el.corePct) {
+          this.el.corePct.textContent = Math.round(corePct) + '%' + (pay < 0.995 ? ' · ×' + pay.toFixed(2) : '');
+          this.el.corePct.title = pay < 0.995 ? 'Final sunmark payout ×' + pay.toFixed(2) : 'Final sunmark payout is full';
+        }
         this.el.coreBar.classList.toggle('low', corePct < 30);
         this.hud.classList.toggle('core-low', corePct < 30);
         const threat = game.coreThreat || 0;
@@ -2267,6 +2273,7 @@ export class UI {
       this.el.kindleChip.classList.toggle('surge', (game.giftT || 0) > 0);
     }
 
+    this.el.repairPrompt.classList.toggle('caravan', game.repairTarget?.kind === 'caravan');
     if (game.repairTarget) {
       this.el.repairPrompt.classList.add('on');
       this.el.repairName.textContent = game.repairTarget.name.toUpperCase();
@@ -2368,8 +2375,11 @@ export class UI {
           value = Math.round(pct) + '%';
           note = !c ? '' : c.atWaystone ? 'HOLD · CLEAR THE WAYSTONE' : c.contested ? 'CONTESTED · CLEAR THE ROAD' : c.escorted ? 'MOVING' : 'GET CLOSE TO MOVE IT';
           if (c?.waystones?.length) note += ' · WAYSTONE ' + c.waystones.filter(w => w.reached).length + '/' + c.waystones.length;
-          if (c) note += ' · INTEGRITY ' + Math.round((c.hp / c.maxHp) * 100) + '%';
-          color = c?.contested ? '#ff7a52' : '#8dffc0';
+          const hull = c ? c.hp / Math.max(1, c.maxHp) : 1;
+          if (c) note += ' · INTEGRITY ' + Math.round(hull * 100) + '%';
+          const pay = game.objectiveRevenue?.().factor ?? 1;
+          if (pay < 0.995) note += ' · PAY ×' + pay.toFixed(2);
+          color = c?.contested || hull < 0.33 ? '#ff7a52' : hull < 0.66 ? '#ffb066' : '#8dffc0';
         } else if (game.mode === 'ritual') {
           const r = game.ritual;
           const sealed = r?.sealed || 0;
@@ -2644,8 +2654,9 @@ export class UI {
     if (!core) {
       if (g.mode === 'escort') {
         const c = g.caravan;
+        const payout = g.objectiveRevenue ? g.objectiveRevenue().factor : 1;
         return `<div class="section-label">Objective</div>
-          <div class="run-notes"><span>Reliquary ${Math.round((c?.progress || 0) * 100)}%</span><span>${Math.ceil(c?.hp || 0)} / ${c?.maxHp || ESCORT.hp} integrity</span><span>${(c?.waystones || []).filter(w => w.reached).length} / ${(c?.waystones || []).length || ESCORT.waystones.length} waystones</span><span>${c?.atWaystone ? 'holding the waystone' : c?.contested ? 'contested' : c?.escorted ? 'moving' : 'waiting'}</span></div>`;
+          <div class="run-notes"><span>Reliquary ${Math.round((c?.progress || 0) * 100)}%</span><span>${Math.ceil(c?.hp || 0)} / ${c?.maxHp || ESCORT.hp} integrity</span><span>final payout ×${payout.toFixed(2)}</span><span>${(c?.waystones || []).filter(w => w.reached).length} / ${(c?.waystones || []).length || ESCORT.waystones.length} waystones</span><span>${c?.atWaystone ? 'holding the waystone' : c?.contested ? 'contested' : c?.escorted ? 'moving' : 'waiting'}</span></div>`;
       }
       if (g.mode === 'ritual') {
         const r = g.ritual;
@@ -2665,11 +2676,12 @@ export class UI {
     }
     const corePct = Math.round(Math.max(0, core.hp / core.maxHp) * 100);
     const towers = g.structures.defenses.length;
+    const payout = g.objectiveRevenue ? g.objectiveRevenue().factor : 1;
     const lanes = g.structures.lanes.length
       ? `${g.structures.lanes.filter(l => l.gate.alive).length} / ${LANE.goalGates} gates standing`
       : `${towers} defenses raised`;
     return `<div class="section-label">Objective</div>
-      <div class="run-notes"><span>Sunforge ${corePct}%</span><span>${lanes}</span><span>${g.coreThreat || 0} breaching</span></div>`;
+      <div class="run-notes"><span>Sunforge ${corePct}%</span><span>${lanes}</span><span>${g.runStats.defensesLost || 0} defenses lost</span><span>final payout ×${payout.toFixed(2)}</span><span>${g.coreThreat || 0} breaching</span></div>`;
   }
 
   showPause(game) {
@@ -2785,6 +2797,17 @@ export class UI {
     const coreMode = summary.mode === 'siege' || summary.mode === 'lane';
     const coreText = coreMode && summary.corePct != null
       ? ` · ${Math.round((summary.corePct ?? 1) * 100)}% core` : '';
+    const defenseText = coreMode && summary.defensesLost
+      ? ` · ${summary.defensesLost} defense${summary.defensesLost === 1 ? '' : 's'} lost` : '';
+    const objectiveFactor = summary.objectiveFactor ?? 1;
+    const objectivePct = Math.round((summary.objectivePct ?? 1) * 100);
+    const objectiveName = summary.objectiveKind === 'caravan' ? 'RELIQUARY'
+      : summary.objectiveKind === 'core' ? 'SUNFORGE' : '';
+    const lostDefenseText = summary.defensesLost
+      ? ` · ${summary.defensesLost} DEFENSE${summary.defensesLost === 1 ? '' : 'S'} LOST` : '';
+    const objectivePenalty = objectiveName && objectiveFactor < 0.995
+      ? `<div class="dawn-catchup" style="color:#ff8a52;border-color:#ff8a5255;background:#ff8a5212">${objectiveName} AT ${objectivePct}% · FINAL SUNMARK PAYOUT ×${objectiveFactor.toFixed(2)}${lostDefenseText}</div>`
+      : '';
     const gateText = summary.mode === 'lane' ? ` · ${LANE.goalGates - (summary.gatesLeft ?? 0)}/${LANE.goalGates} gates` : '';
     const modeText = summary.mode === 'escort' ? ` · reliquary ${summary.caravanPct || 0}%`
       : summary.mode === 'ritual' ? ` · ${summary.ritualSealed || 0}/${RITUAL.shrineCount} circles` : '';
@@ -2801,8 +2824,9 @@ export class UI {
       <div class="dawn-earned">
         <div><span>SUNMARKS EARNED</span><b>+${summary.marksEarned || 0}</b><small>descent ×${(summary.descentMult || 1).toFixed(2)}</small></div>
         <div><span>DAWN BANK</span><b>${summary.totalMarks || 0}</b></div>
-        <div class="dawn-note"><span>RUN NOTES</span><small><b style="color:${diff.css}">${diff.hardcore ? 'HARDCORE' : diff.name}</b> · ${pactsTotal ? pactsTotal + ' pact ranks · ×' + pactMult.toFixed(2) : 'No pacts'} · ${summary.vaults || 0} vaults · ${summary.relicPicks || 0} relics${coreText}${gateText}${modeText}${skillText}${bonusText}${tierText}</small></div>
+        <div class="dawn-note"><span>RUN NOTES</span><small><b style="color:${diff.css}">${diff.hardcore ? 'HARDCORE' : diff.name}</b> · ${pactsTotal ? pactsTotal + ' pact ranks · ×' + pactMult.toFixed(2) : 'No pacts'} · ${summary.vaults || 0} vaults · ${summary.relicPicks || 0} relics${coreText}${defenseText}${gateText}${modeText}${skillText}${bonusText}${tierText}</small></div>
       </div>
+      ${objectivePenalty}
       ${victory ? `<div class="dawn-catchup" style="color:#ffd98a;border-color:#ffd98a44;background:#ffd98a12">ASCEND TO TIER ${romanTier(ascension + 2)} · KEEP THIS BUILD · THE HORDE COMES BACK 10% STRONGER</div>` : ''}
       ${summary.newDifficultyBest ? `<div class="dawn-catchup" style="color:${diff.css};border-color:${diff.css}44;background:${diff.css}12">NEW ${diff.name.toUpperCase()} RECORD · WAVE ${summary.difficultyBest}</div>` : ''}
       ${summary.catchUp > 1 ? `<div class="dawn-catchup">DAWN'S FAVOR · +20% SUNMARKS FOR A LESS-TRAVELLED SIGIL</div>` : ''}

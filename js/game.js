@@ -229,6 +229,7 @@ export class Game {
       relicPicks: 0,
       relicIds: [],
       crownId: null,
+      defensesLost: 0,
     };
   }
 
@@ -1983,36 +1984,44 @@ export class Game {
 
   updateRepair(dt) {
     this.repairTarget = null;
-    if (!this.structures || !this.player?.alive) return;
+    if (!this.player?.alive) return;
     const p = this.player;
     const candidates = [];
-    const core = this.structures.core;
+    const core = this.structures?.core;
     if (core?.alive && core.hp < core.maxHp) candidates.push(core);
-    for (const d of this.structures.defenses) {
+    for (const d of this.structures?.defenses || []) {
       if (d.alive && d.hp < d.maxHp) candidates.push(d);
     }
-    let best = null, bestD = 5.2 * 5.2;
+    const caravan = this.caravan;
+    if (caravan?.alive && caravan.hp < caravan.maxHp) candidates.push(caravan);
+
+    let best = null, bestD = Infinity;
     for (const c of candidates) {
+      const reach = c.kind === 'caravan' ? ESCORT.repairRadius : 5.2;
       const dx = c.pos.x - p.pos.x, dz = c.pos.z - p.pos.z;
       const d2 = dx * dx + dz * dz;
-      if (d2 < bestD) { bestD = d2; best = c; }
+      if (d2 < reach * reach && d2 < bestD) { bestD = d2; best = c; }
     }
     if (!best) return;
     this.repairTarget = best;
     if (!this.isDown('repair')) return;
 
-    const healed = this.structures.repair(best, SIEGE.repairRate * (this.difficultyMeta().repairMult || 1) * dt);
+    const rate = (best.kind === 'caravan' ? ESCORT.repairRate : SIEGE.repairRate) * (this.difficultyMeta().repairMult || 1);
+    const healed = best.kind === 'caravan'
+      ? best.repair(rate * dt)
+      : this.structures.repair(best, rate * dt);
     if (healed > 0) {
+      const color = best.kind === 'caravan' ? 0x8dffc0 : 0xffd98a;
       if (this.time - this._repairTick > 0.28) {
         this._repairTick = this.time;
         this.audio.pickup();
       }
-      this.fx.trail(new THREE.Vector3(best.pos.x + (Math.random() - 0.5) * 1.4, 1 + Math.random() * 2, best.pos.z + (Math.random() - 0.5) * 1.4), 0xffd98a, 0.16, 0.35);
+      this.fx.trail(new THREE.Vector3(best.pos.x + (Math.random() - 0.5) * 1.4, 1 + Math.random() * 2, best.pos.z + (Math.random() - 0.5) * 1.4), color, 0.16, 0.35);
       if (Math.random() < dt * 18) {
         this.fx.beam(
           new THREE.Vector3(p.pos.x, 1.1, p.pos.z),
-          new THREE.Vector3(best.pos.x, best.kind === 'core' ? 2.7 : 1.6, best.pos.z),
-          0xffd98a, 0.05, 0.1
+          new THREE.Vector3(best.pos.x, best.kind === 'caravan' ? 2.1 : best.kind === 'core' ? 2.7 : 1.6, best.pos.z),
+          color, 0.05, 0.1
         );
       }
     }
@@ -2058,6 +2067,23 @@ export class Game {
     return true;
   }
 
+  objectiveRevenue(corePct, caravanPct) {
+    if (this.mode === 'escort' && this.caravan) {
+      const pct = Math.max(0, Math.min(1, caravanPct ?? (this.caravan.hp / Math.max(1, this.caravan.maxHp))));
+      const safe = Math.max(0.01, ESCORT.revenueSafe);
+      const factor = ESCORT.revenueFloor + (1 - ESCORT.revenueFloor) * Math.min(1, pct / safe);
+      return { kind: 'caravan', integrity: pct, factor: Math.min(1, factor), defensesLost: 0 };
+    }
+    const core = this.structures?.core;
+    if (!core) return { kind: null, integrity: 1, factor: 1, defensesLost: 0 };
+    const pct = Math.max(0, Math.min(1, corePct ?? (core.hp / Math.max(1, core.maxHp))));
+    const safe = Math.max(0.01, SIEGE.revenueSafe);
+    const coreFactor = SIEGE.revenueFloor + (1 - SIEGE.revenueFloor) * Math.min(1, pct / safe);
+    const lost = Math.max(0, this.runStats.defensesLost || 0);
+    const defenseFactor = Math.max(0.6, 1 - lost * SIEGE.towerRevenueStep);
+    return { kind: 'core', integrity: pct, factor: Math.min(1, coreFactor * defenseFactor), defensesLost: lost };
+  }
+
   awardRunProgress({ reached, victory, corePct }) {
     const starter = this.starterKey || 'ember';
     const pactsTotal = pactRanks(this.pacts);
@@ -2065,6 +2091,8 @@ export class Game {
     const diff = this.difficultyMeta();
     const player = this.player;
     const resolvedCore = corePct ?? (this.structures?.core?.maxHp ? Math.max(0, this.structures.core.hp / this.structures.core.maxHp) : 1);
+    const resolvedCaravan = this.caravan?.maxHp ? Math.max(0, this.caravan.hp / this.caravan.maxHp) : 1;
+    const objective = this.objectiveRevenue(resolvedCore, resolvedCaravan);
     const run = {
       mode: this.mode,
       victory,
@@ -2072,6 +2100,11 @@ export class Game {
       skillRun: this.skillRun,
       bonusWaves: this.bonusWaves,
       caravanPct: this.caravan ? Math.round(this.caravan.progress * 100) : 0,
+      caravanIntegrity: resolvedCaravan,
+      objectiveKind: objective.kind,
+      objectivePct: objective.integrity,
+      objectiveFactor: objective.factor,
+      defensesLost: objective.defensesLost,
       ritualSealed: this.ritual ? this.ritual.sealed : 0,
       kills: this.kills,
       time: this.runTime,
@@ -2105,8 +2138,9 @@ export class Game {
     const catchUp = priorRuns >= 2 && bestSigilRuns > 0 && priorSigilRuns < bestSigilRuns * 0.5 ? 1.2 : 1;
     const descentRank = Number.isFinite(this.runDescent) ? this.runDescent : this.descentRank();
     const descentMult = 1 + descentRank * DESCENT.markStep;
-    let marks = Math.max(1, Math.floor((1 + reached * 0.35 + (victory ? 4 : 0)) * pactMult * (diff.markMult || 1) * (this.skillRun ? SKILL_RUN.markMult : 1) * descentMult));
-    marks = Math.max(1, Math.round(marks * catchUp));
+    const baseMarks = Math.max(1, Math.floor((1 + reached * 0.35 + (victory ? 4 : 0)) * pactMult * (diff.markMult || 1) * (this.skillRun ? SKILL_RUN.markMult : 1) * descentMult));
+    const objectiveMarks = Math.max(1, Math.floor(baseMarks * objective.factor));
+    let marks = Math.max(1, Math.round(objectiveMarks * catchUp));
 
     this.save.sigilRuns[starter] = priorSigilRuns + 1;
     if (victory) this.save.sigilWins[starter] = (this.save.sigilWins[starter] || 0) + 1;
@@ -2123,7 +2157,7 @@ export class Game {
       achievementMarks += achievement.points || 0;
     }
     this.save.marks = Math.max(0, (this.save.marks || 0) + marks + achievementMarks);
-    return { marks, achievementMarks, newAchievements, catchUp, pactsTotal, pactMult, run, descentRank, descentMult };
+    return { marks, baseMarks, objectiveMarks, achievementMarks, newAchievements, catchUp, pactsTotal, pactMult, objective, run, descentRank, descentMult };
   }
 
   /* ---------------- DEATH / VICTORY ---------------- */
@@ -2203,6 +2237,7 @@ export class Game {
 
     const core = this.structures?.core;
     const corePct = core?.maxHp ? Math.max(0, core.hp / core.maxHp) : 1;
+    const caravanIntegrity = this.caravan?.maxHp ? Math.max(0, this.caravan.hp / this.caravan.maxHp) : 1;
     const progress = this.awardRunProgress({ reached, victory, corePct });
     persist(this.save);
 
@@ -2235,6 +2270,11 @@ export class Game {
         skillRun: this.skillRun,
         bonusWaves: this.bonusWaves,
         caravanPct: this.caravan ? Math.round(this.caravan.progress * 100) : 0,
+        caravanIntegrity,
+        objectiveKind: progress.objective.kind,
+        objectivePct: progress.objective.integrity,
+        objectiveFactor: progress.objective.factor,
+        defensesLost: progress.objective.defensesLost,
         ritualSealed: this.ritual ? this.ritual.sealed : 0,
         blitzTimer: this.blitzTimer,
         marksEarned: progress.marks + progress.achievementMarks,

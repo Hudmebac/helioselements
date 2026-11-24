@@ -3,7 +3,7 @@
    Elements, fusions, enemies, boons and wave composition.
    ============================================================ */
 
-export const VERSION = '1.9.3';
+export const VERSION = '1.9.4';
 
 /* Three camera stops, from the whole ring to the guardian's own eyes. */
 export const CAMERA_VIEWS = [
@@ -857,8 +857,8 @@ export const MODES = {
     goal: 'Survive 20 waves',
     steps: [
       'Spend sun shards at the Forge to raise towers on the pedestals around the core.',
-      'Stand in an enemy\'s path to body-block it before it reaches the Sunforge.',
-      'Survive all twenty waves. Every fifth wave brings a warden.',
+      'Stand in an enemy\'s path to body-block it before it reaches the Sunforge, and hold E nearby to mend the core or a tower.',
+      'Survive all twenty waves. Every fifth wave brings a warden — and every point of damage to the Sunforge or its defenses cuts the final sunmark payout.',
     ],
     win: 'Survive 20 waves',
     fail: 'The Sunforge core is destroyed',
@@ -870,9 +870,9 @@ export const MODES = {
     desc: 'Three rift lanes pour into the Sunforge, each ending at a Rift Gate. Towers hold the core — but only your own fire can break a gate.',
     goal: 'Shatter 3 Rift Gates',
     steps: [
-      'Raise towers on the lane pads to keep the core alive.',
+      'Raise towers on the lane pads to keep the core alive, and hold E nearby to repair them or the Sunforge.',
       'Walk out along a lane and shoot its Rift Gate. Towers cannot damage gates — you can, with shots, surges and ultimates.',
-      'Break all three. Each broken gate stops that lane\'s reinforcements for good and grants Rift Siphon: permanent bonus damage.',
+      'Break all three. Core damage and lost defenses cut the final sunmark payout, so defending the lane is part of the reward.',
     ],
     win: 'All three Rift Gates broken',
     fail: 'The Sunforge core is destroyed',
@@ -913,8 +913,8 @@ export const MODES = {
     goal: 'Walk the reliquary home',
     steps: [
       'Stand within 6.5m of the reliquary to push it forward. Leave it and it stops, then starts to dim.',
-      'Clear the road: anything within 4m of the reliquary tears its integrity down.',
-      'It halts at five waystones until the ground around them is clear. Each one mends the reliquary and pays shards.',
+      'Clear the road: anything within 4m of the reliquary tears its integrity down. Hold E beside it to mend it, but repairing leaves both weapons silent.',
+      'It halts at five waystones until the ground around them is clear. Each one mends the reliquary and pays shards. Heavy damage cuts the final sunmark payout; at zero integrity the caravan is destroyed.',
     ],
     win: 'The reliquary reaches the eastern rift',
     fail: 'Reliquary integrity reaches zero',
@@ -1199,6 +1199,11 @@ export const SIEGE = {
   coreRegenDelay: 6,
   holdPct: 0.75,
   holdShards: 1,
+  /* Damage has a price beyond defeat: the final payout scales with the
+     Sunforge's integrity, and every defense lost takes another cut. */
+  revenueFloor: 0.5,
+  revenueSafe: 0.8,
+  towerRevenueStep: 0.04,
   lastLightPct: 0.25,
   lastLightDamage: 0.4,
   lastLightCharge: 2.5,
@@ -1239,10 +1244,16 @@ export const ESCORT = {
   speed: 3.2,
   escortRadius: 6.5,
   contestedRadius: 4.2,
+  repairRate: 34,
+  repairRadius: 5.8,
   damageInterval: 0.9,
   damagePerEnemy: 6,
   waveDamage: 1.1,
   decay: 6,
+  /* Integrity is the pay ledger. Above the safe line the run pays in full;
+     below it every crack takes marks off the final purse. */
+  revenueFloor: 0.4,
+  revenueSafe: 0.9,
   interTimer: 6.5,
   // Waystones: fractions along the road where the reliquary halts until the ground is clear.
   waystones: [0.14, 0.31, 0.5, 0.7, 0.87],

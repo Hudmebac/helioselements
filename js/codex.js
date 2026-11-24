@@ -410,6 +410,17 @@ export const FAQ = [
    ------------------------------------------------------------ */
 export const CHANGELOG = [
   {
+    version: '1.9.4',
+    date: '2026-11-24',
+    title: 'Scars cost marks',
+    items: [
+      'The Solar Caravan can be mended by hand. Hold E within 5.8 units of a damaged reliquary to restore 34 integrity per second; the repair channel silences both weapons, so every second of mending is a second not spent clearing the road. The repair prompt turns green and shows the caravan’s integrity.',
+      'Caravan damage now costs sunmarks. A run that brings the reliquary home above 90% integrity pays in full; below that the final payout slides down toward ×0.40 at zero integrity. The reliquary shatters at zero, ending the run — and the payout is cut to the floor.',
+      'The Sunforge pays for the state of the hold. Core integrity above 80% pays in full, below it the final payout scales toward ×0.50. Every destroyed defense takes another 4% off, up to a 40% cut, so tower losses follow you to the results screen.',
+      'Damage is visible before the result. The pause screen shows the final payout multiplier and defenses lost, the caravan HUD shows integrity and the current payout cut, and the results screen explains exactly how much integrity cost you.',
+    ],
+  },
+  {
     version: '1.9.3',
     date: '2026-11-24',
     title: 'Look where you walk',
