@@ -44,6 +44,7 @@ export class Player {
     this.weaponRank = 1;
     this.weaponRarity = 'common';
     this.weaponBoost = 1;
+    this.visualScale = 1;
     // The rest of the loadout: a second arm and the single ward slot.
     this.sideWeaponKey = null;
     this.sideWeaponRank = 1;
@@ -81,6 +82,8 @@ export class Player {
   set shield(v) { this.stats.shield = v; }
   get maxShield() { return this.stats.maxShield; }
   get invulnerable() { return this.invuln > 0 || this.dashTime > 0; }
+  get areaDamageBoost() { return 1 + (this.game.areaBoost || 0); }
+  get damageBoost() { return this.areaDamageBoost * (1 + (this.game.giftBoost || 0)); }
 
   /* ------------- mesh ------------- */
   _buildMesh() {
@@ -421,7 +424,7 @@ export class Player {
     if (def.heal) this.heal(def.heal * w.rank, true);
     if (!def.damage && !def.slow) return;
     const radius = def.radius || 4;
-    this.game.areaDamage(this.pos, radius, (def.damage || 0) * w.rank * this.stats.damageMult, {
+    this.game.areaDamage(this.pos, radius, (def.damage || 0) * w.rank * this.stats.damageMult * this.areaDamageBoost, {
       color: def.color,
       knockback: def.knockback || 0,
       slow: def.slow ? { amount: def.slow, duration: 1.6 } : null,
@@ -532,7 +535,7 @@ export class Player {
     this.game.fx.burst(new THREE.Vector3(this.pos.x, 0.8, this.pos.z), this.form.glow, { count: 12, speed: 4, size: 0.2, life: 0.4 });
     if (dashBurst > 0) {
       this.schedule(0.06, () => {
-        this.game.areaDamage(this.pos, 3.6, dashBurst * this.stats.damageMult * (1 + (rb.damage || 0)), {
+        this.game.areaDamage(this.pos, 3.6, dashBurst * this.stats.damageMult * (1 + (rb.damage || 0)) * this.areaDamageBoost, {
           color: this.form.color, knockback: 3,
         });
         this.game.fx.ring(this.pos, this.form.color, { r0: 0.4, r1: 3.6, life: 0.35, opacity: 0.7 });
@@ -552,7 +555,7 @@ export class Player {
     this.game.engine.pulseExposure(0.18);
     this.game.engine.addShake(0.5);
 
-    const dmg = (surge.damage || 30) * this.stats.damageMult * this.stats.ultPower * (1 + (rb.damage || 0));
+    const dmg = (surge.damage || 30) * this.stats.damageMult * this.stats.ultPower * (1 + (rb.damage || 0)) * this.areaDamageBoost;
     switch (surge.type) {
       case 'nova': {
         this.game.areaDamage(this.pos, surge.radius || 5, dmg, {
@@ -979,7 +982,7 @@ export class Player {
         if (e) {
           const dir = e.pos.clone().add(new THREE.Vector3(0, 0.7, 0)).sub(s.mesh.position).normalize();
           this.game.projectiles.fire({
-            pos: s.mesh.position, dir, speed: 19, damage: this.form.stats.damage * this.stats.damageMult * 0.42 * (1 + (rb.damage || 0)),
+            pos: s.mesh.position, dir, speed: 19, damage: this.form.stats.damage * this.stats.damageMult * 0.42 * (1 + (rb.damage || 0)) * this.areaDamageBoost,
             color: this.form.glow, size: 0.65, life: 1.2, pierce: 0, crit: false, trail: true,
           });
           s.cd = 0.72;
@@ -1048,7 +1051,7 @@ export class Player {
     const rankMult = 1 + WEAPON_RANK.perRank * ((cfg.rank || 1) - 1);
     const rarityMult = WEAPON_RANK.rarityMult[cfg.rarity] || 1;
     const closeMult = cfg.close ? WEAPON_RANK.closeBonus : 1;
-    const base = f.stats.damage * s.damageMult * (1 + (rb.damage || 0)) * (1 + (this.game.giftBoost || 0))
+    const base = f.stats.damage * s.damageMult * (1 + (rb.damage || 0)) * this.damageBoost
       * rankMult * rarityMult * (cfg.boost || 1) * (cfg.damageScale || 1) * closeMult;
     const count = Math.max(1, (f.stats.projectiles || 1) + s.extraProjectiles + (rb.projectiles || 0) + (ce.projectiles || 0) * cr);
     const critChance = HIT_RNG.playerCrit + (f.stats.crit || 0) + s.crit + (rb.crit || 0) + (ce.crit || 0) * cr;
@@ -1067,7 +1070,8 @@ export class Player {
     const shape = /maul|fist|landslide/.test(wkey) ? 'boulder'
       : /fan|squall|well|riptide/.test(wkey) ? 'needle'
       : /lance|edge|whip/.test(wkey) ? 'blade' : 'bolt';
-    const shotSize = (f.key === 'stone' ? 1.35 : 1) * (shape === 'boulder' ? 1.25 : 1) * (cfg.small ? 0.78 : 1);
+    const shotSize = (f.key === 'stone' ? 1.35 : 1) * (shape === 'boulder' ? 1.25 : 1) * (cfg.small ? 0.78 : 1)
+      * Math.min(1.35, this.game.areaSizeScale || 1);
     const aimX = cfg.aim ? cfg.aim.x : this.aim.x;
     const aimZ = cfg.aim ? cfg.aim.z : this.aim.z;
     const baseAngle = Math.atan2(aimX, aimZ) + (cfg.angleOffset || 0);
@@ -1084,6 +1088,7 @@ export class Player {
         halo: shape === 'boulder' ? 2.9 : 2.4,
         stretch: f.stats.aoe ? 1 : 1.8,
         pierce, homing, aoe, chain, knockback: knock,
+        hitPad: this.game.areaSizeActive ? 0.16 : 0,
         ignite, slow: f.slow || null, playerShot: true,
         lifesteal, healOnHit, crit, life: WEAPON_RANK.baseRange * (s.range || 1) * (cfg.rangeMult || 1),
       });
@@ -1101,6 +1106,9 @@ export class Player {
   _updateVisual(dt) {
     const g = this.group;
     g.position.set(this.pos.x, 0.9 + Math.sin(this.t * 3.1) * 0.07, this.pos.z);
+    const targetScale = this.game.areaSizeScale || 1;
+    this.visualScale += (targetScale - this.visualScale) * Math.min(1, dt * 7);
+    g.scale.setScalar(this.visualScale);
     this.recoil = Math.max(0, this.recoil - dt * 7);
     this.focus.position.z = 0.92 - this.recoil * 0.3;
     if (this.weaponRig) {
@@ -1119,7 +1127,8 @@ export class Player {
     this.body.rotation.x += dt * 0.25;
     this.shell.rotation.y -= dt * 0.5;
     this.aura.rotation.y += dt * 0.3;
-    this.auraMat.opacity = (this.game.giftT || 0) > 0 ? 0.13 + Math.sin(this.t * 7) * 0.05 : 0.055;
+    const buffed = (this.game.giftT || 0) > 0 || (this.game.areaDamageT || 0) > 0 || (this.game.areaSizeT || 0) > 0;
+    this.auraMat.opacity = buffed ? 0.13 + Math.sin(this.t * 7) * 0.05 : 0.055;
     this.ring1.rotation.z += dt * 1.4;
     this.ring2.rotation.z -= dt * 1.1;
     this.core.scale.setScalar(1 + Math.sin(this.t * 5) * 0.12);

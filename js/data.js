@@ -3,7 +3,7 @@
    Elements, fusions, enemies, boons and wave composition.
    ============================================================ */
 
-export const VERSION = '1.9.6';
+export const VERSION = '1.9.7';
 
 /* Three camera stops, from the whole ring to the guardian's own eyes. */
 export const CAMERA_VIEWS = [
@@ -707,7 +707,12 @@ export function buildDuelWave(wave, pacts = {}, difficulty = null, bonus = null)
 }
 
 // Slower than it used to be: more fighting between drafts, fewer chains of cards.
-export function xpToNext(level) { return Math.round(20 + level * 13 + Math.pow(level, 1.5) * 2.4); }
+// Each wave adds a 20% premium to the base requirement, so late waves take
+// noticeably more essence without turning the last levels into a grind wall.
+export function xpToNext(level, wave = 1) {
+  const base = 20 + level * 13 + Math.pow(level, 1.5) * 2.4;
+  return Math.round(base * (1 + 0.2 * Math.max(0, wave - 1)));
+}
 
 /* ------------------------------------------------------------
    WEAPON RANKS — one weapon, grown by levels, replaced by choice.
@@ -1163,6 +1168,42 @@ export const KINDLING = {
   boss: 4,
   boostTime: 18,
   boostDamage: 0.35,
+};
+
+/* ------------------------------------------------------------
+   AREA BONUSES — small caches scattered around the arena.
+   Walking over one grants a run upgrade: health, temporary size,
+   temporary damage, or a burst of bonus essence.
+   ------------------------------------------------------------ */
+export const AREA_BONUS_TUNING = {
+  perWave: 3,
+  ttl: 55,
+  healPct: 0.25,
+  sizeScale: 1.35,
+  sizeTime: 12,
+  damageBonus: 0.35,
+  damageTime: 12,
+  xpShare: 0.3,
+  minXp: 15,
+};
+
+export const AREA_BONUSES = {
+  health: {
+    id: 'health', name: 'Solar Bloom', short: 'HEAL', glyph: '+',
+    color: 0x7dffb2, css: '#8dffc0', desc: 'Restore 25% of maximum health.',
+  },
+  size: {
+    id: 'size', name: 'Titan Seed', short: 'GROW', glyph: '⬢',
+    color: 0xffb066, css: '#ffc98a', desc: 'Grow larger for 12 seconds; shots widen with you.',
+  },
+  power: {
+    id: 'power', name: 'War Ember', short: 'POWER', glyph: '⚔',
+    color: 0xff6a3d, css: '#ff9a6a', desc: 'Deal 35% more damage for 12 seconds.',
+  },
+  xp: {
+    id: 'xp', name: 'Dawn Mote', short: '+XP', glyph: '✦',
+    color: 0x8fdcff, css: '#9fe8ff', desc: 'Gain a burst of essence.',
+  },
 };
 
 export function normalizeDifficulty(key) { return DIFFICULTIES[key] ? key : 'solar'; }

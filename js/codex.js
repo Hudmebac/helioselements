@@ -201,6 +201,7 @@ export const GUIDE = {
         'On a phone or tablet the same three buttons sit under your right thumb, with the Forge and a hold-to-repair button beside them, and a floating stick under the left. Drag anywhere in the lower-left of the arena and the stick appears under your thumb; release and it recentres. Begin Wave appears between waves, and pause lives in the top-right corner.',
         'On a desktop you can play one-handed as well: hold the left mouse button anywhere on the arena and drag. The same ring appears, the guardian follows the drag exactly as it follows a thumb, and letting go stops him. WASD and the mouse still work together, so you can steer with one and nudge with the other.',
         'The camera has three stops: Distant, Close and First person. Scroll the mouse wheel up to pull in and down to pull back out, click the View pill in the top-right, or press V. On a phone or tablet, the View button under Pause shows the current stop and advances on each tap. Close is a fixed closer angle that follows your position but never rotates. First person is a cockpit view — the guardian’s body is hidden behind a framed glass canopy, side pillars, a reticle and an instrument panel that shows the flight controls. The glass tones down arena glare so enemies stay readable up close, and fallen enemies burst away instead of leaving bodies on the ground. In first person W/S move forward and back along the view, while A/D turn the cockpit left and right; there is no strafing in the cockpit. Distant and Close keep their existing world-axis controls.',
+        'Every wave scatters three glowing arena caches. Walk over one to claim an upgrade: Solar Bloom restores health, Titan Seed makes you larger for a short time with wider shots and pickup reach, War Ember adds temporary damage, and Dawn Mote grants bonus essence. The essence needed for the next level climbs 20% each wave, so deeper waves take more kills and more caches to keep the drafts coming.',
       ],
       controls: true,
       note: `Every key can be rebound in Settings. The defaults are ${KEYBINDS.map(([k, v]) => k + ' for ' + v.toLowerCase()).slice(0, 4).join('; ')}. Settings → Interface → Touch controls (Auto, On, Off) decides whether the thumb layer appears; Auto turns it on for touch screens.`,
@@ -409,6 +410,16 @@ export const FAQ = [
    CHANGELOG — newest first. Add an entry every release.
    ------------------------------------------------------------ */
 export const CHANGELOG = [
+  {
+    version: '1.9.7',
+    date: '2026-11-24',
+    title: 'Caches on the ring',
+    items: [
+      'Each wave lays out three arena caches that grant an upgrade when walked over: Solar Bloom heals, Titan Seed grants temporary size with wider shots and pickup reach, War Ember grants temporary damage, and Dawn Mote grants bonus essence.',
+      'Caches are marked by a coloured beacon, ground ring and floating label, with a toast stating the exact heal, bonus or duration when collected.',
+      'The essence required for the next level now rises 20% each wave, making deep waves demand more kills and caches before the next draft.',
+    ],
+  },
   {
     version: '1.9.6',
     date: '2026-11-24',

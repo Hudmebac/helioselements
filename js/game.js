@@ -14,10 +14,11 @@ import {
   DIFFICULTIES, normalizeDifficulty, difficultyUnlocked, DESCENT,
   CONTROL_ACTIONS, defaultKeys, keyLabel,
   ACHIEVEMENTS, REWARDS, menuDepth, KINDLING, romanTier, CAMERA_VIEWS, HIT_RNG,
+  AREA_BONUSES, AREA_BONUS_TUNING,
 } from './data.js';
 import { Player } from './player.js';
 import { EnemyManager } from './enemies.js';
-import { Projectiles, Pickups, Corpses } from './entities.js';
+import { Projectiles, Pickups, Corpses, AreaBonuses } from './entities.js';
 import { Structures, Caravan, Ritual } from './structures.js';
 import { SunlessVault } from './vaults.js';
 import { arenaRadiusAt } from './engine.js';
@@ -40,6 +41,7 @@ export class Game {
     this.enemies = new EnemyManager(engine.scene, fx, audio);
     this.projectiles = new Projectiles(engine.scene, fx, audio);
     this.pickups = new Pickups(engine.scene, fx, audio);
+    this.areaBonuses = new AreaBonuses(engine.scene, fx, audio);
     this.corpses = new Corpses(engine.scene, fx);
     this.structures = null;
 
@@ -79,7 +81,7 @@ export class Game {
     this.comboBest = 0;
     this.level = 1;
     this.xp = 0;
-    this.xpNeed = xpToNext(1);
+    this.xpNeed = xpToNext(1, 1);
     this.pendingLevels = 0;
     this.cards = [];
     this.runTime = 0;
@@ -88,6 +90,8 @@ export class Game {
     this.kindling = 0;
     this.kindlingGifts = 0;
     this.giftT = 0;
+    this.areaSizeT = 0;
+    this.areaDamageT = 0;
     this.boonStacks = {};
     this.boons = [];
     this.starterKey = null;
@@ -379,7 +383,7 @@ export class Game {
     this.comboBest = 0;
     this.level = 1;
     this.xp = 0;
-    this.xpNeed = xpToNext(1);
+    this.xpNeed = xpToNext(1, 1);
     this.pendingLevels = 0;
     this.cards = [];
     this.runTime = 0;
@@ -388,6 +392,8 @@ export class Game {
     this.kindling = 0;
     this.kindlingGifts = 0;
     this.giftT = 0;
+    this.areaSizeT = 0;
+    this.areaDamageT = 0;
     this.boonStacks = {};
     this.boons = [];
     this._deathHandled = false;
@@ -472,6 +478,7 @@ export class Game {
     this.enemies.clear();
     this.projectiles.clear();
     this.pickups.clear();
+    this.areaBonuses.clear();
     this.corpses.clear();
     if (this.structures) {
       this.structures.clear();
@@ -561,7 +568,10 @@ export class Game {
     this.enemies.clear();
     this.projectiles.clear();
     this.pickups.clear();
+    this.areaBonuses.clear();
     this.corpses.clear();
+    this.areaSizeT = 0;
+    this.areaDamageT = 0;
     if (this.vault) {
       this.vault.clear();
       this.vault = null;
@@ -686,6 +696,10 @@ export class Game {
     this.spawnQueue = this.wavePlan.entries.map(e => ({ ...e }));
     this.waveClock = 0;
     this.phase = 'active';
+    // Every wave asks for more essence, and lays out a fresh set of arena caches.
+    this.xpNeed = xpToNext(this.level, this.wave);
+    this.areaBonuses.clear();
+    this.spawnAreaBonuses();
     if (this.mode === 'blitz') {
       this.blitzMax = BLITZ.waveTime * (this.objMods?.blitzTime || 1);
       // A warden's fight is set by its health, not the horde clock, so boss waves get their own
@@ -1360,6 +1374,65 @@ export class Game {
   }
 
   get giftBoost() { return this.giftT > 0 ? KINDLING.boostDamage : 0; }
+  get areaSizeActive() { return this.areaSizeT > 0; }
+  get areaSizeScale() { return this.areaSizeT > 0 ? AREA_BONUS_TUNING.sizeScale : 1; }
+  get areaBoost() { return this.areaDamageT > 0 ? AREA_BONUS_TUNING.damageBonus : 0; }
+
+  collectAreaBonus(kind) {
+    const def = AREA_BONUSES[kind];
+    const p = this.player;
+    if (!def || !p?.alive) return false;
+    if (kind === 'health') {
+      const amount = Math.max(20, Math.round(p.stats.maxHp * AREA_BONUS_TUNING.healPct));
+      p.heal(amount);
+      this.ui?.toast('SOLAR BLOOM · +' + amount + ' HEALTH', def.css);
+      this.audio.heal?.();
+    } else if (kind === 'size') {
+      this.areaSizeT = AREA_BONUS_TUNING.sizeTime;
+      const pct = Math.round((AREA_BONUS_TUNING.sizeScale - 1) * 100);
+      this.ui?.toast('TITAN SEED · +' + pct + '% SIZE ' + AREA_BONUS_TUNING.sizeTime + 's', def.css);
+      this.audio.levelUp?.();
+    } else if (kind === 'power') {
+      this.areaDamageT = AREA_BONUS_TUNING.damageTime;
+      const pct = Math.round(AREA_BONUS_TUNING.damageBonus * 100);
+      this.ui?.toast('WAR EMBER · +' + pct + '% DAMAGE ' + AREA_BONUS_TUNING.damageTime + 's', def.css);
+      this.audio.levelUp?.();
+    } else if (kind === 'xp') {
+      const gain = Math.max(AREA_BONUS_TUNING.minXp, Math.round(this.xpNeed * AREA_BONUS_TUNING.xpShare));
+      this.essenceTotal += gain;
+      this.ui?.toast('DAWN MOTE · +' + gain + ' XP', def.css);
+      this.audio.pickup?.();
+      this.gainXp(gain);
+    }
+    this.fx.ring(p.pos, def.color, { r0: 0.4, r1: 3.2, life: 0.5, opacity: 0.8 });
+    this.engine.pulseExposure(0.16);
+    this.engine.addShake(0.1);
+    return true;
+  }
+
+  spawnAreaBonuses() {
+    if (!this.player || !this.areaBonuses) return;
+    const kinds = Object.keys(AREA_BONUSES);
+    for (let i = kinds.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [kinds[i], kinds[j]] = [kinds[j], kinds[i]];
+    }
+    const count = Math.min(AREA_BONUS_TUNING.perWave, kinds.length);
+    for (let n = 0; n < count; n++) {
+      const kind = kinds[n];
+      let pos = null;
+      for (let tries = 0; tries < 16; tries++) {
+        const candidate = this.randomArenaPoint();
+        if (Math.hypot(candidate.x - this.player.pos.x, candidate.z - this.player.pos.z) < 7.5) continue;
+        if (this.areaBonuses.list.some(b => Math.hypot(candidate.x - b.group.position.x, candidate.z - b.group.position.z) < 5)) continue;
+        if (this.structures?.hitTest?.(candidate, 1.5)) continue;
+        pos = candidate;
+        break;
+      }
+      if (!pos) pos = this.randomArenaPoint();
+      this.areaBonuses.spawn(kind, pos);
+    }
+  }
 
   dawnGift() {
     this.kindlingGifts++;
@@ -1410,7 +1483,7 @@ export class Game {
     while (this.xp >= this.xpNeed) {
       this.xp -= this.xpNeed;
       this.level++;
-      this.xpNeed = xpToNext(this.level);
+      this.xpNeed = xpToNext(this.level, this.wave);
       // Ranks are not handed out by the clock: the draft is where a weapon grows.
       if (this.skillRun) this.applyMastery();
       else this.pendingLevels++;
@@ -2321,6 +2394,8 @@ export class Game {
 
     this.runTime += dt;
     if (this.giftT > 0) this.giftT = Math.max(0, this.giftT - dt);
+    if (this.areaSizeT > 0) this.areaSizeT = Math.max(0, this.areaSizeT - dt);
+    if (this.areaDamageT > 0) this.areaDamageT = Math.max(0, this.areaDamageT - dt);
     this.player.update(dt);
     this._applyViewVisibility();
     this.updateCoreGuard(dt);
@@ -2343,6 +2418,7 @@ export class Game {
 
     this.projectiles.update(dt, this);
     this.pickups.update(dt, this);
+    this.areaBonuses.update(dt, this);
     this.corpses.update(dt);
     if (this.state !== 'playing') return;
 

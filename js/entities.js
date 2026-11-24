@@ -2,7 +2,8 @@
    HELIOS ELEMENTS — PROJECTILES & PICKUPS
    ============================================================ */
 
-import { glowTexture } from './engine.js';
+import { glowTexture, sigilTexture } from './engine.js';
+import { AREA_BONUSES, AREA_BONUS_TUNING } from './data.js';
 
 const MAX_PROJ = 240;
 
@@ -86,6 +87,7 @@ export class Projectiles {
     p.streak.material = this._streakMat(cfg.glow ?? cfg.color ?? 0xffffff);
     p.streak.scale.set(1, cfg.streakLength ?? 1, 1);
     const sz = cfg.size ?? 1;
+    p.hitPad = cfg.hitPad ?? 0;
     mesh.scale.set(sz, sz, sz * (cfg.stretch ?? 1.6));
     mesh.position.set(cfg.pos.x, cfg.pos.y ?? 0.9, cfg.pos.z);
     mesh.visible = true;
@@ -206,7 +208,7 @@ export class Projectiles {
     for (const e of game.enemies.list) {
       if (e.dead || p.hit.has(e)) continue;
       const dx = e.pos.x - pos.x, dz = e.pos.z - pos.z;
-      const rr = e.radius + 0.42;
+      const rr = e.radius + 0.42 + (p.hitPad || 0);
       const d = dx * dx + dz * dz;
       if (d < rr * rr && d < bestD) { bestD = d; best = e; }
     }
@@ -416,7 +418,7 @@ export class Pickups {
 
   fetchEssence(player, range = 18) {
     if (!player) return null;
-    const magnet = player.stats.magnet + (player.relicBonuses?.().magnet || 0);
+    const magnet = player.stats.magnet + (player.relicBonuses?.().magnet || 0) + (player.game?.areaSizeActive ? 2 : 0);
     const reach = Math.max(range, magnet + 12);
     let best = null, bestD = Infinity;
     for (const p of this.list) {
@@ -435,7 +437,7 @@ export class Pickups {
   update(dt, game) {
     const player = game.player;
     if (!player || !player.alive) return;
-    const magnet = player.stats.magnet + (player.relicBonuses?.().magnet || 0) + (game.magnetBonus || 0);
+    const magnet = player.stats.magnet + (player.relicBonuses?.().magnet || 0) + (game.magnetBonus || 0) + (game.areaSizeActive ? 2 : 0);
     for (let i = this.list.length - 1; i >= 0; i--) {
       const p = this.list[i];
       p.t += dt;
@@ -505,6 +507,136 @@ export class Pickups {
 
   clear() {
     for (const p of this.list) { p.mesh.visible = false; this.scene.remove(p.mesh); this.pool.push(p); }
+    this.list.length = 0;
+  }
+}
+
+/* ============================================================
+   AREA BONUSES — readable caches that sit in the arena and grant
+   a small upgrade when the guardian walks over them.
+   ============================================================ */
+export class AreaBonuses {
+  constructor(scene, fx, audio) {
+    this.scene = scene;
+    this.fx = fx;
+    this.audio = audio;
+    this.list = [];
+    this.styles = new Map();
+    this.coreGeo = new THREE.OctahedronGeometry(0.48, 1);
+    this.ringGeo = new THREE.TorusGeometry(0.92, 0.038, 6, 48);
+    this.beamGeo = new THREE.CylinderGeometry(0.4, 0.62, 2.3, 12, 1, true);
+    this.haloTex = glowTexture('rgba(255,255,255,.95)', 'rgba(255,255,255,.35)', 'rgba(255,255,255,0)');
+  }
+
+  _style(kind) {
+    let style = this.styles.get(kind);
+    if (style) return style;
+    const def = AREA_BONUSES[kind];
+    if (!def) return null;
+    style = {
+      core: new THREE.MeshBasicMaterial({ color: def.color, toneMapped: false }),
+      ring: new THREE.MeshBasicMaterial({
+        color: def.color, transparent: true, opacity: 0.62, toneMapped: false, side: THREE.DoubleSide,
+      }),
+      beam: new THREE.MeshBasicMaterial({
+        color: def.color, transparent: true, opacity: 0.07, toneMapped: false,
+        blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide,
+      }),
+      halo: new THREE.SpriteMaterial({
+        map: this.haloTex, color: def.color, transparent: true, opacity: 0.82,
+        blending: THREE.AdditiveBlending, depthWrite: false, toneMapped: false,
+      }),
+      label: new THREE.SpriteMaterial({
+        map: sigilTexture(def.glyph, def.css, def.short),
+        transparent: true, depthWrite: false, toneMapped: false,
+      }),
+    };
+    this.styles.set(kind, style);
+    return style;
+  }
+
+  spawn(kind, pos) {
+    const def = AREA_BONUSES[kind];
+    const style = this._style(kind);
+    if (!def || !style || !pos) return null;
+    if (this.list.length >= AREA_BONUS_TUNING.perWave) return null;
+    if (this.list.some(p => p.kind === kind)) return null;
+
+    const group = new THREE.Group();
+    group.position.set(pos.x, 0, pos.z);
+
+    const beam = new THREE.Mesh(this.beamGeo, style.beam);
+    beam.position.y = 1.18;
+    const ring = new THREE.Mesh(this.ringGeo, style.ring);
+    ring.rotation.x = -Math.PI / 2;
+    ring.position.y = 0.07;
+    const core = new THREE.Mesh(this.coreGeo, style.core);
+    core.position.y = 0.94;
+    const halo = new THREE.Sprite(style.halo);
+    halo.scale.set(3.4, 3.4, 1);
+    core.add(halo);
+    const label = new THREE.Sprite(style.label);
+    label.scale.set(2.8, 1.22, 1);
+    label.position.y = 2.12;
+
+    group.add(beam, ring, core, label);
+    this.scene.add(group);
+    const bonus = {
+      kind, def, group, core, ring, beam, label,
+      t: 0, ttl: AREA_BONUS_TUNING.ttl,
+    };
+    this.list.push(bonus);
+    return bonus;
+  }
+
+  update(dt, game) {
+    const player = game.player;
+    if (!player || !player.alive) return;
+    for (let i = this.list.length - 1; i >= 0; i--) {
+      const p = this.list[i];
+      p.t += dt;
+      p.ttl -= dt;
+      if (p.ttl <= 0) {
+        this.fx.ring(p.group.position, p.def.color, { r0: 0.3, r1: 1.8, life: 0.35, opacity: 0.4 });
+        this._remove(i);
+        continue;
+      }
+      p.group.visible = p.ttl > 8 || Math.floor(p.ttl * 8) % 2 === 0;
+      const bob = Math.sin(p.t * 2.2) * 0.12;
+      p.core.position.y = 0.94 + bob;
+      p.core.rotation.y += dt * 1.6;
+      p.core.rotation.x += dt * 0.65;
+      p.ring.rotation.z += dt * 0.8;
+      p.ring.scale.setScalar(1 + Math.sin(p.t * 2.8) * 0.07);
+      p.label.position.y = 2.12 + bob * 0.35;
+      p.beam.material.opacity = 0.055 + Math.sin(p.t * 3.4) * 0.02;
+
+      const dx = player.pos.x - p.group.position.x;
+      const dz = player.pos.z - p.group.position.z;
+      const reach = 1.25 + (game.areaSizeActive ? 0.28 : 0);
+      if (Math.hypot(dx, dz) < reach) {
+        const at = new THREE.Vector3(p.group.position.x, 1.15, p.group.position.z);
+        game.collectAreaBonus(p.kind);
+        this.fx.burst(at, p.def.color, { count: 22, speed: 5.4, size: 0.26, life: 0.75, up: 2.8 });
+        this.fx.ring(new THREE.Vector3(at.x, 0.12, at.z), p.def.color, { r0: 0.4, r1: 3.1, life: 0.55, opacity: 0.8 });
+        this._remove(i);
+      }
+    }
+  }
+
+  _remove(i) {
+    const p = this.list[i];
+    if (!p) return;
+    p.group.visible = false;
+    this.scene.remove(p.group);
+    this.list.splice(i, 1);
+  }
+
+  clear() {
+    for (const p of this.list) {
+      p.group.visible = false;
+      this.scene.remove(p.group);
+    }
     this.list.length = 0;
   }
 }
