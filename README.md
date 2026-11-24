@@ -15,7 +15,7 @@ One tab, no install, no account — a 3D roguelite that runs where you already a
 
 <br/>
 
-<img src="https://img.shields.io/badge/version-1.9.8-f5c26b?style=flat-square&labelColor=141726" alt="version 1.9.8">
+<img src="https://img.shields.io/badge/version-1.9.9-f5c26b?style=flat-square&labelColor=141726" alt="version 1.9.9">
 <img src="https://img.shields.io/badge/touch-ready-67ecff?style=flat-square&labelColor=141726" alt="touch ready">
 <img src="https://img.shields.io/badge/modes-8-67ecff?style=flat-square&labelColor=141726" alt="8 modes">
 <img src="https://img.shields.io/badge/engine-Three.js-8a5cff?style=flat-square&labelColor=141726" alt="Three.js">
@@ -304,6 +304,13 @@ The **Play** button at the top of this README points at the game, and `/site/` r
 ## Changelog
 
 <details open>
+<summary><b>v1.9.9 — Clear the fallen</b></summary>
+
+- **Two-second corpses:** killed enemies now stay on the arena floor for exactly **2 seconds**, fade, and are removed. The cleanup clock keeps running during level-up, relic and forge overlays, so bodies cannot freeze in place between waves.
+
+</details>
+
+<details>
 <summary><b>v1.9.8 — The tightening ring</b></summary>
 
 - **Compounding levels, deliberately capped:** the essence needed for the next level is now 20% higher than the previous wave, compounding each wave. The curve caps at **5× base from wave 10**, and wave-clear essence rises to **12 + 6 per wave** so drafts keep arriving through twenty waves.
@@ -467,6 +474,6 @@ The **Play** button at the top of this README points at the game, and `/site/` r
 <br/>
 
 **Built with** Three.js (MIT) · Cinzel & Inter (OFL) · everything else hand-built — renderer, audio synthesis, UI and lore.<br/>
-<sub>Helios Elements v1.9.8 · no install, no account, no telemetry.</sub>
+<sub>Helios Elements v1.9.9 · no install, no account, no telemetry.</sub>
 
 </div>

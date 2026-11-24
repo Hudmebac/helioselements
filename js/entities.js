@@ -288,7 +288,7 @@ export class Projectiles {
    PICKUPS
    ============================================================ */
 const MAX_PICKUPS = 90;
-export const CORPSE_TTL = 7;
+export const CORPSE_TTL = 2;
 export const PICKUP_TTL = 75;
 
 export class Pickups {
@@ -655,8 +655,7 @@ export class Corpses {
 
   add(enemy) {
     if (!enemy || !enemy.group || enemy._corpse) return;
-    // Tiny creatures vanish into ash immediately; only the heavier bodies linger.
-    if (!enemy.isBoss && !enemy.elite && (enemy.key === 'crawler' || enemy.key === 'wisp')) return;
+    // Every fallen enemy gets the same short cleanup window, regardless of size.
     enemy._corpse = true;
     const group = enemy.group;
     group.rotation.z = (Math.random() - 0.5) * 0.8;
@@ -673,12 +672,20 @@ export class Corpses {
       if (!mats.includes(m)) mats.push(m);
     });
 
-    // Heavy bodies hold their shape for a moment, then ash out quickly.
-    const ttl = enemy.isBoss ? 16 : enemy.elite ? 10 : CORPSE_TTL;
-    this.list.push({
+    // Two seconds on the floor, then the body is gone for good. The timer is a
+    // backstop for drafts, pause screens and hidden tabs where update may stop.
+    const ttl = CORPSE_TTL;
+    const corpse = {
       group, enemy, mats, ttl, maxTtl: ttl,
       baseY: group.position.y, baseScale: Math.max(group.scale.x, 0.6), ashT: 0,
-    });
+      removed: false, timer: 0,
+    };
+    corpse.timer = setTimeout(() => {
+      const index = this.list.indexOf(corpse);
+      if (index >= 0) this.list.splice(index, 1);
+      this._remove(corpse);
+    }, CORPSE_TTL * 1000);
+    this.list.push(corpse);
     this.fx?.burst?.(
       new THREE.Vector3(group.position.x, group.position.y + 0.6, group.position.z),
       0x9b8f7c, { count: 12, speed: 3.2, size: 0.2, life: 0.7, up: 1.4 }
@@ -690,7 +697,12 @@ export class Corpses {
   }
 
   _remove(c) {
-    if (!c) return;
+    if (!c || c.removed) return;
+    c.removed = true;
+    if (c.timer) {
+      clearTimeout(c.timer);
+      c.timer = 0;
+    }
     this.scene.remove(c.group);
     c.group.visible = false;
     c.enemy.dispose?.();

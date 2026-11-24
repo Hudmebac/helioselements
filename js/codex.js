@@ -411,6 +411,14 @@ export const FAQ = [
    ------------------------------------------------------------ */
 export const CHANGELOG = [
   {
+    version: '1.9.9',
+    date: '2026-11-24',
+    title: 'Clear the fallen',
+    items: [
+      'Killed enemies now remain on the arena floor for two seconds, fade out, and are removed. The cleanup keeps running while level-up, relic and forge overlays are open, so defeated bodies cannot stay behind between waves.',
+    ],
+  },
+  {
     version: '1.9.8',
     date: '2026-11-24',
     title: 'The tightening ring',

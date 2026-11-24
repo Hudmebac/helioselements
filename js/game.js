@@ -1052,8 +1052,9 @@ export class Game {
     const per = Math.max(1, Math.round(value / orbs));
     for (let i = 0; i < orbs; i++) this.pickups.spawnEssence(enemy.pos, per);
 
-    // Bodies vanish into the kill burst; leaving them on the ground turns the
-    // arena into clutter, especially in first person.
+    // Leave the body for a two-second fade, then remove it even if a draft or
+    // forge overlay pauses the rest of the fight.
+    this.corpses.add(enemy);
     const shardChance = enemy.isBoss || enemy.miniBoss ? 1 : enemy.elite ? 0.35 : enemy.key === 'brute' ? 0.2 : 0.055;
     if (Math.random() < shardChance) {
       this.pickups.spawnShard(enemy.pos);
@@ -2395,6 +2396,9 @@ export class Game {
   /* ---------------- PER FRAME ---------------- */
   update(dt) {
     this.time += dt;
+    // Corpses keep their own two-second clock while overlays are open; a paused
+    // game freezes them with everything else.
+    if (this.corpses && this.state !== 'paused') this.corpses.update(dt);
     if (this.state !== 'playing' || !this.player) return;
 
     this.runTime += dt;
@@ -2424,7 +2428,6 @@ export class Game {
     this.projectiles.update(dt, this);
     this.pickups.update(dt, this);
     this.areaBonuses.update(dt, this);
-    this.corpses.update(dt);
     if (this.state !== 'playing') return;
 
     this.updateWave(dt);
