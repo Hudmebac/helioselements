@@ -10,6 +10,8 @@ import {
 } from './data.js';
 
 const FIRST_PERSON_TURN = 2.6;
+const SENTINEL_ORBIT_RADIUS = 4.2;
+const SENTINEL_TARGET_RANGE = 10;
 
 export class Player {
   constructor(game, form) {
@@ -975,10 +977,15 @@ export class Player {
       const s = this.sentinels[i];
       s.angle += dt * 1.5;
       const a = s.angle + (i / Math.max(1, this.sentinels.length)) * Math.PI * 2;
-      s.mesh.position.set(this.pos.x + Math.cos(a) * 1.7, 1.15 + Math.sin(this.t * 2 + i) * 0.12, this.pos.z + Math.sin(a) * 1.7);
+      s.mesh.position.set(
+        this.pos.x + Math.cos(a) * SENTINEL_ORBIT_RADIUS,
+        1.15 + Math.sin(this.t * 2 + i) * 0.12,
+        this.pos.z + Math.sin(a) * SENTINEL_ORBIT_RADIUS
+      );
+      arenaClamp(s.mesh.position, 0.6);
       s.cd -= dt;
       if (s.cd <= 0) {
-        const e = this.game.enemies.nearest(s.mesh.position, 8);
+        const e = this.game.enemies.nearest(s.mesh.position, SENTINEL_TARGET_RANGE);
         if (e) {
           const dir = e.pos.clone().add(new THREE.Vector3(0, 0.7, 0)).sub(s.mesh.position).normalize();
           this.game.projectiles.fire({

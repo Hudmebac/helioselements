@@ -427,7 +427,7 @@ export const BOONS = [
   { id: 'executioner', name: 'Executioner', rarity: 'epic', icon: '⚔', max: 3, weight: 22, desc: '+35% damage to enemies below 35% health.', apply: p => { p.stats.execute += 0.35; } },
   { id: 'vampiric_sigil', name: 'Vampiric Sigil', rarity: 'epic', icon: '☾', max: 4, weight: 22, desc: 'Steal 4% of damage dealt as health.', apply: p => { p.stats.lifesteal += 0.04; } },
   { id: 'thorns', name: 'Thornmail', rarity: 'rare', icon: '✧', max: 3, weight: 34, desc: 'Reflect 40% of contact damage.', apply: p => { p.stats.thorns += 0.4; } },
-  { id: 'sentinel', name: 'Orbital Sentinel', rarity: 'epic', icon: '◍', max: 3, weight: 26, desc: 'Summon an orbiting mote that strikes nearby foes.', apply: p => { p.addSentinel(); } },
+  { id: 'sentinel', name: 'Orbital Sentinel', rarity: 'epic', icon: '◍', max: 3, weight: 26, desc: 'Summon a mote that orbits wide and fires at nearby foes.', apply: p => { p.addSentinel(); } },
   { id: 'burst_dash', name: 'Burst Dash', rarity: 'rare', icon: '⇢', max: 2, weight: 30, desc: 'Dashing detonates a damaging pulse.', apply: p => { p.stats.dashBurst += 26; } },
   { id: 'solar_wind', name: 'Solar Wind', rarity: 'epic', icon: '❂', max: 3, weight: 24, desc: 'Nearby enemies are slowed by 20%.', apply: p => { p.stats.auraSlow = Math.min(0.5, p.stats.auraSlow + 0.2); } },
   { id: 'focused_lens', name: 'Focused Lens', rarity: 'epic', icon: '◉', max: 3, weight: 24, desc: '+25% damage but attacks 8% slower.', apply: p => { p.stats.damageMult *= 1.25; p.stats.intervalMult *= 1.08; } },
