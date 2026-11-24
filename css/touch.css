@@ -206,6 +206,23 @@ body.tc-on .levelup-btn { display: none !important; }
   .tc-level { bottom: calc(max(8px, env(safe-area-inset-bottom)) + 190px); height: 40px; }
 }
 
+/* Netlify's fixed "Powered by Netlify" badge owns the bottom-right corner of
+   the hosted site. Lift the right thumb's cluster above it; the wave pill
+   rises with the pad it sits on. */
+@media (pointer: coarse), (max-width: 760px) {
+  .tc-pad { bottom: calc(max(10px, env(safe-area-inset-bottom)) + 48px); }
+  .tc-call { bottom: calc(max(10px, env(safe-area-inset-bottom)) + 268px); }
+}
+@media (pointer: coarse) and (max-height: 540px), (max-width: 760px) and (max-height: 540px) {
+  /* Short screens have no room to lift without covering the core bar, so the
+     cluster steps in from the badge instead and keeps its original height. */
+  .tc-pad {
+    right: calc(max(10px, env(safe-area-inset-right)) + 132px);
+    bottom: max(10px, env(safe-area-inset-bottom));
+  }
+  .tc-call { bottom: calc(max(8px, env(safe-area-inset-bottom)) + 198px); }
+}
+
 /* ---------------- MENUS & PAGES, FINGERS ---------------- */
 @media (pointer: coarse), (max-width: 760px) {
   .screen { overflow-x: hidden; }
@@ -224,6 +241,13 @@ body.tc-on .levelup-btn { display: none !important; }
   .toggle { width: 52px; height: 30px; }
   .toggle::after { width: 22px; height: 22px; }
   .toggle.on::after { left: 26px; }
+  /* Page and panel feet start from the left: the badge sits bottom-right. */
+  .select-foot { align-items: flex-start; gap: 14px; padding-bottom: 56px; }
+  .select-foot .spacer { display: none; }
+  .panel { margin-bottom: 56px; }
+  .panel-actions { align-items: flex-start; }
+  .panel-actions .spacer { display: none; }
+  .codex-shell { padding-bottom: 56px; }
   .settings-row { gap: 12px; padding: 12px 0; }
   .settings-row .label b { font-size: 12px; }
   input[type=range] { width: 118px; height: 6px; }

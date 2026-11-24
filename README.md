@@ -1,6 +1,6 @@
 <div align="center">
 
-<sub>B R O W S E R &nbsp; R O G U E L I T E &nbsp; · &nbsp; v 1 . 8 . 1</sub>
+<sub>B R O W S E R &nbsp; R O G U E L I T E &nbsp; · &nbsp; v 1 . 8 . 2</sub>
 
 # ☀ HELIOS ELEMENTS
 
@@ -15,7 +15,7 @@ One tab, no install, no account — a 3D roguelite that runs where you already a
 
 <br/>
 
-<img src="https://img.shields.io/badge/version-1.8.1-f5c26b?style=flat-square&labelColor=141726" alt="version 1.8.1">
+<img src="https://img.shields.io/badge/version-1.8.2-f5c26b?style=flat-square&labelColor=141726" alt="version 1.8.2">
 <img src="https://img.shields.io/badge/touch-ready-67ecff?style=flat-square&labelColor=141726" alt="touch ready">
 <img src="https://img.shields.io/badge/modes-8-67ecff?style=flat-square&labelColor=141726" alt="8 modes">
 <img src="https://img.shields.io/badge/engine-Three.js-8a5cff?style=flat-square&labelColor=141726" alt="Three.js">
@@ -294,6 +294,14 @@ The **Play** button at the top of this README points at the game, and `/site/` r
 ## Changelog
 
 <details open>
+<summary><b>v1.8.2 — Clear of the badge</b></summary>
+
+- The right thumb cluster sits **48px higher in portrait and 44px in landscape**, clear of the fixed badge the hosted site puts in the bottom-right corner; the Begin Wave pill rises with the pad.
+- **Page feet keep left**: Enter the Arena no longer sits in the bottom-right of the mission select, panel action rows (pause, results, forge, settings) start from the left, and the lore site footer stacks left with clearance beneath it.
+
+</details>
+
+<details>
 <summary><b>v1.8.1 — One hand on the mouse</b></summary>
 
 - **Mouse movement**: hold the left mouse button anywhere on the arena and drag. The same floating ring as the phone stick appears under the cursor, the same 52px throw is full speed, and releasing stops the guardian. No setting needed, and it works whether or not the touch pad is on.
@@ -346,7 +354,7 @@ The **Play** button at the top of this README points at the game, and `/site/` r
 
 </details>
 
-**Earlier — v1.8.0:** touch controls, the portrait camera and finger-sized menus. **v1.7.7:** the final loadout readout on the results screen. **v1.7.6:** Kindling and Dawn Gifts, two arms and a ward, ranks drafted rather than handed out, dissolving bodies, two new wardens. **v1.7.5:** three menu depths and the empty-arena wave gate. **v1.7.4:** the Descent multiplier (+15% per rank, paid on the rank *played*) and **Settings → Save** export/import. Before that: the Descent itself, Solar Caravan's eight-point road, level boons, Eclipse Pacts, Skill Runs, Warden Duel, and the Codex.
+**Earlier — v1.8.1:** mouse drag movement. **v1.8.0:** touch controls, the portrait camera and finger-sized menus. **v1.7.7:** the final loadout readout on the results screen. **v1.7.6:** Kindling and Dawn Gifts, two arms and a ward, ranks drafted rather than handed out, dissolving bodies, two new wardens. **v1.7.5:** three menu depths and the empty-arena wave gate. **v1.7.4:** the Descent multiplier (+15% per rank, paid on the rank *played*) and **Settings → Save** export/import. Before that: the Descent itself, Solar Caravan's eight-point road, level boons, Eclipse Pacts, Skill Runs, Warden Duel, and the Codex.
 
 ---
 
@@ -363,6 +371,6 @@ The **Play** button at the top of this README points at the game, and `/site/` r
 <br/>
 
 **Built with** Three.js (MIT) · Cinzel & Inter (OFL) · everything else hand-built — renderer, audio synthesis, UI and lore.<br/>
-<sub>Helios Elements v1.8.1 · no install, no account, no telemetry.</sub>
+<sub>Helios Elements v1.8.2 · no install, no account, no telemetry.</sub>
 
 </div>

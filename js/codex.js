@@ -404,6 +404,15 @@ export const FAQ = [
    ------------------------------------------------------------ */
 export const CHANGELOG = [
   {
+    version: '1.8.2',
+    date: '2026-11-24',
+    title: 'Clear of the badge',
+    items: [
+      'The right thumb cluster sits higher — 48 pixels in portrait and 44 in landscape — clear of the fixed badge that the hosted site puts in the bottom-right corner. The Begin Wave pill rises with the pad so the gap stays even.',
+      'Page feet keep to the left: Enter the Arena no longer sits in the bottom-right corner of the mission select, and the pause, results, forge and settings action rows start from the left. The lore site footer stacks left with clearance beneath it.',
+    ],
+  },
+  {
     version: '1.8.1',
     date: '2026-11-24',
     title: 'One hand on the mouse',
