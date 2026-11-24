@@ -621,6 +621,21 @@
   .build-pill i { font-style: normal; color: var(--gold); font-size: 11px; }
   .build-pill em { font-style: normal; color: var(--faint); font-size: 8px; }
 
+  /* The results screen's final loadout: hand, second arm, ward. */
+  .loadout-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .loadout-slot {
+    padding: 11px 13px 10px; border-radius: 12px;
+    background: linear-gradient(180deg, rgba(255,255,255,.035), rgba(255,255,255,.015));
+    border: 1px solid rgba(255,255,255,.07); border-left: 2px solid var(--lc, rgba(255,255,255,.2));
+  }
+  .loadout-slot span { display: block; font-size: 7.5px; letter-spacing: .22em; text-transform: uppercase; color: var(--faint); }
+  .loadout-slot b { display: flex; align-items: center; gap: 6px; margin: 5px 0 3px; font-family: var(--font-display); font-size: 13px; font-weight: 600; color: #fff3d8; }
+  .loadout-slot b i { font-style: normal; font-size: 13px; color: var(--lc, var(--gold)); }
+  .loadout-slot small { font-size: 8px; letter-spacing: .08em; line-height: 1.45; color: var(--faint); }
+  .loadout-slot small em { font-style: normal; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; }
+  .loadout-slot.empty { opacity: .55; border-left-color: rgba(255,255,255,.12); }
+  @media (max-width: 760px) { .loadout-grid { grid-template-columns: 1fr; } }
+
   .controls-list { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px 24px; }
   .control-row { display: flex; justify-content: space-between; gap: 14px; padding: 8px 0; border-bottom: 1px dashed rgba(255,255,255,.06); font-size: 10.5px; color: #b8bccf; }
   .kbd {

@@ -1,6 +1,6 @@
 <div align="center">
 
-<sub>B R O W S E R &nbsp; R O G U E L I T E &nbsp; · &nbsp; v 1 . 7 . 6</sub>
+<sub>B R O W S E R &nbsp; R O G U E L I T E &nbsp; · &nbsp; v 1 . 7 . 7</sub>
 
 # ☀ HELIOS ELEMENTS
 
@@ -15,7 +15,7 @@ One tab, no install, no account — a 3D roguelite that runs where you already a
 
 <br/>
 
-<img src="https://img.shields.io/badge/version-1.7.6-f5c26b?style=flat-square&labelColor=141726" alt="version 1.7.6">
+<img src="https://img.shields.io/badge/version-1.7.7-f5c26b?style=flat-square&labelColor=141726" alt="version 1.7.7">
 <img src="https://img.shields.io/badge/modes-8-67ecff?style=flat-square&labelColor=141726" alt="8 modes">
 <img src="https://img.shields.io/badge/engine-Three.js-8a5cff?style=flat-square&labelColor=141726" alt="Three.js">
 <img src="https://img.shields.io/badge/dependencies-0-73e698?style=flat-square&labelColor=141726" alt="no dependencies">
@@ -287,6 +287,13 @@ The **Play** button at the top of this README points at the game, and `/site/` r
 ## Changelog
 
 <details open>
+<summary><b>v1.7.7 — What you carried out</b></summary>
+
+- **Final loadout**: the results screen now ends a run with the loadout it actually built — three tiles for the firing hand (rank and rarity), the second arm (rank) and the ward, which prints the shield, mending and pulse numbers it was giving at its final rank. An empty slot says so, and a Skill Run reports bare hands.
+
+</details>
+
+<details>
 <summary><b>v1.7.6 — What the dead leave behind</b></summary>
 
 - **Kindling**: kills can shed a burning mote. Eight of them summon a **Dawn Gift** — +35% damage for 18 seconds, tracked by a HUD meter next to the shard count. Elites drop three, wardens four.
@@ -314,7 +321,7 @@ The **Play** button at the top of this README points at the game, and `/site/` r
 
 </details>
 
-**Earlier — v1.7.5:** three menu depths and the empty-arena wave gate. **v1.7.4:** the Descent multiplier (+15% per rank, paid on the rank *played*) and **Settings → Save** export/import. Before that: the Descent itself, Solar Caravan's eight-point road, level boons, Eclipse Pacts, Skill Runs, Warden Duel, and the Codex.
+**Earlier — v1.7.6:** Kindling and Dawn Gifts, two arms and a ward, ranks drafted rather than handed out, dissolving bodies, two new wardens. **v1.7.5:** three menu depths and the empty-arena wave gate. **v1.7.4:** the Descent multiplier (+15% per rank, paid on the rank *played*) and **Settings → Save** export/import. Before that: the Descent itself, Solar Caravan's eight-point road, level boons, Eclipse Pacts, Skill Runs, Warden Duel, and the Codex.
 
 ---
 
@@ -331,6 +338,6 @@ The **Play** button at the top of this README points at the game, and `/site/` r
 <br/>
 
 **Built with** Three.js (MIT) · Cinzel & Inter (OFL) · everything else hand-built — renderer, audio synthesis, UI and lore.<br/>
-<sub>Helios Elements v1.7.6 · no install, no account, no telemetry.</sub>
+<sub>Helios Elements v1.7.7 · no install, no account, no telemetry.</sub>
 
 </div>

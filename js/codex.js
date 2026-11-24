@@ -402,6 +402,15 @@ export const FAQ = [
    ------------------------------------------------------------ */
 export const CHANGELOG = [
   {
+    version: '1.7.7',
+    date: '2026-11-24',
+    title: 'What you carried out',
+    items: [
+      'The results screen now ends a run with its final loadout in three tiles: the firing hand with its rank and rarity, the second arm with its rank, and the ward at the rank it reached — printing the shield, mending and pulse numbers it was actually giving.',
+      'An empty second arm or ward says so in its tile instead of vanishing, and a Skill Run reports bare hands rather than a weapon it never drafted.',
+    ],
+  },
+  {
     version: '1.7.6',
     date: '2026-11-23',
     title: 'What the dead leave behind',

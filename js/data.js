@@ -3,7 +3,7 @@
    Elements, fusions, enemies, boons and wave composition.
    ============================================================ */
 
-export const VERSION = '1.7.6';
+export const VERSION = '1.7.7';
 
 export const ELEMENTS = {
   ember: {

@@ -5,7 +5,7 @@
 
 import {
   ELEMENTS, FUSIONS, ENEMIES, BOSSES, BOONS, KEYBINDS, RARITY, VERSION,
-  MODES, ARENAS, DEFENSES, SIEGE, LANE, HUNT, ESCORT, RITUAL, BLITZ, DUEL, RELICS, RELIC_SLOTS, PACTS, pactRanks, pactReward, WARDS, wardSummaryFor,
+  MODES, ARENAS, DEFENSES, SIEGE, LANE, HUNT, ESCORT, RITUAL, BLITZ, DUEL, RELICS, RELIC_SLOTS, PACTS, pactRanks, pactReward, WARDS, wardSummaryFor, WEAPON_RANK, WARD_MAX_RANK,
   WAVE_BONUSES, SKILL_RUN, WEAPONS, strongAgainst, weakTo,
   DIFFICULTIES, DIFFICULTY_ORDER, normalizeDifficulty, difficultyUnlocked,
   ACHIEVEMENTS, REWARDS, CONTROL_ACTIONS, keyLabel, DESCENT,
@@ -2670,6 +2670,7 @@ export class UI {
 
     const p = this.game.player;
     const build = p ? this._buildPills(p) : '';
+    const loadout = p ? this._loadoutHtml(p) : '';
     const newAchievements = summary.newAchievements || [];
     const pactMult = summary.pactMult ?? 1;
     const pactsTotal = summary.pactsTotal ?? 0;
@@ -2697,6 +2698,8 @@ export class UI {
       ${summary.catchUp > 1 ? `<div class="dawn-catchup">DAWN'S FAVOR · +20% SUNMARKS FOR A LESS-TRAVELLED SIGIL</div>` : ''}
       ${summary.descent ? `<div class="dawn-catchup" style="color:#ffb066;border-color:#ffb06644;background:#ffb06612">DESCENT ${summary.descent} · NEXT RUN +${Math.round((summary.descentHp - 1) * 100)}% ENEMY HEALTH · +${Math.round((summary.descentDamage - 1) * 100)}% DAMAGE · +${Math.round(summary.descent * DESCENT.markStep * 100)}% SUNMARKS</div>` : ''}
       ${newAchievements.length ? `<div class="section-label">New achievements</div><div class="dawn-new">${newAchievements.map(a => `<span><b>${a.name}</b><em>+${a.points}</em></span>`).join('')}</div>` : ''}
+      <div class="section-label">Final loadout</div>
+      <div class="loadout-grid">${loadout}</div>
       <div class="section-label">${summary.victory ? 'The build that held' : 'The build that fell'}</div>
       <div class="build-list">${build}</div>
     `;
@@ -2708,6 +2711,37 @@ export class UI {
     const el = document.getElementById('screen-gameover');
     el.classList.remove('active');
     el.classList.remove('victory');
+  }
+
+  /* What the run ended wearing: the firing hand, the second arm and the
+     ward, each with the rank it reached. Skill runs finish bare-handed. */
+  _loadoutHtml(player) {
+    const hand = player.form?.weapon;
+    const handRank = player.weaponRank || 1;
+    const handRarity = player.weaponRarity || 'common';
+    const rarityCss = RARITY[handRarity]?.css || '#a9b6d6';
+    const side = player.sideForm?.weapon;
+    const sideRank = player.sideWeaponRank || 1;
+    const ward = player.ward ? WARDS[player.ward.key] : null;
+    const wardRank = player.ward?.rank || 1;
+    const tiles = [
+      `<div class="loadout-slot" style="--lc:${hand?.css || player.form?.css || '#ffd98a'}">
+        <span>Firing hand</span>
+        <b><i>${hand?.icon || player.form?.sigil || '✦'}</i>${hand?.name || 'Bare hands'}</b>
+        <small>${hand ? `rank ${handRank} of ${WEAPON_RANK.max} · <em style="color:${rarityCss}">${handRarity}</em>` : 'no weapon — a skill run'}</small>
+      </div>`,
+      `<div class="loadout-slot ${side ? '' : 'empty'}" style="--lc:${side?.css || '#a9b6d6'}">
+        <span>Second arm</span>
+        <b><i>${side?.icon || '·'}</i>${side?.name || 'Empty slot'}</b>
+        <small>${side ? `rank ${sideRank} of ${WEAPON_RANK.max}` : 'nothing drafted into the off hand'}</small>
+      </div>`,
+      `<div class="loadout-slot ${ward ? '' : 'empty'}" style="--lc:${ward?.css || '#a9b6d6'}">
+        <span>Ward</span>
+        <b><i>${ward?.icon || '·'}</i>${ward?.name || 'No ward'}</b>
+        <small>${ward ? `rank ${wardRank} of ${WARD_MAX_RANK} · ${wardSummaryFor(ward, wardRank)}` : 'the run ended unwarded'}</small>
+      </div>`,
+    ];
+    return tiles.join('');
   }
 
   _buildPills(player) {
