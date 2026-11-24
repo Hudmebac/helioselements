@@ -351,7 +351,9 @@ export class Structures {
 
   damageGate(gate, amount, game) {
     if (!gate?.alive || amount <= 0) return 0;
-    const dmg = Math.max(1, amount);
+    // Each broken gate exposes the next; the multiplier is owned by the run so
+    // the HUD and the damage path read the same number.
+    const dmg = Math.max(1, amount * (game.gateDamageMult || 1));
     gate.hp = Math.max(0, gate.hp - dmg);
     gate.flashT = 0.14;
     if (Math.random() < 0.3) {
@@ -925,7 +927,8 @@ export class Structures {
 
 /* ============================================================
    SOLAR CARAVAN — the escort objective.
-   It only advances while you stand beside it and nothing contests it.
+   It advances while you stand beside it; a contested road slows it, and
+   waystones are the hard stops. The last stretch becomes a rift siege.
    ============================================================ */
 export class Caravan {
   constructor(scene, fx, audio, mods = {}) {
@@ -954,9 +957,13 @@ export class Caravan {
     this.maxHp = ESCORT.hp;
     this.alive = true;
     this.arrived = false;
+    this.finale = false;
+    this.finaleBoss = null;
     this.progress = 0;
     this.escorted = false;
     this.contested = false;
+    this.attackers = 0;
+    this.slowFactor = 1;
     this.kind = 'caravan';
     this.name = 'Solar Caravan';
     this.radius = 1.45;
@@ -1099,7 +1106,7 @@ export class Caravan {
       group.add(ring);
 
       scene.add(group);
-      return { f, d, pos, group, ring, ringMat, reached: false, index: i };
+      return { f, d, pos, group, ring, ringMat, reached: false, ambushed: false, index: i };
     });
     this.nextWaystone = this.waystones[0] || null;
     this.atWaystone = null;
@@ -1148,6 +1155,15 @@ export class Caravan {
     }
     this.contested = foes > 0;
     this.foes = foes;
+    this.attackers = 0;
+    for (const e of game.enemies.list) {
+      if (e.dead || e.type.ranged || e.harrier) continue;
+      if (Math.hypot(e.pos.x - this.pos.x, e.pos.z - this.pos.z) <= ESCORT.contestedRadius + 2.4) this.attackers++;
+    }
+    // A contested road slows the reliquary instead of pinning it in place.
+    // The player can still make progress while fighting, and the waystones
+    // remain the only hard stops.
+    this.slowFactor = Math.max(ESCORT.minMoveFactor, 1 - foes * ESCORT.slowPerFoe);
 
     // Zone + arrow read the same state the reliquary does.
     const zc = this.contested ? 0xff6a4a : this.escorted ? 0x7dffb4 : 0x8fb8a4;
@@ -1155,6 +1171,7 @@ export class Caravan {
     this.zoneMat.opacity = this.contested ? 0.12 : this.escorted ? 0.09 : 0.055;
     this.edgeMat.color.setHex(zc);
     this.edgeMat.opacity = this.contested ? 0.5 : this.escorted ? 0.34 : 0.2;
+    this.arrow.visible = !this.arrived; // the wayfinder stays up through the rift siege
     const goal = this.target;
     const bearing = Math.atan2(goal.pos.x - this.pos.x, goal.pos.z - this.pos.z);
     this.arrow.rotation.y = bearing;
@@ -1177,6 +1194,12 @@ export class Caravan {
         if (Math.hypot(e.pos.x - ws.pos.x, e.pos.z - ws.pos.z) <= ESCORT.waystoneHoldRadius) near++;
       }
       this.wayFoes = near;
+      // A waystone is a set piece, not just a pause: the first approach wakes
+      // its ambush. The stone is only clear once that ambush is dead.
+      if (!ws.ambushed && this.dist >= ws.d - 7.5) {
+        ws.ambushed = true;
+        game.startWaystoneAmbush?.(ws);
+      }
       if (this.escorted && near === 0) this._clearT += dt;
       else this._clearT = 0;
       if (this._clearT >= this.holdTime) {
@@ -1189,8 +1212,8 @@ export class Caravan {
       }
     }
 
-    if (this.escorted && !this.contested && !this.atWaystone) {
-      this.dist = Math.min(this.totalDist, this.dist + this.speed * dt);
+    if (this.escorted && !this.atWaystone && !this.finale) {
+      this.dist = Math.min(this.totalDist, this.dist + this.speed * this.slowFactor * dt);
       this.pos.copy(this.posAt(this.dist));
       this.group.position.copy(this.pos);
       if (Math.random() < dt * 14) {
@@ -1239,13 +1262,28 @@ export class Caravan {
       this.bodyMat.emissiveIntensity = 1.3;
     }
 
-    if (this.dist >= this.totalDist - 0.05) {
-      this.arrived = true;
-      this.alive = false;
-      this.fx.ring(this.pos, 0x8dffc0, { r0: 1, r1: 14, life: 1.3, opacity: 0.9 });
-      this.fx.burst(new THREE.Vector3(this.pos.x, 2, this.pos.z), 0x8dffc0, { count: 60, speed: 11, size: 0.36, life: 1.4, up: 5 });
-      game.onCaravanArrived();
+    // The last stretch is a rift siege: the road ends, but the dark does not.
+    // The reliquary holds while its warden is broken.
+    if (this.dist >= this.totalDist - 0.05 && !this.finale) {
+      this.dist = this.totalDist;
+      this.pos.copy(this.posAt(this.dist));
+      this.group.position.copy(this.pos);
+      this.finale = true;
+      this.finaleBoss = game.startCaravanFinale?.(this) || null;
+      this.arrow.visible = false;
       return;
+    }
+
+    if (this.finale) {
+      if (!this.finaleBoss || this.finaleBoss.dead) {
+        this.finaleBoss = null;
+        this.arrived = true;
+        this.alive = false;
+        this.fx.ring(this.pos, 0x8dffc0, { r0: 1, r1: 14, life: 1.3, opacity: 0.9 });
+        this.fx.burst(new THREE.Vector3(this.pos.x, 2, this.pos.z), 0x8dffc0, { count: 60, speed: 11, size: 0.36, life: 1.4, up: 5 });
+        game.onCaravanArrived();
+        return;
+      }
     }
 
     // Abandoning the reliquary lets the dark gnaw at it.
@@ -1412,7 +1450,7 @@ export class Ritual {
       scene.add(group);
       this.shrines.push({
         index: i, pos, group, ring, ringMat, disc, discMat, flame, flameMat, beam, beamMat, glow, light,
-        charge: 0, sealed: false, contested: false,
+        charge: 0, sealed: false, contested: false, pulseT: 0,
       });
     }
   }
@@ -1448,10 +1486,30 @@ export class Ritual {
         }
         if (s.charge >= 1) {
           s.sealed = true;
+          s.pulseT = 0.5;
           this.fx.ring(s.pos, 0xffd166, { r0: 0.6, r1: 7, life: 0.9, opacity: 0.9 });
           this.fx.burst(new THREE.Vector3(s.pos.x, 1.4, s.pos.z), 0xffd166, { count: 34, speed: 8, size: 0.3, life: 1, up: 3.4 });
           this.audio?.fusion?.();
           game.onShrineSealed(s);
+        }
+      }
+
+      // A sealed circle becomes a solar ward: it answers the horde that walks
+      // over it. This makes finishing a circle change the arena, not just the HUD.
+      if (s.sealed) {
+        s.pulseT = (s.pulseT || 0) - dt;
+        if (s.pulseT <= 0) {
+          s.pulseT = RITUAL.sealPulseInterval;
+          const radius = RITUAL.sealPulseRadius;
+          const damage = RITUAL.sealPulseDamage + (game.wave || 1) * 2;
+          for (const e of game.enemies.list) {
+            if (e.dead) continue;
+            if (Math.hypot(e.pos.x - s.pos.x, e.pos.z - s.pos.z) <= radius) {
+              game.damageEnemy(e, damage, { color: 0xffd166, silent: true, element: 'lumen' });
+            }
+          }
+          this.fx.ring(s.pos, 0xffd166, { r0: 0.7, r1: radius, life: 0.45, opacity: 0.65 });
+          this.fx.burst(new THREE.Vector3(s.pos.x, 1.2, s.pos.z), 0xffd166, { count: 16, speed: 6, size: 0.22, life: 0.5, up: 1.5 });
         }
       }
 

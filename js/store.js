@@ -1,6 +1,11 @@
 import { SETTINGS_DEFAULT, normalizePacts, normalizeDifficulty, defaultKeys, DESCENT } from './data.js';
 
 const KEY = 'helios.elements.save.v1';
+// Open the game with ?sandbox=1 to run against the loaded save without ever
+// writing it back. Balance passes and playtests can mutate builds, marks and
+// records freely while the real save stays untouched.
+export const SANDBOX = typeof window !== 'undefined'
+  && new URLSearchParams(window.location.search).has('sandbox');
 
 export function defaultSave() {
   return {
@@ -117,6 +122,7 @@ export function importSave(text) {
 }
 
 export function persist(save) {
+  if (SANDBOX) return;
   try {
     localStorage.setItem(KEY, JSON.stringify(save));
   } catch (e) {

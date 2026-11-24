@@ -15,7 +15,7 @@ One tab, no install, no account — a 3D roguelite that runs where you already a
 
 <br/>
 
-<img src="https://img.shields.io/badge/version-1.10.1-f5c26b?style=flat-square&labelColor=141726" alt="version 1.10.1">
+<img src="https://img.shields.io/badge/version-1.13.0-f5c26b?style=flat-square&labelColor=141726" alt="version 1.13.0">
 <img src="https://img.shields.io/badge/touch-ready-67ecff?style=flat-square&labelColor=141726" alt="touch ready">
 <img src="https://img.shields.io/badge/modes-8-67ecff?style=flat-square&labelColor=141726" alt="8 modes">
 <img src="https://img.shields.io/badge/engine-Three.js-8a5cff?style=flat-square&labelColor=141726" alt="Three.js">
@@ -58,7 +58,7 @@ Every run is a negotiation between three clocks: your health, the incoming horde
 <td width="50%"><img src="marketing/storyboard/02-warden.png" alt="The Rift Warden"><br/><sub><b>The Rift Warden.</b> Every fifth wave, something with a title arrives.</sub></td>
 </tr>
 <tr>
-<td><img src="marketing/storyboard/03-solar-caravan.png" alt="Solar Caravan"><br/><sub><b>Solar Caravan.</b> Walk a reliquary 205 metres of pilgrim road. It only moves while you do.</sub></td>
+<td><img src="marketing/storyboard/03-solar-caravan.png" alt="Solar Caravan"><br/><sub><b>Solar Caravan.</b> Walk a reliquary 205 metres of pilgrim road. A contested road slows it; six waystones stop it.</sub></td>
 <td><img src="marketing/storyboard/04-eclipse-blitz.png" alt="Eclipse Blitz"><br/><sub><b>Eclipse Blitz.</b> Twelve waves on a burning clock. Kills buy seconds.</sub></td>
 </tr>
 <tr>
@@ -111,8 +111,8 @@ Elements beat the two that follow them around the wheel and are **weak to the tw
 <tr><td><b>☀ Sunforge Siege</b></td><td>Hold a failing core for 20 waves. Spend shards on towers; body-block the breach.</td><td>Sunforge Sanctum</td></tr>
 <tr><td><b>⌖ Sunfall Lanes</b></td><td>Shatter 3 Rift Gates along three lanes — and keep the core alive while you do.</td><td>Sunfall Reach</td></tr>
 <tr><td><b>◈ Endless Trial</b></td><td>No core, no towers, no finish line. Chase your best wave.</td><td>Umbral Colosseum</td></tr>
-<tr><td><b>☄ Warden Hunt</b></td><td>Four wardens, back to back, each with an escort. No trash waves.</td><td>Ashfall Basin</td></tr>
-<tr><td><b>⛨ Solar Caravan</b></td><td>Escort a reliquary down a 205 m road. It halts at five waystones until the ground is clear.</td><td>Dawn Road</td></tr>
+<tr><td><b>☄ Warden Hunt</b></td><td>Four wardens, back to back, each with a court. Clear the court to expose the crown.</td><td>Ashfall Basin</td></tr>
+<tr><td><b>⛨ Solar Caravan</b></td><td>Escort a reliquary down a 205 m road. Six waystones halt it until their ambush is clear; the rift ends in a siege.</td><td>Dawn Road</td></tr>
 <tr><td><b>◉ Ember Ritual</b></td><td>Charge and seal three circles while the horde tries to take them back.</td><td>Cinder Cloister</td></tr>
 <tr><td><b>⌛ Eclipse Blitz</b></td><td>Twelve waves on a burning clock. Every kill adds time.</td><td>Eclipse Ring</td></tr>
 <tr><td><b>⚔ Warden Duel</b></td><td>Four crowned champions, alone, no escorts. The last is Helios Unbound.</td><td>Warden's Crown</td></tr>
@@ -306,6 +306,37 @@ The **Play** button at the top of this README points at the game, and `/site/` r
 ## Changelog
 
 <details open>
+<summary><b>v1.13.0 — Read the Silhouette</b></summary>
+
+- **Refined horde silhouettes:** crawlers gain a carapace, mandibles and tail; wisps gain an inner core, shard ring and trailing shards; brutes gain a head, pauldrons, forearms and jaw; spitters gain a muzzle, side pods and tendrils.
+- **Crowned and warden shapes:** mini-bosses gain a coloured mantle, pulsing core, six-point crown and crown gem; each warden gains a secondary silhouette, from rift blades to seraph glass feathers.
+- **Cheaper horde detail:** crawler legs, back spikes and eyes are batch-drawn as instanced meshes. A 50-crawler live check dropped from roughly 1,295 to 886 draw calls.
+- **Two-second warnings:** every boss or mini-boss set piece now sends a larger named warning toast and warning ring two seconds before it begins.
+
+</details>
+
+<details>
+<summary><b>v1.12.0 — The Wheel Answers</b></summary>
+
+- **The horde wears its element:** every wave has a dominant element plus a deliberate minority of adjacent elements. Enemy badges, ground rings and halos show the colour and sigil, and enemy attacks use the same advantage wheel as your shots.
+- **Wardens act, not just shoot:** Cinder Eruption, Tidal Mend, Squall Sprint, Stone Slam, Solar Judgment, Nightfall and Void Pull each have a ground tell and a real answer. Boss volleys, charges and summons were spaced out around them.
+- **Ascend is safe:** a death clears any old victory flag, Ascend requires a living victorious guardian, and the results screen only hides after a successful ascend.
+
+</details>
+
+<details>
+<summary><b>v1.11.0 — The Long Road Answers</b></summary>
+
+- **Solar Caravan rebuilt around six waystones:** each stone wakes its own ambush, offers a waystone bargain draft and mends the reliquary. A contested road now slows the stone instead of pinning it. The last stretch is a rift siege against a warden; Breakers ignore the peel and Harriers hunt the guardian.
+- **Sunforge Siege answers the breach:** below half integrity the core rebukes the horde on a long cadence, and Sunforge Rites at waves 5, 10 and 15 offer guaranteed boon drafts.
+- **Sunfall Lanes turns the screw:** every broken gate adds **+18% crossfire** damage to the remaining gates, clears its lane with a backlash and opens a draft.
+- **Warden Hunt:** the last escort falling exposes the warden to **+18%** damage, and each felled warden grants a trophy draft plus permanent **Hunt Momentum** (+12% damage, +8% speed).
+- **Ember Ritual:** sealed circles become solar wards that pulse damage, and the first two seals open a boon draft.
+- **Warden Duel:** dash through a champion's wind-up or charge for a **Duelist's Read** (+18 ultimate charge), and every champion leaves a trophy draft plus **Champion Tempo** (+15% damage).
+
+</details>
+
+<details>
 <summary><b>v1.10.1 — Read the Rift</b></summary>
 
 - **Six wardens, six arrivals:** each named warden gets its own motif, and crowned sub-bosses announce themselves before they close. Waystones, ritual seals, broken gates and failing objectives all resolve with their own cues instead of one generic chime.
@@ -388,7 +419,7 @@ The **Play** button at the top of this README points at the game, and `/site/` r
 <details>
 <summary><b>v1.9.4 — Scars cost marks</b></summary>
 
-- **Mend the caravan by hand:** hold **E** within **5.8m** of a damaged reliquary to restore **34 integrity/s**. Repairing silences both weapons, so every second of mending is a second not spent clearing the road. The repair prompt turns green and shows its integrity.
+- **Mend the caravan by hand:** hold **E** within **5.8m** of a damaged reliquary to restore **30 integrity/s**. Repairing silences both weapons, so every second of mending is a second not spent clearing the road. The repair prompt turns green and shows its integrity.
 - **Caravan damage costs sunmarks:** full payout above **90%** integrity, sliding toward **×0.40** at zero. At zero the reliquary shatters and the run ends.
 - **Structures pay for the state of the hold:** full payout above **80%** core integrity, sliding toward **×0.50** below it. Each destroyed defense takes another **4%** off the final payout, up to a **40%** cut.
 - **See the cost before the result:** the pause screen and caravan HUD show the current payout multiplier, and the results screen explains how much integrity cost you.
@@ -470,7 +501,7 @@ The **Play** button at the top of this README points at the game, and `/site/` r
 <summary><b>v1.7.6 — What the dead leave behind</b></summary>
 
 - **Kindling**: kills can shed a burning mote. Eight of them summon a **Dawn Gift** — +35% damage for 18 seconds, tracked by a HUD meter next to the shard count. Elites drop three, wardens four.
-- **Gifts answer the mission**: two shards and a mended core in Sunforge Siege, +4s on the clock in Eclipse Blitz, reliquary repair in Solar Caravan, a circle charge in Blind Ritual — and every second gift sends a wisp to fight beside you.
+- **Gifts answer the mission**: two shards and a mended core in Sunforge Siege, +4s on the clock in Eclipse Blitz, reliquary repair in Solar Caravan, a circle charge in Ember Ritual — and every second gift sends a wisp to fight beside you.
 - **Fallen bodies dissolve**: an ash puff at the moment of death, then a shrink and sink that clears the arena in 7 seconds (10 for elites, 16 for wardens) instead of lingering.
 - **Runs begin on their own**: wave 1 starts three seconds after the arena opens, with the countdown on the HUD — <kbd>Enter</kbd> still starts it immediately.
 - **Characters read their element**: the guardian carries its sigil and element name overhead, every enemy wears its element's sigil and a red hostile ring underfoot, and weapons fire their own silhouette (bolt, blade, needle, boulder) from a crystal focus that kicks with every shot.
@@ -511,6 +542,6 @@ The **Play** button at the top of this README points at the game, and `/site/` r
 <br/>
 
 **Built with** Three.js (MIT) · Cinzel & Inter (OFL) · everything else hand-built — renderer, audio synthesis, UI and lore.<br/>
-<sub>Helios Elements v1.10.1 · no install, no account, no telemetry.</sub>
+<sub>Helios Elements v1.13.0 · no install, no account, no telemetry.</sub>
 
 </div>

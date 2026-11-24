@@ -3,7 +3,7 @@
    Elements, fusions, enemies, boons and wave composition.
    ============================================================ */
 
-export const VERSION = '1.10.1';
+export const VERSION = '1.13.0';
 
 /* Three camera stops, from the whole ring to the guardian's own eyes. */
 export const CAMERA_VIEWS = [
@@ -238,6 +238,31 @@ export function weakTo(element) {
 /* The horde an attuned arena sends against you. */
 export function countersOf(element) { return weakTo(element); }
 
+/* A wave carries one dominant element, with a smaller splash of others. This
+   is the readable version of the wheel: the horde's colour and sigil tell you
+   what its attacks will do before the first hit lands. */
+function pickEventElement(wave, difficulty, theme, bossElement = null) {
+  if (bossElement) return bossElement;
+  const rank = difficulty?.rank || 0;
+  const counters = theme ? countersOf(theme) : [];
+  if (counters.length && Math.random() < 0.45) {
+    return counters[(wave + rank) % counters.length];
+  }
+  return ELEMENT_WHEEL[(Math.max(1, wave) - 1 + rank) % ELEMENT_WHEEL.length];
+}
+
+function pickVariantElement(eventElement, index = 0) {
+  if (!eventElement) return null;
+  const i = ELEMENT_WHEEL.indexOf(eventElement);
+  if (i < 0) return eventElement;
+  // Most of the event carries its named element. Every fifth body carries the
+  // next wheel step, and every ninth carries the opposite edge, so a wave
+  // always has a readable elemental mix instead of one flat colour.
+  if (index % 9 === 8) return ELEMENT_WHEEL[(i + 4) % ELEMENT_WHEEL.length];
+  if (index % 5 === 4) return ELEMENT_WHEEL[(i + 2) % ELEMENT_WHEEL.length];
+  return eventElement;
+}
+
 /* ------------------------------------------------------------
    ARMAMENTS — every element carries three weapons. The shape of
    the shot changes; the element decides what it is good against.
@@ -341,48 +366,48 @@ export const ENEMIES = {
     xp: 12, color: 0xff6a3a, glow: 0xffd08a, css: '#ff9a5a', shape: 'brute', element: 'ember', miniBoss: true,
     desc: 'A herald of the ember court. Hits like a brute, and carries a brute’s health.',
     role: 'Herald', threat: 4,
-    pattern: 'Closes like a brute, then answers with a three-shot fan.',
-    tell: 'Its crowned aura brightens as the fan winds up.',
+    pattern: 'Cinder Eruption: a telegraphed ground burst, then a three-shot fan.',
+    tell: 'Its crowned aura brightens and the floor reddens before the burst.',
   },
   mini_shade: {
     key: 'mini_shade', name: 'Glass Revenant', hp: 165, speed: 4.3, damage: 14, radius: 0.95,
     xp: 11, color: 0x6f8cff, glow: 0xcbd6ff, css: '#93a8ff', shape: 'spitter', element: 'umbra', miniBoss: true,
     desc: 'A revenant of the long night. Keeps its distance and spits glass.',
     role: 'Revenant', threat: 4,
-    pattern: 'Hovers at range and spits glass while you try to close.',
-    tell: 'Glass-blue shards orbit the crown before it fires.',
+    pattern: 'Nightfall: vanishes for two seconds, then reappears beside the guardian with a glass slash.',
+    tell: 'The crown dims out of sight; the glass shards fall still.',
   },
   mini_tide: {
     key: 'mini_tide', name: 'Brine Custodian', hp: 235, speed: 3.0, damage: 15, radius: 1.12,
     xp: 13, color: 0x2f8fe0, glow: 0x9fe8ff, css: '#4fb9ff', shape: 'brute', element: 'tide', miniBoss: true,
     desc: 'A keeper of the deep, armoured in salt. Slow, patient, and very hard to shift.',
     role: 'Custodian', threat: 4,
-    pattern: 'A slow armoured advance that refuses to be shifted.',
-    tell: 'Salt plates catch the light as its tide-glow builds.',
+    pattern: 'Tidal Mend: channels a heal and pushes the guardian back, then resumes the armoured advance.',
+    tell: 'Salt plates glow blue and the tide ring draws inward before the mend.',
   },
   mini_gale: {
     key: 'mini_gale', name: 'Squall Matron', hp: 175, speed: 5.2, damage: 12, radius: 0.9,
     xp: 12, color: 0x59e8ff, glow: 0xd8fbff, css: '#67ecff', shape: 'wisp', flying: true, element: 'gale', miniBoss: true,
     desc: 'A storm given a body. Circles the arena, daring you to lead your shots.',
     role: 'Matron', threat: 4,
-    pattern: 'Circles fast and makes you lead every shot.',
-    tell: 'A high hover and a trailing squall mark the turn.',
+    pattern: 'Squall Sprint: a telegraphed line dash into a five-shot fan.',
+    tell: 'A high hover, a pulled-back trail, then the sprint line.',
   },
   mini_lumen: {
     key: 'mini_lumen', name: 'Dawn Inquisitor', hp: 195, speed: 3.4, damage: 16, radius: 0.9,
     xp: 13, color: 0xffd166, glow: 0xfff0b0, css: '#ffe9a8', shape: 'spitter', ranged: true, element: 'lumen', miniBoss: true,
     desc: 'It judges from a distance and sentences in gouts of daylight.',
     role: 'Inquisitor', threat: 4,
-    pattern: 'Judges from outside the scrum and fires through the gaps.',
-    tell: 'The lens flare comes before the sentence.',
+    pattern: 'Solar Judgment: marks a spot, then drops a beam and a three-shot fan.',
+    tell: 'The lens flare marks the ground before the sentence.',
   },
   mini_stone: {
     key: 'mini_stone', name: 'Granite Sentinel', hp: 270, speed: 2.4, damage: 21, radius: 1.2,
     xp: 14, color: 0x8a6a45, glow: 0xffd39a, css: '#d49a55', shape: 'brute', element: 'stone', miniBoss: true,
     desc: 'A standing stone that learned to walk. Every plate is a door that does not open.',
     role: 'Sentinel', threat: 4,
-    pattern: 'Advances without hurry and hits like a closing door.',
-    tell: 'Plate seams glow before each swing.',
+    pattern: 'Stone Slam: a telegraphed ground bash that knocks the guardian away.',
+    tell: 'Plate seams glow and the ground ring tightens before the slam.',
   },
   boss: {
     key: 'boss', name: 'Rift Warden', hp: 560, speed: 3.0, damage: 22, radius: 1.9,
@@ -395,13 +420,28 @@ export const ENEMIES = {
 export const MINI_BOSS_KEYS = ['mini_warden', 'mini_shade', 'mini_tide', 'mini_gale', 'mini_lumen', 'mini_stone'];
 
 export const BOSSES = [
-  { name: 'Rift Warden', color: 0xb44dff, glow: 0xff8af0, css: '#c879ff', title: 'The First Wound', element: 'umbra', role: 'Warden', threat: 5, pattern: 'Riftfire volleys, a telegraphed charge, and wisps called out of the dark.', tell: 'Violet gate-light gathers before it charges.' },
-  { name: 'Ashen Colossus', color: 0xff5a2a, glow: 0xffc06a, css: '#ff8a4a', title: 'The Grief of Mountains', element: 'ember', role: 'Warden', threat: 5, pattern: 'Ember volleys and a ground-shaking charge, with cinder wisps in its wake.', tell: 'The cracks in its chest open before the volley.' },
-  { name: 'Void Herald', color: 0x6c7bff, glow: 0xc9d2ff, css: '#8f9bff', title: 'The Quiet Between Stars', element: 'umbra', role: 'Warden', threat: 5, pattern: 'Wide void volleys and a charge that punishes held ground.', tell: 'The arena dims at the edges before it moves.' },
-  { name: 'Helios Unbound', color: 0xffd166, glow: 0xfff3c4, css: '#ffdc85', title: 'The Sun That Remembers', element: 'lumen', role: 'Warden', threat: 5, pattern: 'Relentless solar volleys and summons; the last champion of the cycle.', tell: 'A white-gold flare; the floor brightens before the charge.' },
-  { name: 'Cinder Tyrant', color: 0xff7a2a, glow: 0xffd08a, css: '#ffb066', title: 'The Last Ember King', element: 'ember', role: 'Warden', threat: 5, pattern: 'Ember pressure, summons and a charge that scatters defenses.', tell: 'Its crown burns brighter before each order.' },
-  { name: 'Stormglass Seraph', color: 0x7de8ff, glow: 0xd8fbff, css: '#a9e9ff', title: 'The Sky That Broke', element: 'gale', role: 'Warden', threat: 5, pattern: 'Fast gale volleys and a long, straight charge line.', tell: 'Glass wings snap open before the fan.' },
+  { name: 'Rift Warden', color: 0xb44dff, glow: 0xff8af0, css: '#c879ff', title: 'The First Wound', element: 'umbra', role: 'Warden', threat: 5, pattern: 'Nightfall: vanishes for two seconds, then reappears with a rift slash. Riftfire volleys and a telegraphed charge.', tell: 'Violet gate-light gathers, then snuffs out before the reappearance.' },
+  { name: 'Ashen Colossus', color: 0xff5a2a, glow: 0xffc06a, css: '#ff8a4a', title: 'The Grief of Mountains', element: 'ember', role: 'Warden', threat: 5, pattern: 'Cinder Eruption: a wide telegraphed ground burst. Ember volleys and a ground-shaking charge.', tell: 'The cracks in its chest open and the floor turns red before the burst.' },
+  { name: 'Void Herald', color: 0x6c7bff, glow: 0xc9d2ff, css: '#8f9bff', title: 'The Quiet Between Stars', element: 'umbra', role: 'Warden', threat: 5, pattern: 'Void Pull: drags the guardian into the dark before a wide volley. Charges held ground.', tell: 'The arena dims at the edges and the centre pulls inward.' },
+  { name: 'Helios Unbound', color: 0xffd166, glow: 0xfff3c4, css: '#ffdc85', title: 'The Sun That Remembers', element: 'lumen', role: 'Warden', threat: 5, pattern: 'Solar Judgment: marks a spot, then brings down a beam. Relentless solar volleys and summons.', tell: 'A white-gold flare marks the ground before the sentence.' },
+  { name: 'Cinder Tyrant', color: 0xff7a2a, glow: 0xffd08a, css: '#ffb066', title: 'The Last Ember King', element: 'ember', role: 'Warden', threat: 5, pattern: 'Cinder Eruption and ember pressure; its summons keep the arena moving.', tell: 'Its crown burns brighter and the floor cracks before the burst.' },
+  { name: 'Stormglass Seraph', color: 0x7de8ff, glow: 0xd8fbff, css: '#a9e9ff', title: 'The Sky That Broke', element: 'gale', role: 'Warden', threat: 5, pattern: 'Squall Sprint: a telegraphed line dash into a five-shot fan. Fast gale volleys.', tell: 'Glass wings snap open and the air pulls back before the sprint.' },
 ];
+
+/* Each element gets one readable boss/crowned trick. The horde still shoots;
+   these are the moments that make a warden feel like an event, not a turret. */
+export const ELEMENT_MECHANICS = {
+  ember: 'eruption',
+  tide: 'mend',
+  gale: 'sprint',
+  stone: 'slam',
+  lumen: 'judgment',
+  umbra: 'vanish',
+};
+
+/* Signature mechanics for the six named wardens. They stay inside each
+   warden's element, but no two wardens play the same trick. */
+export const BOSS_MECHANICS = ['vanish', 'eruption', 'pull', 'judgment', 'eruption', 'sprint'];
 
 /* ------------------------------------------------------------
    BOONS — drafted on level up. Stack limits keep builds sharp.
@@ -595,16 +635,19 @@ export function buildWave(wave, pacts = {}, difficulty = null, bonus = null, the
   const dmgMult = (1 + 0.11 * (wave - 1)) * (1 + 0.10 * p.fury) * (d.enemyDamage || 1);
   const speedMult = Math.min(2.1, (1 + 0.015 * (wave - 1)) * (1 + 0.05 * p.haste) * (d.enemySpeed || 1) * (b.speed || 1));
   const entries = [];
+  let eventElement = null;
 
   if (isBoss) {
     // Deeper tiers meet the newer wardens: the rotation starts further along the list.
     const wardenIndex = (Math.floor(wave / 5) - 1 + (d.rank || 0)) % BOSSES.length;
-    entries.push({ type: 'boss', delay: 1.4, bossIndex: wardenIndex });
+    eventElement = BOSSES[wardenIndex].element || null;
+    entries.push({     type: 'boss', delay: 1.4, bossIndex: wardenIndex, element: eventElement });
     const adds = 3 + Math.floor(wave / 5) * 2 + density * 2;
     for (let i = 0; i < adds; i++) {
-      entries.push({ type: i % 3 === 0 ? 'wisp' : 'crawler', delay: 4 + i * 0.55 });
+      entries.push({ type: i % 3 === 0 ? 'wisp' : 'crawler', delay: 4 + i * 0.55, element: pickVariantElement(eventElement, i) });
     }
   } else {
+    eventElement = pickEventElement(wave, d, theme);
     const total = Math.min(56, Math.round((6 + wave * 1.8) * (1 + density * 0.16) * (d.spawn || 1) * (b.spawn || 1)));
     const pool = [{ key: 'crawler', w: 100 }];
     if (wave >= 2) pool.push({ key: 'wisp', w: Math.min(60, 20 + wave * 4) });
@@ -629,6 +672,7 @@ export function buildWave(wave, pacts = {}, difficulty = null, bonus = null, the
       entries.push({
         type: biased.length && Math.random() < 0.45 ? weightedPick(biased) : weightedPick(pool),
         delay: (i / total) * duration + Math.random() * 0.4,
+        element: pickVariantElement(eventElement, i),
         elite: wave >= 6 && Math.random() < Math.min(0.3, 0.03 + wave * 0.012 + density * 0.012 + (b.eliteBonus || 0)),
       });
     }
@@ -636,6 +680,7 @@ export function buildWave(wave, pacts = {}, difficulty = null, bonus = null, the
   return {
     wave, isBoss, hpMult, dmgMult, speedMult, entries, pacts: p,
     bossIndex: Math.floor(wave / 5) - 1,
+    eventElement,
     xpScale: (1 / (1 + density * 0.07)) * (b.xp || 1),
     reward: pactReward(p), difficulty: d.key, bonus: b.id ? b : null,
   };
@@ -656,6 +701,10 @@ export function buildLaneWave(wave, pacts = {}, openLanes = [0, 1, 2], difficult
   const perLane = Math.min(14, Math.round((3 + Math.floor(wave * 0.7) + p.density) * (d.spawn || 1) * (b.spawn || 1)));
   const duration = Math.min(20, 5 + perLane * 0.95);
   const entries = [];
+  const bossIndex = Math.floor(wave / 5) - 1;
+  const eventElement = isBoss
+    ? (BOSSES[bossIndex]?.element || null)
+    : pickEventElement(wave, d, theme);
   // Attuned arenas bias their lanes toward the countering elements.
   const counterTypes = (theme ? countersOf(theme) : []).filter(k => ENEMIES[k] && (k === 'crawler'
     || (k === 'wisp' && wave >= 2) || (k === 'spitter' && wave >= 3) || (k === 'brute' && wave >= 4)));
@@ -671,6 +720,7 @@ export function buildLaneWave(wave, pacts = {}, openLanes = [0, 1, 2], difficult
       entries.push({
         type, lane,
         delay: 1.2 + (i / Math.max(1, perLane)) * duration + Math.random() * 0.5,
+        element: pickVariantElement(eventElement, i),
         elite: wave >= 6 && Math.random() < Math.min(0.26, 0.02 + wave * 0.009 + (b.eliteBonus || 0)),
       });
     }
@@ -686,13 +736,14 @@ export function buildLaneWave(wave, pacts = {}, openLanes = [0, 1, 2], difficult
   if (isBoss) {
     entries.push({
       type: 'boss', lane: lanes[Math.floor(Math.random() * lanes.length)],
-      delay: 2.2, bossIndex: Math.floor(wave / 5) - 1,
+      delay: 2.2, bossIndex, element: eventElement,
     });
   }
 
   return {
     wave, isBoss, hpMult, dmgMult, speedMult, entries, pacts: p,
-    bossIndex: Math.floor(wave / 5) - 1,
+    bossIndex,
+    eventElement,
     xpScale: (1 / (1 + p.density * 0.07)) * (b.xp || 1),
     reward: pactReward(p), difficulty: d.key, bonus: b.id ? b : null,
   };
@@ -709,6 +760,7 @@ export function buildHuntWave(wave, pacts = {}, difficulty = null, bonus = null)
   const hpMult = (1 + 0.2 * (wave - 1)) * HUNT.bossHpMult * (1 + 0.12 * p.vitality) * (d.enemyHp || 1) * (b.hp || 1);
   const dmgMult = (1 + 0.1 * (wave - 1)) * (1 + 0.1 * p.fury) * (d.enemyDamage || 1);
   const speedMult = Math.min(1.8, (1 + 0.03 * (wave - 1) + p.haste * 0.05) * (d.enemySpeed || 1) * (b.speed || 1));
+  const eventElement = BOSSES[bossIndex]?.element || null;
   const entries = [{ type: 'boss', delay: 1.6, bossIndex }];
   // The warden's court: a crowned sub-boss walks with every hunt after the first.
   if (wave >= 2) {
@@ -720,11 +772,12 @@ export function buildHuntWave(wave, pacts = {}, difficulty = null, bonus = null)
     entries.push({
       type: i % 4 === 0 ? 'brute' : i % 3 === 0 ? 'spitter' : i % 2 === 0 ? 'wisp' : 'crawler',
       delay: 3 + i * 0.5,
+      element: pickVariantElement(eventElement, i),
       elite: wave >= 2 && i % 5 === 0,
     });
   }
   return {
-    wave, isBoss: true, hpMult, dmgMult, speedMult, entries, pacts: p, bossIndex,
+    wave, isBoss: true, hpMult, dmgMult, speedMult, entries, pacts: p, bossIndex, eventElement,
     xpScale: (b.xp || 1), reward: pactReward(p), difficulty: d.key, bonus: b.id ? b : null,
   };
 }
@@ -743,6 +796,7 @@ export function buildDuelWave(wave, pacts = {}, difficulty = null, bonus = null)
   return {
     wave, isBoss: true, hpMult, dmgMult, speedMult,
     entries: [{ type: 'boss', delay: 1.5, bossIndex }], pacts: p, bossIndex,
+    eventElement: BOSSES[bossIndex]?.element || null,
     xpScale: (b.xp || 1), reward: pactReward(p), difficulty: d.key, bonus: b.id ? b : null,
   };
 }
@@ -901,12 +955,12 @@ export const MODES = {
   siege: {
     key: 'siege', name: 'Sunforge Siege', kicker: 'The objective',
     tagline: 'Hold the light. Build the wall.',
-    desc: 'The Sunforge core is failing and the horde is coming for it. Spend shards on towers, stand in the breach, and hold for twenty waves.',
+    desc: 'The Sunforge core is failing and the horde is coming for it. Spend shards on towers, stand in the breach, and hold for twenty waves. A wounded core answers with its own rebuke.',
     goal: 'Survive 20 waves',
     steps: [
       'Spend sun shards at the Forge to raise towers on the pedestals around the core.',
-      'Stand in an enemy\'s path to body-block it before it reaches the Sunforge, and hold E nearby to mend the core or a tower.',
-      'Survive all twenty waves. Every fifth wave brings a warden — and every point of damage to the Sunforge or its defenses cuts the final sunmark payout.',
+      'Stand in an enemy\'s path to body-block it before it reaches the Sunforge, and hold E nearby to mend the core or a tower. Below half integrity, the Sunforge periodically rebukes the breach.',
+      'Survive all twenty waves. Waves 5, 10 and 15 open a Sunforge Rite — a free boon draft — and every fifth wave brings a warden.',
     ],
     win: 'Survive 20 waves',
     fail: 'The Sunforge core is destroyed',
@@ -915,12 +969,12 @@ export const MODES = {
   lane: {
     key: 'lane', name: 'Sunfall Lanes', kicker: 'The push',
     tagline: 'Three lanes. One core. Break them first.',
-    desc: 'Three rift lanes pour into the Sunforge, each ending at a Rift Gate. Towers hold the core — but only your own fire can break a gate.',
+    desc: 'Three rift lanes pour into the Sunforge, each ending at a Rift Gate. Towers hold the core — but only your own fire can break a gate. Every fallen gate turns the next into crossfire.',
     goal: 'Shatter 3 Rift Gates',
     steps: [
       'Raise towers on the lane pads to keep the core alive, and hold E nearby to repair them or the Sunforge.',
       'Walk out along a lane and shoot its Rift Gate. Towers cannot damage gates — you can, with shots, surges and ultimates.',
-      'Break all three. Core damage and lost defenses cut the final sunmark payout, so defending the lane is part of the reward.',
+      'Each broken gate adds crossfire damage to the remaining gates, clears its lane with a backlash and opens a boon draft. Break all three to win.',
     ],
     win: 'All three Rift Gates broken',
     fail: 'The Sunforge core is destroyed',
@@ -943,12 +997,12 @@ export const MODES = {
   hunt: {
     key: 'hunt', name: 'Warden Hunt', kicker: 'The gauntlet',
     tagline: 'Four wardens. No walls. No mercy.',
-    desc: 'No core and no defenses. Four wardens arrive back to back, each with an escort. Kill them all before the arena closes.',
+    desc: 'No core and no defenses. Four wardens arrive back to back, each with a court. Clear the court first and the crown is exposed; every trophy makes the next hunt sharper.',
     goal: 'Fell 4 wardens',
     steps: [
-      'Every wave is a warden plus its escort — there are no trash waves between them.',
-      'Wardens hit far harder than the horde. Keep moving and use the whole arena.',
-      'Fell all four to win the hunt.',
+      'Every wave is a warden plus its court — there are no trash waves between them.',
+      'Kill the court before the warden: the last escort falling exposes the crown to +18% damage.',
+      'Each warden felled grants a trophy draft and permanent Hunt Momentum (+12% damage, +8% speed). Fell all four to win.',
     ],
     win: 'All four wardens felled',
     fail: 'You fall',
@@ -957,12 +1011,12 @@ export const MODES = {
   escort: {
     key: 'escort', name: 'Solar Caravan', kicker: 'The escort',
     tagline: 'Walk the light home.',
-    desc: 'A reliquary of dawn must be walked the length of the pilgrim road to the rift. Melee raiders commit to it while spitters and wardens hunt you. It only moves while you are beside it and the road ahead is clear.',
+    desc: 'A reliquary of dawn must be walked the length of the pilgrim road to the rift. Melee raiders commit to it while spitters and wardens hunt you. The road is contested, not a hard stop — and the last stretch is a rift siege.',
     goal: 'Walk the reliquary home',
     steps: [
-      'Stand within 6.5m of the reliquary to push it forward. Leave it and it stops, then starts to dim.',
-      'Melee raiders ignore you and attack the reliquary directly. Spitters and wardens still hunt you. Kill the raiders before they break it; standing on the reliquary does not pull them off.',
-      'It halts at five waystones until the ground around them is clear. Each one mends the reliquary and pays shards. Hold E beside it to mend it, but repairing leaves both weapons silent. Heavy damage cuts the final sunmark payout; at zero integrity the caravan is destroyed.',
+      'Stand within 6.5m of the reliquary to push it forward. A contested road slows it; leaving it entirely stops it and starts to dim. Attacking a raider peels it onto you for a moment.',
+      'Melee raiders attack the reliquary directly and telegraph their strikes. Spitters and wardens still hunt you. Interrupt the wind-up or mend the reliquary before the pack breaks it.',
+      'It halts at six waystones until the ground is clear; each stone wakes an ambush and opens a waystone bargain (a free boon draft). The eastern rift ends in a warden siege — break the warden to bring the light home.',
     ],
     win: 'The reliquary reaches the eastern rift',
     fail: 'Reliquary integrity reaches zero',
@@ -971,11 +1025,11 @@ export const MODES = {
   ritual: {
     key: 'ritual', name: 'Ember Ritual', kicker: 'The ritual',
     tagline: 'Hold the circles. Feed the flame.',
-    desc: 'Three ember circles ring the arena. Stand in one to charge it while the horde tries to take the others. Seal all three before the ritual gutters out.',
+    desc: 'Three ember circles ring the arena. Stand in one to charge it while the horde tries to take the others. A sealed circle becomes a solar ward that burns whatever walks over it.',
     goal: 'Seal 3 ember circles',
     steps: [
       'Stand inside a circle to charge it. Enemies inside stop the charge and drain it.',
-      'Sealed circles stay sealed, but the horde still walks over them.',
+      'Sealed circles stay sealed and pulse solar damage around them. The first two seals also open a boon draft.',
       'Seal all three to complete the ritual.',
     ],
     win: 'All three circles sealed',
@@ -999,12 +1053,12 @@ export const MODES = {
   duel: {
     key: 'duel', name: 'Warden Duel', kicker: 'The champion',
     tagline: 'One arena. Four champions.',
-    desc: 'Four crowned champions come alone, one after another — the last of them is Helios Unbound. No escorts, no walls, no core — just the ring and your sigil.',
+    desc: 'Four crowned champions come alone, one after another — the last of them is Helios Unbound. No escorts, no walls, no core — just the ring, your sigil, and the read.',
     goal: 'Fell 4 champions',
     steps: [
       'Each wave is a single champion, far stronger than a normal warden.',
-      'No escorts and no adds — learn the pattern and stay mobile.',
-      'Fell all four to take the ring. Each champion is tougher than the last.',
+      'Dash through a champion\'s wind-up or charge for a Duelist\'s Read: +18 ultimate charge.',
+      'Every champion felled grants a trophy boon draft and permanent Champion Tempo (+15% damage). Fell all four to take the ring.',
     ],
     win: 'All four champions felled',
     fail: 'You fall',
@@ -1294,6 +1348,13 @@ export const SIEGE = {
   coreZapRadius: 9,
   coreZapInterval: 2.4,
   coreZapDamage: 22,
+  // A wounded Sunforge answers the breach with a wider rebuke, so a losing
+  // core is not a silent countdown.
+  rebukePct: 0.5,
+  rebukeInterval: 9,
+  rebukeRadius: 8.5,
+  rebukeDamage: 34,
+  checkpointWaves: [5, 10, 15],
 };
 
 export const LANE = {
@@ -1307,6 +1368,10 @@ export const LANE = {
   gateShardReward: 2,
   gateClearHeal: 0.025,
   siphon: 0.06,
+  // Every broken gate exposes the next: a reason to keep pushing.
+  crossfire: 0.18,
+  gateBacklash: 42,
+  gateBacklashRadius: 7.5,
   lanes: [
     { key: 'top', name: 'Top Lane', short: 'TOP', angle: Math.PI * 1.17, css: '#ff9a5a' },
     { key: 'mid', name: 'Mid Lane', short: 'MID', angle: Math.PI * 0.5, css: '#ffd166' },
@@ -1318,6 +1383,10 @@ export const HUNT = {
   goalWave: 4,
   bossHpMult: 1.45,
   interTimer: 4.2,
+  // The hunt rewards clearing the court before the crown.
+  exposedBonus: 0.18,
+  momentumDamage: 0.12,
+  momentumSpeed: 0.08,
 };
 
 export const ESCORT = {
@@ -1332,8 +1401,9 @@ export const ESCORT = {
   repairRadius: 5.8,
   // Escort enemies are meant to survive long enough to reach the reliquary,
   // and their direct hits must hurt enough that ignoring them loses the run.
-  enemyHpMult: 1.6,
-  attackDamageMult: 1.25,
+  enemyHpMult: 1.75,
+  attackDamageMult: 1.65,
+  breakerDamageMult: 2.2,
   decay: 7,
   /* Integrity is the pay ledger. Above the safe line the run pays in full;
      below it every crack takes marks off the final purse. */
@@ -1341,11 +1411,24 @@ export const ESCORT = {
   revenueSafe: 0.9,
   interTimer: 6.5,
   // Waystones: fractions along the road where the reliquary halts until the ground is clear.
-  waystones: [0.14, 0.31, 0.5, 0.7, 0.87],
+  waystones: [0.12, 0.27, 0.43, 0.59, 0.74, 0.88],
   waystoneHoldRadius: 7.5,
   waystoneClearTime: 1.0,
-  waystoneHeal: 0.08,
+  waystoneHeal: 0.03,
   waystoneShards: 2,
+  // The road is contested, not a hard stop: raiders slow the reliquary.
+  slowPerFoe: 0.12,
+  minMoveFactor: 0.28,
+  // Attacking a raider can peel it off the reliquary for a moment. Breakers
+  // ignore the peel; they are the pack that makes the stone genuinely bleed.
+  provokeTime: 2.2,
+  provokeChance: 0.45,
+  // A slice of the fast raider wing hunts the guardian instead of the stone.
+  harrierChance: 0.32,
+  // The last stretch opens a rift siege instead of ending on a walk-in.
+  finaleHpMult: 0.95,
+  finaleAdds: 2,
+  finaleBossIndex: 5,
   // Dawn pulse: the reliquary answers the horde while you walk beside it.
   pulseChargeTime: 15,
   pulseRadius: 9,
@@ -1361,6 +1444,10 @@ export const RITUAL = {
   decay: 0.045,
   contestDecay: 0.24,
   interTimer: 6,
+  // A sealed circle is not just a checkbox: it becomes a solar ward.
+  sealPulseInterval: 2.4,
+  sealPulseDamage: 20,
+  sealPulseRadius: 5.2,
 };
 
 export const BLITZ = {
@@ -1376,6 +1463,9 @@ export const DUEL = {
   goalWave: 4,
   bossHpMult: 1.95,
   interTimer: 4.6,
+  // Each champion leaves a measure of its strength in the ring.
+  momentumDamage: 0.15,
+  momentumUlt: 12,
 };
 
 export const DEFENSES = {

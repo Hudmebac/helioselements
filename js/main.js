@@ -8,7 +8,7 @@ import { AudioSystem } from './audio.js';
 import { Game } from './game.js';
 import { UI } from './ui.js';
 import { TouchControls } from './touch.js';
-import { loadSave } from './store.js';
+import { loadSave, SANDBOX } from './store.js';
 
 const boot = document.getElementById('boot');
 
@@ -34,6 +34,10 @@ try {
 
   game.ui = ui;
   game.applySettings(save.settings);
+  if (SANDBOX) {
+    save.sandbox = true;
+    setTimeout(() => ui.toast('SANDBOX RUN · SAVE WRITES DISABLED', '#8fe6ff'), 900);
+  }
   const touch = new TouchControls(game);
   game.touch = touch;
   game.init();

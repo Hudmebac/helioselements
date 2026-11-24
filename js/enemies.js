@@ -3,7 +3,9 @@
    Periodic Horde, behaviours, bosses and the horde manager.
    ============================================================ */
 
-import { ENEMIES, BOSSES, ELEMENTS, ESCORT } from './data.js';
+import {
+  ENEMIES, BOSSES, ELEMENTS, ESCORT, ELEMENT_MECHANICS, BOSS_MECHANICS,
+} from './data.js';
 import { arenaClamp, arenaRadiusAt, glowTexture, shadowTexture, sigilTexture } from './engine.js';
 
 const shadowMat = new THREE.MeshBasicMaterial({
@@ -12,11 +14,47 @@ const shadowMat = new THREE.MeshBasicMaterial({
 shadowMat.userData.shared = true;
 const shadowGeo = new THREE.CircleGeometry(1, 20);
 
+// A shared dark armour material gives every silhouette a readable shadowed
+// side without adding one material per creature.
+const armorMat = new THREE.MeshStandardMaterial({
+  color: 0x29232f, roughness: 0.8, metalness: 0.22, flatShading: true,
+});
+armorMat.userData.shared = true;
+
 const geoCache = new Map();
 function geo(key, make) {
   if (!geoCache.has(key)) geoCache.set(key, make());
   return geoCache.get(key);
 }
+
+// Small repeated parts (legs, fins, crown spikes) are batch-drawn as one
+// InstancedMesh per creature instead of one draw call per part.
+function addInstances(group, key, make, material, placements) {
+  const mesh = new THREE.InstancedMesh(geo(key, make), material, placements.length);
+  const dummy = new THREE.Object3D();
+  placements.forEach((p, i) => {
+    dummy.position.set(p.x, p.y, p.z);
+    if (p.rot) dummy.rotation.set(p.rot[0], p.rot[1], p.rot[2]);
+    else dummy.rotation.set(0, 0, 0);
+    if (p.scale) dummy.scale.set(p.scale[0], p.scale[1], p.scale[2]);
+    else dummy.scale.set(1, 1, 1);
+    dummy.updateMatrix();
+    mesh.setMatrixAt(i, dummy.matrix);
+  });
+  mesh.instanceMatrix.needsUpdate = true;
+  group.add(mesh);
+  return mesh;
+}
+
+const MECHANIC_NAMES = {
+  eruption: 'CINDER ERUPTION',
+  mend: 'TIDAL MEND',
+  sprint: 'SQUALL SPRINT',
+  slam: 'STONE SLAM',
+  judgment: 'SOLAR JUDGMENT',
+  vanish: 'NIGHTFALL',
+  pull: 'VOID PULL',
+};
 
 export class EnemyManager {
   constructor(scene, fx, audio) {
@@ -59,7 +97,7 @@ export class EnemyManager {
   nearest(pos, range, filter = null) {
     let best = null, bestD = range * range;
     for (const e of this.list) {
-      if (e.dead) continue;
+      if (e.dead || e.invisible) continue;
       if (filter && !filter(e)) continue;
       const dx = e.pos.x - pos.x, dz = e.pos.z - pos.z;
       const d = dx * dx + dz * dz;
@@ -99,26 +137,54 @@ export class Enemy {
     this.damage = type.damage * dmgMult * (this.elite ? 1.35 : 1);
     this.radius = type.radius * (this.elite ? 1.2 : 1);
     this.xp = type.xp * (this.elite ? 2.5 : 1);
-    this.color = this.isBoss ? (BOSSES[this.bossIndex % BOSSES.length].color) : type.color;
-    this.glow = this.isBoss ? (BOSSES[this.bossIndex % BOSSES.length].glow) : type.glow;
-    this.name = this.isBoss ? BOSSES[this.bossIndex % BOSSES.length].name : (this.elite ? 'Elite ' + type.name : type.name);
-    this.element = this.isBoss
-      ? (BOSSES[this.bossIndex % BOSSES.length].element || null)
-      : (type.element || null);
+    if (opts.breaker) {
+      this.maxHp = Math.round(this.maxHp * 2.1);
+      this.hp = this.maxHp;
+      this.speed *= 0.82;
+      this.damage *= 1.25;
+      this.radius *= 1.12;
+      this.xp *= 2;
+    }
+    const bossMeta = this.isBoss ? BOSSES[this.bossIndex % BOSSES.length] : null;
+    const baseElement = bossMeta ? (bossMeta.element || null) : (type.element || null);
+    this.element = this.isBoss ? baseElement : (opts.element || baseElement || null);
+    this.elementMeta = this.element ? ELEMENTS[this.element] : null;
+    this.isElementVariant = !this.isBoss && !!this.element && this.element !== baseElement;
+    this.color = this.isElementVariant
+      ? (this.elementMeta?.color || type.color)
+      : bossMeta ? bossMeta.color : type.color;
+    this.glow = this.isElementVariant
+      ? (this.elementMeta?.glow || type.glow)
+      : bossMeta ? bossMeta.glow : type.glow;
+    const baseName = bossMeta ? bossMeta.name : type.name;
+    this.name = this.isBoss
+      ? baseName
+      : this.isElementVariant
+        ? (this.elementMeta?.name || this.element) + ' ' + (this.elite ? 'Elite ' : '') + baseName
+        : (this.elite ? 'Elite ' + baseName : baseName);
     this.flying = !!type.flying;
     this.miniBoss = !!type.miniBoss;
+    this.harrier = !!opts.harrier;
+    this.breaker = !!opts.breaker;
     this.laneAngle = opts.laneAngle ?? null;
     this.dead = false;
     this._corpse = false;
 
-    const a = opts.angle ?? Math.random() * Math.PI * 2;
-    const r = opts.radius ?? (arenaRadiusAt(a) - 3);
-    this.pos = new THREE.Vector3(Math.cos(a) * r, 0, Math.sin(a) * r);
+    if (opts.pos) {
+      this.pos = new THREE.Vector3(opts.pos.x, 0, opts.pos.z);
+    } else {
+      const a = opts.angle ?? Math.random() * Math.PI * 2;
+      const r = opts.radius ?? (arenaRadiusAt(a) - 3);
+      this.pos = new THREE.Vector3(Math.cos(a) * r, 0, Math.sin(a) * r);
+    }
 
     this.burn = { dps: 0, until: 0 };
     this.slow = { amount: 0, until: 0 };
     this.knock = new THREE.Vector3();
     this.attackCd = 0.4 + Math.random() * 0.5;
+    this.caravanWind = 0;
+    this.caravanWindTarget = null;
+    this.provokedUntil = 0;
     this.vx = 0;
     this.vz = 0;
     this.flashT = 0;
@@ -138,6 +204,21 @@ export class Enemy {
     this.enraged = false;
     this.ringSpd = 0.6;
 
+    // Element mechanics: one readable set piece for every boss and crowned
+    // enemy. Melee and ranged pressure continue around it, but the mechanic is
+    // the moment the player has to answer.
+    this.mechanicKind = null;
+    this.mechanicT = this.isBoss ? 3.4 + Math.random() * 1.8 : this.miniBoss ? 5.2 + Math.random() * 2 : 999;
+    this.mechanicWind = 0;
+    this.mechanicPos = new THREE.Vector3();
+    this.mechanicDir = new THREE.Vector3();
+    this.sprintT = 0;
+    this.sprintDir = new THREE.Vector3();
+    this.invisibleT = 0;
+    this.invisible = false;
+    this.mechanicCount = 0;
+    this.mechanicWarned = false;
+
     this._buildMesh();
     this.group.position.set(this.pos.x, this.baseY, this.pos.z);
     this.group.scale.setScalar(0.01);
@@ -156,12 +237,15 @@ export class Enemy {
     shadow.position.y = -this.baseY + 0.055;
     group.add(shadow);
 
+    // Keep the element colour in the body, but pull the mid-tone down so the
+    // key light and emissive rim shape the silhouette instead of bleaching it.
+    const bodyColor = new THREE.Color(this.color).multiplyScalar(this.isBoss ? 0.34 : this.miniBoss ? 0.28 : 0.22);
+    this.baseEmissive = this.isBoss ? 0.12 : this.miniBoss ? 0.1 : 0.07;
     const bodyMat = new THREE.MeshStandardMaterial({
-      color: this.color, emissive: this.glow, emissiveIntensity: 0.5,
-      roughness: 0.5, metalness: 0.35, flatShading: true,
+      color: bodyColor, emissive: this.glow, emissiveIntensity: this.baseEmissive,
+      roughness: 0.74, metalness: 0.18, flatShading: true,
     });
     this.bodyMat = bodyMat;
-    this.baseEmissive = this.isBoss ? 0.7 : this.miniBoss ? 0.62 : 0.5;
     bodyMat.emissiveIntensity = this.baseEmissive;
 
     const accentMat = new THREE.MeshBasicMaterial({ color: this.glow, toneMapped: false });
@@ -173,26 +257,37 @@ export class Enemy {
       group.add(body);
       this.body = body;
       // A ridge of embers along the back: the crawler reads as cinder, not a blob.
-      for (let i = 0; i < 3; i++) {
-        const spike = new THREE.Mesh(geo('crawlerSpike', () => new THREE.ConeGeometry(0.11, 0.34, 4)), accentMat);
-        spike.position.set(0, 0.4 - i * 0.03, 0.34 - i * 0.3);
-        spike.rotation.x = -0.45;
-        group.add(spike);
-      }
+      addInstances(group, 'crawlerSpike', () => new THREE.ConeGeometry(0.11, 0.34, 4), accentMat,
+        [0, 1, 2].map(i => ({ x: 0, y: 0.4 - i * 0.03, z: 0.34 - i * 0.3, rot: [-0.45, 0, 0] })));
+      const legPlacements = [];
       for (let i = 0; i < 6; i++) {
         const a = (i / 6) * Math.PI * 2;
-        const leg = new THREE.Mesh(geo('leg', () => new THREE.ConeGeometry(0.085, 0.5, 4)), accentMat);
-        leg.position.set(Math.cos(a) * 0.6, -0.28, Math.sin(a) * 0.6);
-        leg.rotation.z = Math.cos(a) * 1.1;
-        leg.rotation.x = Math.sin(a) * 1.1;
-        group.add(leg);
+        legPlacements.push({
+          x: Math.cos(a) * 0.6, y: -0.28, z: Math.sin(a) * 0.6,
+          rot: [Math.sin(a) * 1.1, 0, Math.cos(a) * 1.1],
+        });
       }
+      addInstances(group, 'leg', () => new THREE.ConeGeometry(0.085, 0.5, 4), accentMat, legPlacements);
       const eyeMat = new THREE.MeshBasicMaterial({ color: 0xfff0d0, toneMapped: false });
+      addInstances(group, 'eye', () => new THREE.SphereGeometry(0.09, 8, 8), eyeMat,
+        [{ x: -0.22, y: 0.14, z: 0.5 }, { x: 0.22, y: 0.14, z: 0.5 }]);
+      // Refined silhouette: a low carapace, paired mandibles and a raised tail
+      // turn the crawler from a floating polyhedron into a readable creature.
+      const shell = new THREE.Mesh(geo('crawlerShell', () => new THREE.SphereGeometry(0.62, 14, 8, 0, Math.PI * 2, 0, Math.PI * 0.56)), armorMat);
+      shell.scale.set(1.12, 0.72, 1.18);
+      shell.position.set(0, 0.31, 0.02);
+      group.add(shell);
       for (const s of [-1, 1]) {
-        const eye = new THREE.Mesh(geo('eye', () => new THREE.SphereGeometry(0.09, 8, 8)), eyeMat);
-        eye.position.set(s * 0.22, 0.14, 0.5);
-        group.add(eye);
+        const jaw = new THREE.Mesh(geo('crawlerJaw', () => new THREE.ConeGeometry(0.08, 0.34, 4)), accentMat);
+        jaw.position.set(s * 0.22, -0.08, 0.64);
+        jaw.rotation.x = Math.PI / 2;
+        jaw.rotation.z = s * 0.24;
+        group.add(jaw);
       }
+      const tail = new THREE.Mesh(geo('crawlerTail', () => new THREE.ConeGeometry(0.1, 0.58, 4)), accentMat);
+      tail.position.set(0, 0.08, -0.75);
+      tail.rotation.x = -1.12;
+      group.add(tail);
     } else if (t.shape === 'wisp') {
       const body = new THREE.Mesh(geo('wisp', () => new THREE.OctahedronGeometry(0.55, 0)), bodyMat);
       body.scale.set(0.9, 1.7, 0.9);
@@ -200,12 +295,30 @@ export class Enemy {
       this.body = body;
       const halo = new THREE.Sprite(new THREE.SpriteMaterial({
         map: glowTexture('rgba(255,255,255,.9)', 'rgba(220,200,255,.3)', 'rgba(160,120,255,0)'),
-        color: this.glow, transparent: true, opacity: 0.55,
+        color: this.glow, transparent: true, opacity: 0.18,
         blending: THREE.AdditiveBlending, depthWrite: false, toneMapped: false,
       }));
-      halo.scale.set(2.6, 2.6, 1);
+      halo.scale.set(2.1, 2.1, 1);
       group.add(halo);
       this.halo = halo;
+      // A bright inner core and a tilted shard ring make the wisp read as a
+      // bound spirit rather than a single stretched diamond.
+      const core = new THREE.Mesh(geo('wispCore', () => new THREE.OctahedronGeometry(0.22, 0)), accentMat);
+      core.position.y = 0.03;
+      group.add(core);
+      this.wispCore = core;
+      const shardRing = new THREE.Mesh(geo('wispRing', () => new THREE.TorusGeometry(0.58, 0.035, 6, 28)), accentMat);
+      shardRing.rotation.x = Math.PI / 2.6;
+      group.add(shardRing);
+      this.wispRing = shardRing;
+      for (let i = 0; i < 3; i++) {
+        const a = (i / 3) * Math.PI * 2;
+        const shard = new THREE.Mesh(geo('wispTrail', () => new THREE.ConeGeometry(0.055, 0.4, 4)), accentMat);
+        shard.position.set(Math.cos(a) * 0.48, -0.5 - i * 0.12, Math.sin(a) * 0.48);
+        shard.rotation.x = Math.PI;
+        shard.rotation.z = Math.cos(a) * 0.25;
+        group.add(shard);
+      }
     } else if (t.shape === 'brute') {
       const body = new THREE.Mesh(geo('brute', () => new THREE.DodecahedronGeometry(1.05, 1)), bodyMat);
       body.scale.set(1, 0.92, 0.95);
@@ -221,10 +334,9 @@ export class Enemy {
       const chest = new THREE.Mesh(geo('bruteChest', () => new THREE.SphereGeometry(0.17, 10, 8)), accentMat);
       chest.position.set(0, 0.12, 0.93);
       group.add(chest);
-      const plateMat = new THREE.MeshStandardMaterial({ color: 0x2a2622, roughness: 0.6, metalness: 0.5 });
       for (let i = 0; i < 4; i++) {
         const a = (i / 4) * Math.PI * 2;
-        const plate = new THREE.Mesh(geo('plate', () => new THREE.BoxGeometry(0.5, 0.62, 0.16)), plateMat);
+        const plate = new THREE.Mesh(geo('plate', () => new THREE.BoxGeometry(0.5, 0.62, 0.16)), armorMat);
         plate.position.set(Math.cos(a) * 0.78, 0.2, Math.sin(a) * 0.78);
         plate.rotation.y = -a;
         group.add(plate);
@@ -236,6 +348,28 @@ export class Enemy {
         crack.rotation.x = 0.3 * (i - 1);
         group.add(crack);
       }
+      // Add a head, pauldrons and forearms so the brute has a humanoid mass
+      // and a readable top line against the arena floor.
+      const head = new THREE.Mesh(geo('bruteHead', () => new THREE.DodecahedronGeometry(0.42, 0)), bodyMat);
+      head.position.set(0, 0.9, 0.08);
+      head.scale.set(0.9, 0.8, 0.9);
+      group.add(head);
+      for (const s of [-1, 1]) {
+        const pauldron = new THREE.Mesh(geo('brutePauldron', () => new THREE.DodecahedronGeometry(0.4, 0)), armorMat);
+        pauldron.position.set(s * 0.78, 0.62, 0);
+        pauldron.scale.set(1, 0.7, 0.85);
+        group.add(pauldron);
+        const arm = new THREE.Mesh(geo('bruteArm', () => new THREE.CylinderGeometry(0.18, 0.24, 0.9, 6)), armorMat);
+        arm.position.set(s * 0.88, -0.18, 0.12);
+        arm.rotation.z = s * 0.18;
+        group.add(arm);
+        const fist = new THREE.Mesh(geo('bruteFist', () => new THREE.DodecahedronGeometry(0.25, 0)), accentMat);
+        fist.position.set(s * 0.95, -0.62, 0.18);
+        group.add(fist);
+      }
+      const jaw = new THREE.Mesh(geo('bruteJaw', () => new THREE.BoxGeometry(0.4, 0.16, 0.2)), accentMat);
+      jaw.position.set(0, 0.69, 0.5);
+      group.add(jaw);
     } else if (t.shape === 'spitter') {
       const body = new THREE.Mesh(geo('spitter', () => new THREE.SphereGeometry(0.6, 18, 14)), bodyMat);
       group.add(body);
@@ -262,6 +396,24 @@ export class Enemy {
       const pupil = new THREE.Mesh(geo('pupil', () => new THREE.SphereGeometry(0.08, 8, 8)), new THREE.MeshBasicMaterial({ color: 0x2a1200 }));
       pupil.position.set(0, 0.1, 0.63);
       group.add(pupil);
+      // A muzzle and side pods frame the lens; tendrils anchor it to the floor.
+      const muzzle = new THREE.Mesh(geo('spitterMuzzle', () => new THREE.ConeGeometry(0.18, 0.48, 6)), accentMat);
+      muzzle.rotation.x = Math.PI / 2;
+      muzzle.position.set(0, 0.1, 0.82);
+      group.add(muzzle);
+      for (const s of [-1, 1]) {
+        const pod = new THREE.Mesh(geo('spitterPod', () => new THREE.SphereGeometry(0.2, 10, 8)), armorMat);
+        pod.position.set(s * 0.52, -0.06, 0.25);
+        pod.scale.set(0.8, 0.9, 1.1);
+        group.add(pod);
+      }
+      for (let i = 0; i < 3; i++) {
+        const a = -0.55 + i * 0.55;
+        const tendril = new THREE.Mesh(geo('spitterTendril', () => new THREE.ConeGeometry(0.05, 0.5, 4)), accentMat);
+        tendril.position.set(Math.sin(a) * 0.34, -0.55, Math.cos(a) * 0.26);
+        tendril.rotation.x = Math.PI + Math.cos(a) * 0.18;
+        group.add(tendril);
+      }
     } else {
       // boss — every warden has its own silhouette so the name on the banner
       // matches the shape in the arena.
@@ -282,7 +434,7 @@ export class Enemy {
       let body;
       let coreY = 1.6;
       let ringRadius = 1.35;
-      let haloScale = 8;
+      let haloScale = 4.8;
 
       if (bossKind === 1) { // Ashen Colossus — broad stone shoulders and furnace horns
         body = new THREE.Mesh(geo('bossColossus', () => new THREE.DodecahedronGeometry(1.05, 1)), bodyMat);
@@ -296,7 +448,7 @@ export class Enemy {
         }
         coreY = 1.35;
         ringRadius = 1.85;
-        haloScale = 9.5;
+        haloScale = 5.0;
       } else if (bossKind === 2) { // Void Herald — a floating octahedron inside a cage of shards
         body = new THREE.Mesh(geo('bossHerald', () => new THREE.OctahedronGeometry(1.0, 1)), bodyMat);
         body.scale.set(1.12, 1.42, 1.12);
@@ -311,7 +463,7 @@ export class Enemy {
         }
         coreY = 1.65;
         ringRadius = 1.55;
-        haloScale = 8.5;
+        haloScale = 4.6;
       } else if (bossKind === 3) { // Helios Unbound — a sun-spire with a crown of rays
         body = new THREE.Mesh(geo('bossUnbound', () => new THREE.ConeGeometry(0.72, 3.9, 6)), bodyMat);
         body.position.y = 1.78;
@@ -325,7 +477,7 @@ export class Enemy {
         }
         coreY = 1.95;
         ringRadius = 1.6;
-        haloScale = 9;
+        haloScale = 4.9;
       } else if (bossKind === 4) { // Cinder Tyrant — a blocky iron king with a square crown
         body = new THREE.Mesh(geo('bossTyrant', () => new THREE.BoxGeometry(1.35, 2.8, 1.25)), bodyMat);
         body.position.y = 1.3;
@@ -339,7 +491,7 @@ export class Enemy {
         }
         coreY = 1.55;
         ringRadius = 1.45;
-        haloScale = 8.5;
+        haloScale = 4.7;
       } else if (bossKind === 5) { // Stormglass Seraph — a tall diamond with glass wings
         body = new THREE.Mesh(geo('bossSeraph', () => new THREE.OctahedronGeometry(0.9, 0)), bodyMat);
         body.scale.set(0.9, 1.8, 0.9);
@@ -354,7 +506,7 @@ export class Enemy {
         }
         coreY = 1.7;
         ringRadius = 1.55;
-        haloScale = 8.2;
+        haloScale = 4.8;
       } else { // Rift Warden — the original rift-carved obelisk
         body = new THREE.Mesh(geo('boss', () => new THREE.CylinderGeometry(0.55, 1.0, 3.2, 6)), bodyMat);
         body.position.y = 1.2;
@@ -367,6 +519,81 @@ export class Enemy {
           group.add(spike);
         }
       }
+      // Secondary boss silhouettes: each warden gets one extra readable mass
+      // beyond its core body, so the arena shape matches the banner name.
+      if (bossKind === 0) {
+        for (const side of [-1, 1]) {
+          const blade = new THREE.Mesh(geo('riftBlade', () => new THREE.ConeGeometry(0.16, 2.4, 3)), accentMat);
+          blade.position.set(side * 1.0, 1.85, 0.08);
+          blade.rotation.z = side * -0.3;
+          group.add(blade);
+        }
+        const baseCrown = new THREE.Mesh(geo('riftCrown', () => new THREE.TorusGeometry(0.9, 0.05, 6, 30)), accentMat);
+        baseCrown.rotation.x = Math.PI / 2;
+        baseCrown.position.y = 2.68;
+        group.add(baseCrown);
+      } else if (bossKind === 1) {
+        for (const side of [-1, 1]) {
+          const boulder = new THREE.Mesh(geo('colossusPauldron', () => new THREE.DodecahedronGeometry(0.42, 0)), bodyMat);
+          boulder.position.set(side * 1.28, 2.02, -0.08);
+          boulder.scale.set(1.2, 0.78, 0.95);
+          group.add(boulder);
+          const shoulderSpike = new THREE.Mesh(geo('colossusShoulderSpike', () => new THREE.ConeGeometry(0.18, 1.0, 5)), accentMat);
+          shoulderSpike.position.set(side * 1.24, 2.46, -0.04);
+          shoulderSpike.rotation.z = side * -0.62;
+          group.add(shoulderSpike);
+        }
+      } else if (bossKind === 2) {
+        const cage = new THREE.Mesh(geo('heraldCage', () => new THREE.TorusGeometry(1.18, 0.05, 6, 36)), accentMat);
+        cage.rotation.x = Math.PI / 2;
+        cage.position.y = 2.35;
+        group.add(cage);
+        const lowerCage = new THREE.Mesh(geo('heraldLowerCage', () => new THREE.TorusGeometry(0.92, 0.04, 6, 32)), accentMat);
+        lowerCage.rotation.x = Math.PI / 2;
+        lowerCage.position.y = 0.96;
+        group.add(lowerCage);
+      } else if (bossKind === 3) {
+        const sunDisc = new THREE.Mesh(geo('unboundDisc', () => new THREE.TorusGeometry(1.48, 0.06, 6, 44)), accentMat);
+        sunDisc.position.set(0, 1.86, -0.42);
+        group.add(sunDisc);
+        for (let i = 0; i < 6; i++) {
+          const a = (i / 6) * Math.PI * 2;
+          const ember = new THREE.Mesh(geo('unboundEmber', () => new THREE.OctahedronGeometry(0.1, 0)), accentMat);
+          ember.position.set(Math.cos(a) * 1.5, 1.86 + Math.sin(a) * 1.5, -0.42);
+          group.add(ember);
+        }
+      } else if (bossKind === 4) {
+        const crownBase = new THREE.Mesh(geo('tyrantCrownBase', () => new THREE.BoxGeometry(1.3, 0.22, 1.0)), accentMat);
+        crownBase.position.y = 2.82;
+        group.add(crownBase);
+        for (const x of [-0.45, 0, 0.45]) {
+          const crownSpike = new THREE.Mesh(geo('tyrantCrownSpike', () => new THREE.BoxGeometry(0.15, 0.62, 0.15)), accentMat);
+          crownSpike.position.set(x, 3.12, 0);
+          crownSpike.rotation.z = x * 0.4;
+          group.add(crownSpike);
+        }
+        for (const side of [-1, 1]) {
+          const shoulder = new THREE.Mesh(geo('tyrantShoulder', () => new THREE.DodecahedronGeometry(0.34, 0)), bodyMat);
+          shoulder.position.set(side * 0.92, 2.1, 0);
+          shoulder.scale.set(1, 0.75, 0.9);
+          group.add(shoulder);
+        }
+      } else if (bossKind === 5) {
+        for (const side of [-1, 1]) {
+          for (let i = 0; i < 3; i++) {
+            const glass = new THREE.Mesh(geo('seraphGlass', () => new THREE.ConeGeometry(0.1, 0.9, 4)), accentMat);
+            glass.position.set(side * (1.14 + i * 0.06), 1.42 + i * 0.3, -0.2 - i * 0.06);
+            glass.rotation.z = side * 0.6;
+            glass.rotation.x = 0.2;
+            group.add(glass);
+          }
+        }
+        const tailFeather = new THREE.Mesh(geo('seraphTail', () => new THREE.ConeGeometry(0.16, 1.1, 4)), accentMat);
+        tailFeather.position.set(0, 0.92, -0.55);
+        tailFeather.rotation.x = -0.35;
+        group.add(tailFeather);
+      }
+
       group.add(body);
       this.body = body;
 
@@ -381,7 +608,7 @@ export class Enemy {
       for (let i = 0; i < 2; i++) {
         const ring = new THREE.Mesh(
           geo('bossRing' + i, () => new THREE.TorusGeometry(1, 0.045, 6, 40)),
-          new THREE.MeshBasicMaterial({ color: i ? this.color : this.glow, transparent: true, opacity: 0.6, toneMapped: false })
+          new THREE.MeshBasicMaterial({ color: i ? this.color : this.glow, transparent: true, opacity: 0.38, toneMapped: false })
         );
         ring.scale.setScalar(ringRadius + i * 0.3);
         ring.position.y = coreY - 0.1 + i * 0.5;
@@ -391,7 +618,7 @@ export class Enemy {
       }
       const halo = new THREE.Sprite(new THREE.SpriteMaterial({
         map: glowTexture('rgba(255,255,255,.85)', 'rgba(255,255,255,.18)', 'rgba(255,255,255,0)'),
-        color: this.glow, transparent: true, opacity: seraph ? 0.32 : 0.6,
+        color: this.glow, transparent: true, opacity: seraph ? 0.16 : 0.24,
         blending: THREE.AdditiveBlending, depthWrite: false, toneMapped: false,
       }));
       halo.scale.set(haloScale, haloScale, 1);
@@ -433,24 +660,43 @@ export class Enemy {
     if (this.miniBoss) {
       // Crowned: a mini-boss should never be mistaken for the horde around it.
       const auraMat = new THREE.MeshBasicMaterial({
-        color: this.glow, transparent: true, opacity: 0.14, wireframe: true,
+        color: this.color, transparent: true, opacity: 0.06, wireframe: true,
         depthWrite: false, toneMapped: false,
       });
       this.miniAura = new THREE.Mesh(new THREE.IcosahedronGeometry(1.35, 1), auraMat);
+      this.miniAura.scale.setScalar(0.82);
       this.miniAura.position.y = 0.1;
       group.add(this.miniAura);
+      // A second, coloured mantle separates a crowned enemy from the horde
+      // even when its body shape is borrowed from a brute, wisp or spitter.
+      const mantle = new THREE.Mesh(geo('miniMantle', () => new THREE.TorusGeometry(0.82, 0.055, 6, 32)), accentMat);
+      mantle.rotation.x = Math.PI / 2;
+      mantle.position.y = this.baseY * 0.45;
+      group.add(mantle);
+      this.miniMantle = mantle;
+      const miniCore = new THREE.Mesh(geo('miniCore', () => new THREE.OctahedronGeometry(0.2, 0)), accentMat);
+      miniCore.position.set(0, this.baseY * 0.72, this.radius * 0.9);
+      group.add(miniCore);
+      this.miniCore = miniCore;
+      const crownBase = this.flying ? 1.02 : this.type.ranged ? 0.72 : 1.14;
       const crownMat = new THREE.MeshBasicMaterial({ color: 0xffe6a8, toneMapped: false });
-      for (let i = 0; i < 4; i++) {
-        const a = (i / 4) * Math.PI * 2;
+      for (let i = 0; i < 6; i++) {
+        const a = (i / 6) * Math.PI * 2;
         const spike = new THREE.Mesh(geo('miniSpike', () => new THREE.ConeGeometry(0.11, 0.55, 4)), crownMat);
-        spike.position.set(Math.cos(a) * 0.45, this.baseY * 0.9 + 0.35, Math.sin(a) * 0.45);
+        const tall = i % 2 === 0 ? 1.15 : 0.78;
+        spike.scale.set(1, tall, 1);
+        spike.position.set(Math.cos(a) * 0.47, crownBase, Math.sin(a) * 0.47);
         spike.rotation.z = Math.cos(a) * -0.3;
         group.add(spike);
       }
       const crown = new THREE.Mesh(new THREE.TorusGeometry(0.5, 0.035, 6, 26), crownMat);
       crown.rotation.x = Math.PI / 2;
-      crown.position.y = this.baseY * 0.9 + 0.55;
+      crown.position.y = crownBase + 0.2;
       group.add(crown);
+      const gem = new THREE.Mesh(geo('miniGem', () => new THREE.OctahedronGeometry(0.14, 0)), accentMat);
+      gem.position.y = crownBase + 0.3;
+      group.add(gem);
+      this.miniGem = gem;
     }
 
     if (this.elite) {
@@ -468,20 +714,48 @@ export class Enemy {
       transparent: true, opacity: 0.72, depthWrite: false, toneMapped: false,
     });
     this.badge = new THREE.Sprite(this.badgeMat);
-    this.badge.scale.set(0.72, 0.36, 1);
-    this.badge.position.y = this.isBoss ? 3.55 : this.flying ? 1.15 : 1.35;
+    const badgeSize = this.isBoss ? 1.55 : this.miniBoss ? 1.12 : 0.92;
+    this.badge.scale.set(badgeSize, badgeSize * 0.5, 1);
+    this.badge.position.y = this.isBoss ? 3.68 : this.flying ? 1.35 : 1.55;
     group.add(this.badge);
 
-    // Hostile ground ring: red says "this wants you dead", whatever its element.
-    const threatR = this.radius * (this.isBoss ? 2.0 : 1.5);
-    const threatMat = new THREE.MeshBasicMaterial({
-      color: 0xff4230, transparent: true, opacity: this.isBoss ? 0.4 : 0.26,
+    // The element is not a tiny footnote: a broad coloured ring and a soft
+    // matching halo sit under every creature, so the player can read what a
+    // wave is made of before the first shot lands.
+    const elementColor = this.elementMeta?.color || this.type.color;
+    this.elementRingMat = new THREE.MeshBasicMaterial({
+      color: elementColor, transparent: true, opacity: this.miniBoss || this.isBoss ? 0.32 : 0.18,
       side: THREE.DoubleSide, blending: THREE.AdditiveBlending, depthWrite: false, toneMapped: false,
     });
-    const threat = new THREE.Mesh(new THREE.RingGeometry(threatR * 0.8, threatR, 44), threatMat);
-    threat.rotation.x = -Math.PI / 2;
-    threat.position.y = -this.baseY + 0.05;
-    group.add(threat);
+    const er = this.radius * (this.isBoss ? 2.35 : this.miniBoss ? 1.95 : 1.5);
+    this.elementRing = new THREE.Mesh(new THREE.RingGeometry(er * 0.82, er, 44), this.elementRingMat);
+    this.elementRing.rotation.x = -Math.PI / 2;
+    this.elementRing.position.y = -this.baseY + 0.045;
+    group.add(this.elementRing);
+
+    this.elementHalo = new THREE.Sprite(new THREE.SpriteMaterial({
+      map: glowTexture('rgba(255,255,255,.9)', 'rgba(255,255,255,.24)', 'rgba(255,255,255,0)'),
+      color: elementColor, transparent: true, opacity: this.miniBoss || this.isBoss ? 0.18 : 0.07,
+      blending: THREE.AdditiveBlending, depthWrite: false, toneMapped: false,
+    }));
+    this.elementHalo.scale.setScalar(this.radius * (this.isBoss ? 2.5 : this.miniBoss ? 2.4 : 2.25));
+    this.elementHalo.position.y = this.baseY * 0.45;
+    group.add(this.elementHalo);
+
+    // Wardens, crowned enemies and elites get the extra hostile ring. Regular
+    // horde members keep one elemental ring so a big wave does not become a
+    // stack of overlapping circles.
+    if (this.isBoss || this.miniBoss || this.elite) {
+      const threatR = this.radius * (this.isBoss ? 2.0 : 1.5);
+      const threatMat = new THREE.MeshBasicMaterial({
+        color: 0xff4230, transparent: true, opacity: this.isBoss ? 0.3 : 0.14,
+        side: THREE.DoubleSide, blending: THREE.AdditiveBlending, depthWrite: false, toneMapped: false,
+      });
+      const threat = new THREE.Mesh(new THREE.RingGeometry(threatR * 0.8, threatR, 44), threatMat);
+      threat.rotation.x = -Math.PI / 2;
+      threat.position.y = -this.baseY + 0.05;
+      group.add(threat);
+    }
 
     group.scale.setScalar(scale);
     this.group = group;
@@ -539,11 +813,30 @@ export class Enemy {
       this.flashT -= dt;
       if (this.flashT <= 0) this.bodyMat.emissiveIntensity = this.isBoss && this.enraged ? this.baseEmissive * 2 : this.baseEmissive;
     }
+    if (this.caravanWind > 0) this.bodyMat.emissiveIntensity = this.baseEmissive * 3.2;
 
     const playerDx = player.pos.x - this.pos.x;
     const playerDz = player.pos.z - this.pos.z;
     const playerDist = Math.hypot(playerDx, playerDz) || 1;
     const target = this._targetFor(game);
+
+    // A raider committed to the reliquary winds up before it strikes. The
+    // warning is short, but it makes direct caravan damage readable and gives
+    // the player a moment to peel the attacker.
+    if (this.caravanWind > 0) {
+      this.caravanWind -= dt;
+      if (this.caravanWind <= 0) {
+        const struck = this.caravanWindTarget;
+        this.caravanWindTarget = null;
+        if (struck?.alive && game.caravan?.alive) {
+          const reach = this.radius + (struck.radius || 1) + 0.35;
+          if (Math.hypot(struck.pos.x - this.pos.x, struck.pos.z - this.pos.z) <= reach) {
+            game.caravan.damage(this.damage * ESCORT.attackDamageMult * (this.breaker ? ESCORT.breakerDamageMult : 1), game);
+            game.fx.burst(new THREE.Vector3(struck.pos.x, 1.2, struck.pos.z), 0xff7a52, { count: 12, speed: 4, size: 0.2, life: 0.4, up: 1.4 });
+          }
+        }
+      }
+    }
 
     const dx = target.pos.x - this.pos.x;
     const dz = target.pos.z - this.pos.z;
@@ -562,12 +855,16 @@ export class Enemy {
     const slowFactor = this.slow.until > 0 ? (1 - this.slow.amount) : 1;
     let speed = this.speed * slowFactor;
 
-    if (this.isBoss) {
-      this._bossUpdate(dt, game, nx, nz, dist, speed);
-    } else if (this.type.ranged) {
-      this._rangedUpdate(dt, game, nx, nz, dist, speed);
-    } else {
-      this._meleeUpdate(dt, game, nx, nz, dist, speed, slowFactor);
+    const mechanicActed = (this.isBoss || this.miniBoss)
+      && this._mechanicsUpdate(dt, game, nx, nz, dist, speed);
+    if (!mechanicActed) {
+      if (this.isBoss) {
+        this._bossUpdate(dt, game, nx, nz, dist, speed);
+      } else if (this.type.ranged) {
+        this._rangedUpdate(dt, game, nx, nz, dist, speed);
+      } else {
+        this._meleeUpdate(dt, game, nx, nz, dist, speed, slowFactor);
+      }
     }
 
     // knockback
@@ -621,7 +918,7 @@ export class Enemy {
     // contact — the player can body-block a creature headed for the core
     this.attackCd -= dt;
     const contactRange = this.radius + 0.95;
-    if (playerDist < contactRange && this.attackCd <= 0 && this.chargeWind <= 0) {
+    if (!this.invisible && playerDist < contactRange && this.attackCd <= 0 && this.chargeWind <= 0) {
       const roll = game.rollEnemyHit?.() || { kind: 'hit', mult: 1 };
       if (roll.mult <= 0) {
         fx.number(new THREE.Vector3(player.pos.x, 1.9, player.pos.z), 'MISS', 'miss');
@@ -638,14 +935,27 @@ export class Enemy {
       }
     }
 
-    // structures under attack
-    if (target.kind !== 'player' && target.alive && this.attackCd <= 0 && this.chargeWind <= 0) {
+    // structures under attack. Caravan raiders telegraph first; structures
+    // still take the immediate blow.
+    if (!this.invisible && target.kind !== 'player' && target.alive && this.attackCd <= 0 && this.chargeWind <= 0 && this.caravanWind <= 0) {
       const reach = this.radius + (target.radius || 1) + 0.2;
       if (dist < reach) {
-        if (target.kind === 'caravan') game.caravan?.damage(this.damage * ESCORT.attackDamageMult, game);
-        else game.structures?.damage(target, this.damage, game);
-        this.attackCd = this.isBoss ? 1.1 : 0.9;
-        game.fx.burst(new THREE.Vector3(this.pos.x, 1, this.pos.z), this.glow, { count: 7, speed: 3, size: 0.18, life: 0.35 });
+        if (target.kind === 'caravan') {
+          this.attackCd = 1.05;
+          this.caravanWind = 0.42;
+          this.caravanWindTarget = game.caravan;
+          game.fx.beam(
+            new THREE.Vector3(this.pos.x, this.baseY, this.pos.z),
+            new THREE.Vector3(game.caravan.pos.x, 1.45, game.caravan.pos.z),
+            0xff7a52, 0.2, 0.3
+          );
+          game.fx.ring(this.pos, 0xff7a52, { r0: 0.4, r1: 2.4, life: 0.35, opacity: 0.55 });
+          game.audio?.objectiveDanger?.(0);
+        } else {
+          game.structures?.damage(target, this.damage, game);
+          this.attackCd = this.isBoss ? 1.1 : 0.9;
+          game.fx.burst(new THREE.Vector3(this.pos.x, 1, this.pos.z), this.glow, { count: 7, speed: 3, size: 0.18, life: 0.35 });
+        }
       }
     }
 
@@ -664,10 +974,15 @@ export class Enemy {
       if (this.key === 'wisp') this.body.rotation.z = Math.sin(game.time * 2 + this.phase) * 0.2;
     }
     if (this.halo) {
-      const haloBase = this.seraph ? 0.24 : 0.45;
-      this.halo.material.opacity = haloBase + Math.sin(game.time * 3 + this.phase) * (this.seraph ? 0.04 : 0.12);
+      const haloBase = this.seraph ? 0.14 : 0.22;
+      this.halo.material.opacity = haloBase + Math.sin(game.time * 3 + this.phase) * (this.seraph ? 0.025 : 0.055);
     }
     if (this.haloRing) this.haloRing.rotation.z += dt * 1.4;
+    if (this.wispCore) this.wispCore.scale.setScalar(1 + Math.sin(game.time * 5 + this.phase) * 0.16);
+    if (this.wispRing) { this.wispRing.rotation.z += dt * 1.8; this.wispRing.rotation.y += dt * 0.7; }
+    if (this.miniCore) this.miniCore.scale.setScalar(1 + Math.sin(game.time * 4 + this.phase) * 0.12);
+    if (this.miniGem) this.miniGem.rotation.y += dt * 0.9;
+    if (this.miniMantle) this.miniMantle.rotation.y += dt * 0.45;
     if (this.bossRingA) { this.bossRingA.rotation.z += dt * 0.8; this.bossRingB.rotation.z -= dt * 0.6; }
     if (this.bossCore) this.bossCore.scale.setScalar((this.seraph ? 0.85 : 1) * (1 + Math.sin(game.time * 4) * 0.12));
     if (this.eliteRing) this.eliteRing.rotation.z += dt * 1.2;
@@ -682,7 +997,16 @@ export class Enemy {
     if (this.miniAura) {
       this.miniAura.rotation.y -= dt * 0.55;
       this.miniAura.rotation.x += dt * 0.28;
-      this.miniAura.material.opacity = 0.1 + Math.sin(game.time * 2.2 + this.phase) * 0.05;
+      this.miniAura.material.opacity = 0.035 + Math.sin(game.time * 2.2 + this.phase) * 0.018;
+    }
+    if (this.elementRing) {
+      this.elementRing.rotation.z += dt * 0.55;
+      const base = this.miniBoss || this.isBoss ? 0.32 : 0.18;
+      this.elementRingMat.opacity = base + Math.sin(game.time * 2.4 + this.phase) * 0.05;
+    }
+    if (this.elementHalo) {
+      const base = this.miniBoss || this.isBoss ? 0.16 : 0.06;
+      this.elementHalo.material.opacity = base + Math.sin(game.time * 3.1 + this.phase) * 0.04;
     }
     if (this.isBoss && this.enraged && Math.random() < dt * 12) {
       fx.trail(new THREE.Vector3(this.pos.x + (Math.random() - 0.5) * 2, this.baseY + Math.random() * 2.6, this.pos.z + (Math.random() - 0.5) * 2), this.glow, 0.25, 0.4);
@@ -694,8 +1018,10 @@ export class Enemy {
     const caravan = game.caravan;
     if (caravan?.alive) {
       // Melee raiders commit to the reliquary; ranged enemies and wardens keep
-      // hunting the guardian. The player cannot body-block raiders off it.
-      if (this.type.ranged || this.isBoss) return playerTarget;
+      // hunting the guardian. A raider the guardian attacks is peeled onto the
+      // guardian for a short window, so the player can actively defend it.
+      if (this.type.ranged || this.isBoss || this.harrier) return playerTarget;
+      if (game.time < (this.provokedUntil || 0)) return playerTarget;
       return { kind: 'caravan', pos: caravan.pos, radius: caravan.radius, alive: true };
     }
     if (!game.structures) return playerTarget;
@@ -769,6 +1095,181 @@ export class Enemy {
     return true;
   }
 
+  /* Element set pieces for wardens and crowned enemies. Each one has a
+     telegraph, a distinct answer, and a cooldown long enough that the normal
+     volleys still matter. */
+  _mechanicsUpdate(dt, game, nx, nz, dist, speed) {
+    const player = game.player;
+    if (!player?.alive) return false;
+
+    if (this.invisibleT > 0) {
+      this.invisibleT -= dt;
+      this.pos.x += nx * speed * 0.35 * dt;
+      this.pos.z += nz * speed * 0.35 * dt;
+      if (this.invisibleT <= 0) this._reappear(game);
+      return true;
+    }
+
+    if (this.sprintT > 0) {
+      this.sprintT -= dt;
+      const sprintSpeed = this.isBoss ? 27 : 21;
+      this.pos.addScaledVector(this.sprintDir, sprintSpeed * dt);
+      game.fx.trail(new THREE.Vector3(this.pos.x, this.baseY, this.pos.z), this.glow, 0.28, 0.5);
+      if (this.sprintT <= 0) {
+        this.group.scale.setScalar(this.scale);
+        game.fx.ring(this.pos, this.glow, { r0: 0.6, r1: 6, life: 0.5, opacity: 0.65 });
+        game.engine.addShake(0.35);
+        this._fireAtPlayer(game, 5, 0.18, 0.62);
+        this._finishMechanic();
+      }
+      return true;
+    }
+
+    if (this.mechanicWind > 0) {
+      this.mechanicWind -= dt;
+      this.bodyMat.emissiveIntensity = this.baseEmissive + 1.4;
+      if (this.mechanicWind <= 0) this._resolveMechanic(game);
+      return true;
+    }
+
+    // Let the old charge/volley cycle breathe; mechanics take the next opening.
+    if (this.chargeWind > 0 || this.chargeTime > 0) return false;
+
+    this.mechanicT -= dt;
+    if (this.mechanicT > 0) {
+      if (!this.mechanicWarned && this.mechanicT <= 2) {
+        this.mechanicWarned = true;
+        const kind = this._mechanicKind();
+        const name = MECHANIC_NAMES[kind] || kind.toUpperCase();
+        game.ui?.toast('⚠ ' + name + ' INCOMING · ' + Math.max(1, Math.ceil(this.mechanicT)) + 's', this.elementMeta?.css || this.type.css || '#ffd166');
+        game.fx.ring(this.pos, this.glow, { r0: 1.2, r1: 8, life: 1.1, opacity: 0.45 });
+      }
+      return false;
+    }
+    this._beginMechanic(game, nx, nz);
+    return true;
+  }
+
+  _mechanicKind() {
+    return this.isBoss
+      ? (BOSS_MECHANICS[this.bossIndex % BOSS_MECHANICS.length] || ELEMENT_MECHANICS[this.element] || 'slam')
+      : (ELEMENT_MECHANICS[this.element] || 'slam');
+  }
+
+  _beginMechanic(game, nx, nz) {
+    const kind = this._mechanicKind();
+    this.mechanicKind = kind;
+    this.mechanicCount++;
+    this.mechanicDir.set(nx, 0, nz);
+    const name = MECHANIC_NAMES[kind] || kind.toUpperCase();
+    game.ui?.toast(this.name.toUpperCase() + ' · ' + name, this.elementMeta?.css || this.type.css);
+
+    if (kind === 'vanish') {
+      this.invisible = true;
+      this.invisibleT = 2;
+      this.group.visible = false;
+      game.fx.burst(new THREE.Vector3(this.pos.x, 1.2, this.pos.z), this.glow, { count: 36, speed: 8, size: 0.28, life: 0.7, up: 3 });
+      game.fx.ring(this.pos, this.glow, { r0: 0.6, r1: 7, life: 0.8, opacity: 0.7 });
+      return;
+    }
+
+    if (kind === 'judgment') {
+      this.mechanicWind = 0.9;
+      this.mechanicPos.copy(game.player.pos);
+      game.fx.ring(this.mechanicPos, this.glow, { r0: 0.5, r1: 4.5, life: 0.95, opacity: 0.75 });
+      game.fx.beam(new THREE.Vector3(this.pos.x, this.baseY, this.pos.z),
+        new THREE.Vector3(this.mechanicPos.x, 0.8, this.mechanicPos.z), this.glow, 0.32, 0.9);
+      return;
+    }
+
+    const wind = kind === 'slam' ? 0.8 : kind === 'sprint' ? 0.55 : kind === 'mend' ? 1 : 0.85;
+    this.mechanicWind = wind;
+    const radius = kind === 'eruption' ? 6 : kind === 'slam' ? 4.8 : kind === 'pull' ? 8 : 3.6;
+    game.fx.ring(this.pos, this.glow, { r0: 0.6, r1: radius, life: wind + 0.1, opacity: 0.65 });
+    if (kind === 'sprint') this.sprintDir.copy(this.mechanicDir).normalize();
+  }
+
+  _resolveMechanic(game) {
+    const player = game.player;
+    if (!player?.alive) { this._finishMechanic(); return; }
+    const kind = this.mechanicKind;
+    const dist = Math.hypot(player.pos.x - this.pos.x, player.pos.z - this.pos.z);
+
+    if (kind === 'eruption') {
+      if (dist <= 6.2) player.takeDamage(this.damage * 1.25, this, { element: this.element });
+      game.fx.ring(this.pos, this.glow, { r0: 0.8, r1: 7, life: 0.6, opacity: 0.75 });
+      game.fx.burst(new THREE.Vector3(this.pos.x, 1.2, this.pos.z), this.glow, { count: 44, speed: 8, size: 0.3, life: 0.7, up: 3 });
+      game.engine.addShake(0.55);
+    } else if (kind === 'judgment') {
+      const marked = Math.hypot(player.pos.x - this.mechanicPos.x, player.pos.z - this.mechanicPos.z);
+      if (marked <= 4.4) player.takeDamage(this.damage * 1.35, this, { element: this.element });
+      game.fx.ring(this.mechanicPos, this.glow, { r0: 0.8, r1: 5, life: 0.55, opacity: 0.8 });
+      game.fx.burst(new THREE.Vector3(this.mechanicPos.x, 1, this.mechanicPos.z), this.glow, { count: 42, speed: 9, size: 0.3, life: 0.65, up: 4 });
+      game.engine.addShake(0.5);
+    } else if (kind === 'slam') {
+      if (dist <= 5) {
+        player.takeDamage(this.damage * 1.15, this, { element: this.element });
+        const pdx = player.pos.x - this.pos.x, pdz = player.pos.z - this.pos.z;
+        const pd = Math.hypot(pdx, pdz) || 1;
+        player.vel.x += (pdx / pd) * 9;
+        player.vel.z += (pdz / pd) * 9;
+      }
+      game.fx.ring(this.pos, this.glow, { r0: 0.7, r1: 5.5, life: 0.55, opacity: 0.8 });
+      game.engine.addShake(0.7);
+    } else if (kind === 'mend') {
+      const before = this.hp;
+      this.hp = Math.min(this.maxHp, this.hp + this.maxHp * 0.12);
+      this.flash();
+      game.fx.ring(this.pos, this.glow, { r0: 0.6, r1: 7, life: 0.7, opacity: 0.8 });
+      game.fx.burst(new THREE.Vector3(this.pos.x, 1.2, this.pos.z), this.glow, { count: 34, speed: 5, size: 0.28, life: 0.8, up: 4 });
+      if (this.hp > before) game.ui?.toast(this.name + ' MENDS · ' + Math.round(this.hp) + ' / ' + Math.round(this.maxHp), this.elementMeta?.css || this.type.css);
+    } else if (kind === 'pull') {
+      if (dist <= 9) {
+        const dx = this.pos.x - player.pos.x, dz = this.pos.z - player.pos.z;
+        const d = Math.hypot(dx, dz) || 1;
+        player.vel.x += (dx / d) * 18;
+        player.vel.z += (dz / d) * 18;
+        player.takeDamage(this.damage * 0.35, this, { element: this.element });
+      }
+      game.fx.ring(this.pos, this.glow, { r0: 0.8, r1: 9, life: 0.7, opacity: 0.7 });
+      game.engine.addShake(0.4);
+    } else if (kind === 'sprint') {
+      this.sprintT = this.isBoss ? 0.5 : 0.38;
+      this.group.scale.setScalar(this.scale * 1.08);
+      game.fx.ring(this.pos, this.glow, { r0: 0.5, r1: 4.5, life: 0.45, opacity: 0.75 });
+      return;
+    }
+
+    this._finishMechanic();
+  }
+
+  _reappear(game) {
+    const player = game.player;
+    this.invisible = false;
+    this.group.visible = true;
+    if (player?.alive) {
+      const dx = this.pos.x - player.pos.x, dz = this.pos.z - player.pos.z;
+      const d = Math.hypot(dx, dz) || 1;
+      this.pos.set(player.pos.x + (dx / d) * 2.4, 0, player.pos.z + (dz / d) * 2.4);
+      arenaClamp(this.pos, 1);
+      const dist = Math.hypot(player.pos.x - this.pos.x, player.pos.z - this.pos.z);
+      if (dist <= 3.6) player.takeDamage(this.damage * 1.55, this, { element: this.element });
+      game.fx.burst(new THREE.Vector3(this.pos.x, 1.2, this.pos.z), this.glow, { count: 42, speed: 8, size: 0.3, life: 0.7, up: 3 });
+      game.fx.ring(this.pos, this.glow, { r0: 0.5, r1: 6, life: 0.6, opacity: 0.75 });
+      game.fx.beam(new THREE.Vector3(this.pos.x, this.baseY, this.pos.z),
+        new THREE.Vector3(player.pos.x, 1.2, player.pos.z), this.glow, 0.24, 0.45);
+      game.engine.addShake(0.6);
+    }
+    this._finishMechanic();
+  }
+
+  _finishMechanic() {
+    this.mechanicKind = null;
+    this.mechanicWarned = false;
+    this.bodyMat.emissiveIntensity = this.baseEmissive;
+    this.mechanicT = (this.isBoss ? 8.5 : 10.5) + Math.random() * 3;
+  }
+
   _bossUpdate(dt, game, nx, nz, dist, speed) {
     const player = game.player;
     if (!this.enraged && this.hp / this.maxHp < 0.4) {
@@ -821,8 +1322,10 @@ export class Enemy {
     // radial volley
     this.volleyT -= dt;
     if (this.volleyT <= 0) {
-      this.volleyT = (this.enraged ? 3.6 : 5.4);
-      const n = this.enraged ? 18 : 14;
+      // Leave room for the element set piece: a warden should feel like a
+      // sequence of decisions, not a conveyor belt of identical fans.
+      this.volleyT = (this.enraged ? 4.8 : 7.2);
+      const n = this.enraged ? 16 : 12;
       const base = Math.random() * Math.PI * 2;
       for (let i = 0; i < n; i++) {
         const a = base + (i / n) * Math.PI * 2;
@@ -841,7 +1344,7 @@ export class Enemy {
     // charge
     this.chargeT -= dt;
     if (this.chargeT <= 0) {
-      this.chargeT = (this.enraged ? 6.5 : 9);
+      this.chargeT = (this.enraged ? 8.5 : 11.5);
       this.chargeWind = 0.75;
       game.fx.ring(this.pos, this.color, { r0: 0.5, r1: 5, life: 0.6, opacity: 0.6 });
     }
@@ -849,7 +1352,7 @@ export class Enemy {
     // summon
     this.summonT -= dt;
     if (this.summonT <= 0) {
-      this.summonT = this.enraged ? 9 : 13;
+      this.summonT = this.enraged ? 12 : 16;
       for (let i = 0; i < 2; i++) {
         const a = Math.random() * Math.PI * 2;
         game.spawnEnemy('wisp', { angle: a, radius: Math.min(arenaRadiusAt(a) - 3, 7 + Math.random() * 8) });
@@ -864,5 +1367,9 @@ export class Enemy {
     if (this.accentMat) this.accentMat.dispose();
     if (this.rimMat) this.rimMat.dispose();
     if (this.miniAura) this.miniAura.material.dispose();
+    if (this.elementRing) this.elementRing.geometry.dispose();
+    if (this.elementRingMat) this.elementRingMat.dispose();
+    if (this.elementHalo) this.elementHalo.material.dispose();
+    if (this.badgeMat) this.badgeMat.dispose();
   }
 }

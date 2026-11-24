@@ -531,6 +531,19 @@ export class Player {
     this.dashTime = 0.2;
     this.dashCdTimer = this.stats.dashCd / (1 + (rb.cdr || 0));
     this.invuln = Math.max(this.invuln, 0.32);
+    // Duelist's answer: dash through a champion's wind-up or charge and the
+    // ring rewards the read with ultimate charge.
+    if (this.game.mode === 'duel') {
+      const champion = this.game.enemies.list.find(e => e.isBoss && !e.dead
+        && ((e.chargeWind || 0) > 0 || (e.chargeTime || 0) > 0)
+        && Math.hypot(e.pos.x - this.pos.x, e.pos.z - this.pos.z) < 8);
+      if (champion) {
+        this.gainCharge(18);
+        this.game.ui?.toast('DUELIST\u2019S READ · +18 ULTIMATE CHARGE', '#ffe9a8');
+        this.game.fx.ring(this.pos, 0xffe9a8, { r0: 0.4, r1: 4, life: 0.5, opacity: 0.8 });
+        this.game.audio.fusion?.();
+      }
+    }
     this.game.engine.punchFov(5);
     this.game.audio.dash();
     this.game.fx.ring(this.pos, this.form.glow, { r0: 0.4, r1: 2.6, life: 0.4, opacity: 0.6 });

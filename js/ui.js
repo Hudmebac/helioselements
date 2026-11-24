@@ -247,7 +247,7 @@ export class UI {
           </button>
           <button class="mode-card" data-mode="lane" style="--mc:#67ecff">
             <span class="mode-ico">⌖</span>
-            <span class="mode-txt"><em>THE PUSH</em><b>Sunfall Lanes</b><span>Three lanes, tower pads, and three Rift Gates to break.</span></span>
+            <span class="mode-txt"><em>THE PUSH</em><b>Sunfall Lanes</b><span>Break three gates; each fallen gate turns the next into crossfire.</span></span>
             <span class="mode-tag">BEST <b data-best-lane>0</b></span>
           </button>
           <button class="mode-card" data-mode="trial" style="--mc:#b184ff">
@@ -257,17 +257,17 @@ export class UI {
           </button>
           <button class="mode-card" data-mode="hunt" style="--mc:#ff9a5a">
             <span class="mode-ico">☄</span>
-            <span class="mode-txt"><em>THE GAUNTLET</em><b>Warden Hunt</b><span>Four wardens back to back. No core, no walls.</span></span>
+            <span class="mode-txt"><em>THE GAUNTLET</em><b>Warden Hunt</b><span>Four wardens. Clear the court to expose the crown.</span></span>
             <span class="mode-tag">BEST <b data-best-hunt>0</b></span>
           </button>
           <button class="mode-card" data-mode="escort" style="--mc:#73e698">
             <span class="mode-ico">⛨</span>
-            <span class="mode-txt"><em>THE ESCORT</em><b>Solar Caravan</b><span>Walk a reliquary home while melee raiders commit to it.</span></span>
+            <span class="mode-txt"><em>THE ESCORT</em><b>Solar Caravan</b><span>Walk a reliquary home, peel raiders, then break the rift warden.</span></span>
             <span class="mode-tag">BEST <b data-best-escort>0</b></span>
           </button>
           <button class="mode-card" data-mode="ritual" style="--mc:#ffd166">
             <span class="mode-ico">◉</span>
-            <span class="mode-txt"><em>THE RITUAL</em><b>Ember Ritual</b><span>Hold three circles and seal them before the flame dies.</span></span>
+            <span class="mode-txt"><em>THE RITUAL</em><b>Ember Ritual</b><span>Seal three circles; each sealed circle becomes a burning ward.</span></span>
             <span class="mode-tag">BEST <b data-best-ritual>0</b></span>
           </button>
           <button class="mode-card" data-mode="blitz" style="--mc:#ff6b6b">
@@ -277,7 +277,7 @@ export class UI {
           </button>
           <button class="mode-card" data-mode="duel" style="--mc:#ffe9a8">
             <span class="mode-ico">⚔</span>
-            <span class="mode-txt"><em>THE CHAMPION</em><b>Warden Duel</b><span>Four crowned wardens, alone, back to back.</span></span>
+            <span class="mode-txt"><em>THE CHAMPION</em><b>Warden Duel</b><span>Four champions alone. Every felled champion tempers the next round.</span></span>
             <span class="mode-tag">BEST <b data-best-duel>0</b></span>
           </button>
         </div>
@@ -1033,9 +1033,14 @@ export class UI {
         this.game.restart();
         break;
       case 'ascend':
-        this.audio.confirm();
-        this.hideGameOver();
-        this.game.ascend();
+        // Only leave the results screen if the run really can ascend. A death
+        // screen must never strand the player on a hidden screen.
+        if (this.game.ascend()) {
+          this.audio.confirm();
+          this.hideGameOver();
+        } else {
+          this.audio.ui();
+        }
         break;
       case 'stepback':
         this.audio.ui();
@@ -1662,14 +1667,14 @@ export class UI {
     const hint = document.getElementById('select-hint');
     if (hint) {
       const modeHints = {
-        siege: 'Protect the Sunforge, raise defenses with shards, and hold for twenty waves. Stand inside the Aegis to hit harder and slow the breach.',
-        lane: 'Three lanes feed the core. Tower the lane pads to hold it, then walk out to a Rift Gate and shoot it — towers cannot damage gates, only your fire, surges and ultimates can.',
+        siege: 'Protect the Sunforge, raise defenses with shards, and hold for twenty waves. Stand inside the Aegis to hit harder and slow the breach; below half integrity the core rebukes the horde, and waves 5, 10 and 15 open a Sunforge Rite.',
+        lane: 'Three lanes feed the core. Tower the lane pads to hold it, then walk out to a Rift Gate and shoot it — towers cannot damage gates, only your fire, surges and ultimates can. Each broken gate turns the next into crossfire.',
         trial: 'No core. No defenses. Survive the endless horde and push your best wave.',
-        hunt: 'No core and no walls. Four wardens arrive back to back — kill every one before the arena closes.',
-        escort: 'The reliquary only moves while you stand beside it and nothing is contesting it. Melee raiders ignore you and attack it directly; spitters and wardens hunt you. Hold E beside it to mend it, but repairing leaves you unable to fire. Damage cuts the final sunmark payout and at zero integrity the caravan is destroyed. Kill the raiders, then walk it home.',
-        ritual: 'Three ember circles ring the arena. Stand inside one to charge it; enemies inside stop the charge and drain it. Seal all three at once before the flame gutters out.',
+        hunt: 'No core and no walls. Four wardens arrive back to back with a court. Clear the court to expose the crown (+18% damage); every felled warden grants a trophy draft and permanent Hunt Momentum.',
+        escort: 'The reliquary advances while you stand beside it; a contested road slows it, and only leaving it entirely stops it. Six waystones halt the stone until their ambush is clear, then the eastern rift ends in a warden siege. Melee raiders strike it directly, Breakers ignore the peel, and Harriers hunt you. Hold E beside it to mend it, but repairing leaves you unable to fire.',
+        ritual: 'Three ember circles ring the arena. Stand inside one to charge it; enemies inside stop the charge and drain it. A sealed circle becomes a solar ward, and the first two seals open a boon draft.',
         blitz: 'Every wave is on a clock. Kills and warden kills add time. Clear twelve waves before the sun sets — there are no breathers.',
-        duel: 'Four crowned champions come alone, each far stronger than the last. No escorts, no walls — just the ring and your sigil.',
+        duel: 'Four crowned champions come alone, each far stronger than the last. Dash through a wind-up or charge for a Duelist\'s Read, and every champion leaves a trophy draft plus Champion Tempo.',
       };
       const modeHint = modeHints[this.mode] || modeHints.trial;
       hint.innerHTML = `<span class="hint-mode">${modeHint}</span><br><b>${el.name} · ${el.role}</b> — ${el.passive}<br>
@@ -1958,11 +1963,11 @@ export class UI {
         </div>
         <div class="section-label">The new missions</div>
         <p class="subnote" style="font-size:10.5px;line-height:1.8">
-          <b>Solar Caravan</b> — the reliquary only advances while you are within ${ESCORT.escortRadius} units and no enemy is within ${ESCORT.contestedRadius} of it.
-          It has ${ESCORT.hp} integrity. Melee raiders commit to it and strike it directly while spitters and wardens hunt you; it also bleeds ${ESCORT.decay} integrity per second while you are away.
-          Hold <b>E</b> beside it to mend ${ESCORT.repairRate} integrity per second, but repair takes both hands and leaves you unable to fire. Above <b>${Math.round(ESCORT.revenueSafe * 100)}%</b> integrity the run pays full sunmarks; below it the final payout falls toward <b>×${ESCORT.revenueFloor.toFixed(2)}</b>, and at zero integrity the caravan is destroyed. Clear the road, mend when you can afford to stop shooting, then walk it the last stretch.<br><br>
+          <b>Solar Caravan</b> — the reliquary advances while you are within ${ESCORT.escortRadius} units. Enemies within ${ESCORT.contestedRadius} slow it to as little as <b>×${ESCORT.minMoveFactor.toFixed(2)}</b> speed instead of stopping it; only leaving it entirely halts the stone.
+          It has ${ESCORT.hp} integrity. Melee raiders commit to it and strike it directly while spitters and wardens hunt you. Six waystones halt the road until their ambush is clear, and the eastern rift ends in a warden siege.
+          Hold <b>E</b> beside it to mend ${ESCORT.repairRate} integrity per second, but repair takes both hands and leaves you unable to fire. Above <b>${Math.round(ESCORT.revenueSafe * 100)}%</b> integrity the run pays full sunmarks; below it the final payout falls toward <b>×${ESCORT.revenueFloor.toFixed(2)}</b>, and at zero integrity the caravan is destroyed.<br><br>
           <b>Ember Ritual</b> — stand inside a circle for ${RITUAL.chargeTime}s to seal it (longer on harder tiers). Enemies inside contest it and drain the charge; an unattended circle bleeds ${Math.round(RITUAL.decay * 100)}% per second.
-          Sealed circles stay sealed. Seal all ${RITUAL.shrineCount} and the ritual is complete.<br><br>
+          A sealed circle becomes a solar ward that pulses damage, and the first two seals open a boon draft. Seal all ${RITUAL.shrineCount} and the ritual is complete.<br><br>
           <b>Eclipse Blitz</b> — horde waves start with ${BLITZ.waveTime}s on the clock (shorter on harder tiers). Warden waves get their own sunset, scaled to the warden's health. Kills add ${BLITZ.killBonus}s and a felled warden adds ${BLITZ.bossBonus}s.
           Clear ${BLITZ.goalWave} waves before the timer empties. Boss waves still arrive every fifth wave.<br><br>
           <b>Warden Duel</b> — four champions, no escorts, no structures. Each one has ${DUEL.bossHpMult.toFixed(1)}× a normal warden's health and grows tougher each round.
@@ -2290,7 +2295,8 @@ export class UI {
           const sig = lanes.map((l, i) => (l.gate.alive ? Math.ceil(l.gate.hp / l.gate.maxHp * 20) : 'x') + ':' + counts[i]).join('|');
           if (sig !== this._laneSig) {
             this._laneSig = sig;
-            this.el.laneStrip.innerHTML = '<div class="lane-strip-head">RIFT GATES · ONLY YOUR FIRE BREAKS THEM</div>' + lanes.map((l, i) => {
+            const crossfire = (game.gateDamageMult || 1).toFixed(2);
+            this.el.laneStrip.innerHTML = '<div class="lane-strip-head">RIFT GATES · ONLY YOUR FIRE BREAKS THEM · CROSSFIRE ×' + crossfire + '</div>' + lanes.map((l, i) => {
               const g = l.gate;
               const pct = g.alive ? Math.max(0, g.hp / g.maxHp) * 100 : 0;
               const state = g.alive
@@ -2416,6 +2422,10 @@ export class UI {
       const secs = Math.max(0, game.interTimer || 0);
       phase = secs > 0.15 ? 'NEXT WAVE ' + Math.ceil(secs) : 'BREATHE';
     }
+    if (game.mode === 'hunt' && game.phase === 'active' && game.huntEscortsRemaining <= 0) phase = 'WARDEN EXPOSED';
+    if (game.mode === 'duel' && game.phase === 'active' && game.duelMomentum > 0) phase = 'TEMPO ×' + game.duelMomentum + ' · ' + phase;
+    const waveEl = game.waveElement ? ELEMENTS[game.waveElement] : null;
+    if (waveEl) phase = waveEl.sigil + ' ' + phase;
     this.el.phase.textContent = phase;
     this.el.phase.classList.toggle('hot', game.phase === 'active' || (game.phase === 'intermission' && (game.interTimer || 0) <= 3));
     if (this.el.diffTag) {
@@ -2457,8 +2467,9 @@ export class UI {
           label = 'SOLAR CARAVAN';
           pct = c ? c.progress * 100 : 0;
           value = Math.round(pct) + '%';
-          note = !c ? '' : c.atWaystone ? 'HOLD · CLEAR THE WAYSTONE' : c.contested ? 'CONTESTED · CLEAR THE ROAD' : c.escorted ? 'MOVING' : 'GET CLOSE TO MOVE IT';
+          note = !c ? '' : c.finale ? 'RIFT SIEGE · BREAK THE WARDEN' : c.atWaystone ? 'HOLD · CLEAR THE WAYSTONE' : c.contested ? 'CONTESTED · SLOWED' : c.escorted ? 'MOVING' : 'GET CLOSE TO MOVE IT';
           if (c?.waystones?.length) note += ' · WAYSTONE ' + c.waystones.filter(w => w.reached).length + '/' + c.waystones.length;
+          if (c?.attackers) note += ' · RAIDERS ' + c.attackers;
           const hull = c ? c.hp / Math.max(1, c.maxHp) : 1;
           if (c) note += ' · INTEGRITY ' + Math.round(hull * 100) + '%';
           const pay = game.objectiveRevenue?.().factor ?? 1;
@@ -2741,7 +2752,7 @@ export class UI {
         const c = g.caravan;
         const payout = g.objectiveRevenue ? g.objectiveRevenue().factor : 1;
         return `<div class="section-label">Objective</div>
-          <div class="run-notes"><span>Reliquary ${Math.round((c?.progress || 0) * 100)}%</span><span>${Math.ceil(c?.hp || 0)} / ${c?.maxHp || ESCORT.hp} integrity</span><span>final payout ×${payout.toFixed(2)}</span><span>${(c?.waystones || []).filter(w => w.reached).length} / ${(c?.waystones || []).length || ESCORT.waystones.length} waystones</span><span>${c?.atWaystone ? 'holding the waystone' : c?.contested ? 'contested' : c?.escorted ? 'moving' : 'waiting'}</span></div>`;
+          <div class="run-notes"><span>Reliquary ${Math.round((c?.progress || 0) * 100)}%</span><span>${Math.ceil(c?.hp || 0)} / ${c?.maxHp || ESCORT.hp} integrity</span><span>final payout ×${payout.toFixed(2)}</span><span>${(c?.waystones || []).filter(w => w.reached).length} / ${(c?.waystones || []).length || ESCORT.waystones.length} waystones</span><span>${c?.finale ? 'rift siege' : c?.atWaystone ? 'holding the waystone' : c?.contested ? 'contested · slowed' : c?.escorted ? 'moving' : 'waiting'}</span>${c?.attackers ? `<span>${c.attackers} raiders committed</span>` : ''}</div>`;
       }
       if (g.mode === 'ritual') {
         const r = g.ritual;
@@ -3007,12 +3018,13 @@ export class UI {
     if (!stack) return;
     while (stack.children.length >= 3) stack.firstElementChild.remove();
     const el = document.createElement('div');
-    el.className = 'toast';
+    const warning = text.startsWith('⚠');
+    el.className = warning ? 'toast warn' : 'toast';
     el.style.color = color;
     el.style.borderColor = color + '55';
     el.textContent = text;
     stack.appendChild(el);
-    setTimeout(() => el.remove(), 2600);
+    setTimeout(() => el.remove(), warning ? 3200 : 2600);
   }
 
   fusion(form) {

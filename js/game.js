@@ -67,6 +67,13 @@ export class Game {
     this.repairTarget = null;
     this._repairTick = 0;
     this.runId = 0;
+    this.caravanFinale = null;
+    this.waveElement = null;
+    this.gateDamageMult = 1;
+    this.huntEscortsRemaining = 0;
+    this.huntMomentum = 0;
+    this.duelMomentum = 0;
+    this._coreRebukeT = 0;
 
     this.wave = 0;
     this.phase = 'idle';
@@ -385,6 +392,13 @@ export class Game {
     this.ascension = 0;
     this.repairTarget = null;
     this._repairTick = 0;
+    this.caravanFinale = null;
+    this.waveElement = null;
+    this.gateDamageMult = 1;
+    this.huntEscortsRemaining = 0;
+    this.huntMomentum = 0;
+    this.duelMomentum = 0;
+    this._coreRebukeT = 0;
 
     this.state = 'playing';
     this.wave = 1;
@@ -450,8 +464,8 @@ export class Game {
       this.ui.banner('THE HUNT BEGINS', 'FOUR WARDENS', 'No core. No walls. Kill them all');
       this.ui.toast('WARDENS COME BACK TO BACK · STAY MOBILE', '#ffb07a');
     } else if (this.mode === 'escort') {
-      this.ui.banner('WALK THE LIGHT HOME', 'SOLAR CARAVAN', 'Melee raiders hit it · stay beside it · it halts at waystones');
-      this.ui.toast('MELEE RAIDERS COMMIT TO THE RELIQUARY · SPITTERS AND WARDENS HUNT YOU', '#8dffc0');
+      this.ui.banner('WALK THE LIGHT HOME', 'SOLAR CARAVAN', 'A contested road slows it · six waystones · the rift ends in a siege');
+      this.ui.toast('MELEE RAIDERS COMMIT TO THE RELIQUARY · BREAKERS IGNORE THE PEEL · HARRIERS HUNT YOU', '#8dffc0');
     } else if (this.mode === 'ritual') {
       this.ui.banner('THREE CIRCLES OPEN', 'EMBER RITUAL', 'Stand in a circle · keep the horde off it');
       this.ui.toast('SEAL ALL THREE CIRCLES · CONTESTED CIRCLES LOSE CHARGE', '#ffd166');
@@ -568,7 +582,7 @@ export class Game {
      shards into the next tier, with the horde compounding 10% harder each
      time. The mode's objective is rebuilt from scratch for the new tier. */
   ascend() {
-    if (!this.victory || this.state !== 'gameover' || !this.player) return false;
+    if (!this.victory || this.state !== 'gameover' || !this.player?.alive) return false;
     this.ascension = Math.max(0, this.ascension || 0) + 1;
     this.victory = false;
     this._deathHandled = false;
@@ -589,6 +603,13 @@ export class Game {
     this.repairTarget = null;
     this.pendingRelicDrafts = [];
     this.relicDraft = null;
+    this.caravanFinale = null;
+    this.waveElement = null;
+    this.gateDamageMult = 1;
+    this.huntEscortsRemaining = 0;
+    this.huntMomentum = 0;
+    this.duelMomentum = 0;
+    this._coreRebukeT = 0;
 
     this.enemies.clear();
     this.projectiles.clear();
@@ -671,11 +692,27 @@ export class Game {
       const lane = entry.lane != null ? this.structures?.lanes?.[entry.lane] : null;
       if (lane && !lane.gate.alive) continue; // that lane is already broken
       const angle = lane ? lane.angle + (Math.random() - 0.5) * 0.1 : this._spawnAngle();
+      // On the pilgrim road, raiders enter around the reliquary rather than
+      // walking in from the arena wall. This is what makes a committed pack
+      // reach the stone while the guardian is still clearing the last one.
+      let spawnPos = null;
+      if (this.mode === 'escort' && this.caravan?.alive) {
+        const a = Math.random() * Math.PI * 2;
+        const r = 9 + Math.random() * 7;
+        spawnPos = new THREE.Vector3(
+          this.caravan.pos.x + Math.cos(a) * r,
+          0,
+          this.caravan.pos.z + Math.sin(a) * r
+        );
+      }
       this.spawnEnemy(entry.type, {
         elite: entry.elite,
+        breaker: entry.breaker,
         bossIndex: entry.bossIndex ?? this.wavePlan?.bossIndex,
+        element: entry.element,
         angle,
         radius: lane ? LANE.laneRadius + 1.2 + Math.random() * 1.4 : undefined,
+        pos: spawnPos,
         laneAngle: lane ? lane.angle : null,
       });
     }
@@ -707,7 +744,14 @@ export class Game {
     else this.wavePlan = buildWave(this.wave, this.pacts, diff, bonus, this.arenaElement);
     // The caravan is a moving objective, so its raiders need more health to
     // survive the walk long enough to threaten the reliquary.
-    if (this.mode === 'escort') this.wavePlan.hpMult *= ESCORT.enemyHpMult;
+    if (this.mode === 'escort') {
+      this.wavePlan.hpMult *= ESCORT.enemyHpMult;
+      // A Breaker joins every road wave from the second: a slow, high-health
+      // raider whose hits matter more than its body count.
+      if (this.wave >= 2) {
+        this.wavePlan.entries.push({ type: 'brute', delay: 1.2, breaker: true, element: this.wavePlan.eventElement });
+      }
+    }
     // The descent you carried in makes the horde a little tougher than the tier alone.
     const climb = this.descentMeta();
     if (climb.rank) {
@@ -721,7 +765,9 @@ export class Game {
       this.wavePlan.dmgMult *= tier;
       this.wavePlan.speedMult *= Math.pow(1.02, this.ascension);
     }
+    this.waveElement = this.wavePlan.eventElement || null;
     this.spawnQueue = this.wavePlan.entries.map(e => ({ ...e }));
+    if (this.mode === 'hunt') this.huntEscortsRemaining = this.wavePlan.entries.filter(e => e.type !== 'boss').length;
     this.waveClock = 0;
     this.phase = 'active';
     // Every wave asks for more essence, and lays out a fresh set of arena caches.
@@ -754,6 +800,13 @@ export class Game {
       this.audio.wave();
     }
     if (bonus) this.ui.toast('LEVEL BONUS · ' + bonus.name.toUpperCase() + ' — ' + bonus.desc, bonus.css);
+    const eventEl = this.waveElement ? ELEMENTS[this.waveElement] : null;
+    if (eventEl) {
+      this.ui.toast(
+        eventEl.sigil + ' ' + eventEl.name.toUpperCase() + ' EVENT · THE HORDE CARRIES ' + eventEl.name.toUpperCase(),
+        eventEl.css
+      );
+    }
     this.audio.setIntensity(Math.min(1, 0.2 + this.wave * 0.055));
     this.interTimer = 0;
   }
@@ -841,6 +894,25 @@ export class Game {
       this.ui.banner('WAVE CLEARED', '+' + reward + ' ESSENCE', this.wave % 5 === 0 ? 'A warden approaches' : 'Breathe. Then continue');
     }
     if (this.wave % 5 === 0 && !['hunt', 'duel'].includes(this.mode)) this.ui.toast('BOSS WAVE INCOMING', '#ff9be0');
+
+    // Mode checkpoints: the shorter missions now have a build cadence instead
+    // of ending before the draft has a chance to matter.
+    if (this.mode === 'hunt') {
+      this.huntMomentum++;
+      this.player.stats.damageMult *= 1 + HUNT.momentumDamage;
+      this.player.stats.moveMult *= 1 + HUNT.momentumSpeed;
+      this.ui.toast('HUNT MOMENTUM ×' + this.huntMomentum + ' · +' + Math.round(HUNT.momentumDamage * 100) + '% DAMAGE · +' + Math.round(HUNT.momentumSpeed * 100) + '% SPEED', '#ff9a5a');
+      this.checkpointBoon('WARDEN TROPHY', '#ff9a5a');
+    } else if (this.mode === 'duel' && cleared < DUEL.goalWave) {
+      this.duelMomentum++;
+      this.player.stats.damageMult *= 1 + DUEL.momentumDamage;
+      this.player.gainCharge(DUEL.momentumUlt);
+      this.ui.toast('CHAMPION TEMPO ×' + this.duelMomentum + ' · +' + Math.round(DUEL.momentumDamage * 100) + '% DAMAGE', '#ffe9a8');
+      this.checkpointBoon('CHAMPION TROPHY', '#ffe9a8');
+    } else if (this.mode === 'siege' && SIEGE.checkpointWaves.includes(cleared)) {
+      this.checkpointBoon('SUNFORGE RITE', '#ffd98a');
+    }
+
     // Anything stored during the wave is opened here, when nothing is firing.
     if (this.pendingLevels > 0 && this.state === 'playing') this.openLevelUp();
   }
@@ -875,6 +947,68 @@ export class Game {
     this.audio.waystone();
     this.ui.banner('WAYSTONE ' + (index + 1) + ' / ' + total, 'THE ROAD IS CLEAR', '+' + ESCORT.waystoneShards + ' shards · the reliquary is mended');
     this.ui.toast('IT MOVES AGAIN · STAY BESIDE THE RELIQUARY', '#8dffc0');
+    this.checkpointBoon('WAYSTONE BARGAIN', '#8dffc0');
+  }
+
+  /* Every objective checkpoint offers a real draft, not just a stat tick.
+     That keeps builds growing in the shorter missions and makes waystones,
+     gates, wardens and circles feel like milestones. */
+  checkpointBoon(label, color = '#ffd98a') {
+    this.pendingLevels += 1;
+    this.player?.gainCharge(12);
+    this.ui.toast(label + ' · A BOON IS OFFERED', color);
+    if (this.state === 'playing') this.openLevelUp();
+  }
+
+  startWaystoneAmbush(ws) {
+    if (!ws || !this.wavePlan) return;
+    const count = 2 + Math.floor((this.wave || 1) / 2);
+    const types = ['crawler', 'crawler', 'wisp', 'brute', 'spitter'];
+    for (let i = 0; i < count; i++) {
+      const angle = Math.atan2(ws.pos.z, ws.pos.x) + (i / count) * Math.PI * 2;
+      this.spawnEnemy(types[i % types.length], {
+        angle,
+        radius: Math.max(3, Math.hypot(ws.pos.x, ws.pos.z) - 4 - (i % 2) * 3),
+        element: this.wavePlan?.eventElement,
+        elite: this.wave >= 4 && i === 0,
+        breaker: this.wave >= 3 && i === 0,
+      });
+    }
+    this.ui.toast('WAYSTONE AMBUSH · CLEAR THE STONE TO MOVE AGAIN', '#ffb066');
+    this.fx.ring(ws.pos, 0xffb066, { r0: 0.8, r1: 7, life: 0.8, opacity: 0.65 });
+    this.engine.addShake(0.28);
+  }
+
+  startCaravanFinale(caravan) {
+    if (this.caravanFinale?.boss && !this.caravanFinale.boss.dead) return this.caravanFinale.boss;
+    if (this.caravanFinale?.startedAt != null) return null;
+    const plan = this.wavePlan || { hpMult: 1, dmgMult: 1, speedMult: 1 };
+    const bossIndex = (ESCORT.finaleBossIndex || 0) % BOSSES.length;
+    const towardCenter = Math.atan2(caravan.pos.z, caravan.pos.x) + Math.PI;
+    const boss = this.spawnEnemy('boss', {
+      bossIndex,
+      angle: towardCenter,
+      radius: 7.5,
+      hpMult: (plan.hpMult || 1) * ESCORT.finaleHpMult,
+      dmgMult: (plan.dmgMult || 1) * 0.9,
+      speedMult: plan.speedMult || 1,
+    });
+    for (let i = 0; i < ESCORT.finaleAdds; i++) {
+      this.spawnEnemy(i % 2 ? 'spitter' : 'brute', {
+        angle: towardCenter + (i - 0.5) * 0.8,
+        radius: 9 + i * 2,
+        hpMult: (plan.hpMult || 1) * 0.8,
+        dmgMult: plan.dmgMult || 1,
+        speedMult: plan.speedMult || 1,
+      });
+    }
+    this.caravanFinale = { boss, startedAt: this.time };
+    this.ui.banner('THE RIFT REFUSES', (BOSSES[bossIndex]?.name || 'RIFT WARDEN').toUpperCase(), 'Break the warden · keep the reliquary alive');
+    this.ui.toast('THE FINAL STRETCH IS A SIEGE · THE ROAD NO LONGER CARRIES YOU', '#ffd98a');
+    this.engine.pulseExposure(0.65);
+    this.engine.addShake(1.1);
+    this.audio.boss(bossIndex);
+    return boss;
   }
 
   onCaravanArrived() {
@@ -896,7 +1030,10 @@ export class Game {
     this.gainXp(40 + this.wave * 6);
     const sealed = this.ritual?.shrines.filter(s => s.sealed).length || 0;
     this.audio.ritualSeal();
-    this.ui.banner('CIRCLE SEALED', 'THE EMBER GROWS', sealed + ' / ' + RITUAL.shrineCount + ' circles held');
+    this.ui.banner('CIRCLE SEALED', 'THE EMBER GROWS', sealed + ' / ' + RITUAL.shrineCount + ' circles held · this circle now burns the horde');
+    // The third seal is the victory; a draft there would be hidden by the
+    // results screen, so the first two are the build checkpoints.
+    if (sealed < RITUAL.shrineCount) this.checkpointBoon('SEALED CIRCLE', '#ffd166');
   }
 
   onRitualComplete() {
@@ -916,12 +1053,18 @@ export class Game {
       this.onVictory();
       return;
     }
+    // Crossfire: each fallen gate exposes the next, and the backlash clears
+    // the lane around it. The last gate is the only one that ends the run.
+    this.gateDamageMult = 1 + (LANE.goalGates - left) * LANE.crossfire;
+    this.areaDamage(gate.pos, LANE.gateBacklashRadius, LANE.gateBacklash + this.wave * 3, { color: gate.lane.css, element: 'lumen' });
+    this.fx.ring(gate.pos, gate.lane.css, { r0: 1, r1: LANE.gateBacklashRadius, life: 0.8, opacity: 0.7 });
     this.ui.banner(
       gate.short + ' GATE BROKEN',
       left + ' LANE' + (left === 1 ? '' : 'S') + ' REMAIN',
-      'Their rift is closed — +' + LANE.gateShardReward + ' shards · +' + Math.round(LANE.siphon * 100) + '% siphon'
+      'Their rift is closed — +' + LANE.gateShardReward + ' shards · crossfire ×' + this.gateDamageMult.toFixed(2)
     );
     this.ui.toast('THE ' + gate.short + ' LANE FALLS SILENT', gate.lane.css);
+    this.checkpointBoon('CROSSFIRE', gate.lane.css);
     this.ui.updateHud(this);
   }
 
@@ -950,6 +1093,19 @@ export class Game {
     this.coreGuard = Math.hypot(p.pos.x - core.pos.x, p.pos.z - core.pos.z) <= SIEGE.aegisRadius;
     this.coreLastLight = core.hp / core.maxHp <= SIEGE.lastLightPct;
     if (this.coreGuard && this.coreLastLight) p.gainCharge(SIEGE.lastLightCharge * dt);
+
+    // A wounded Sunforge pushes back. The rebuke is deliberately on a long
+    // cadence: it buys a breath, not a second tower.
+    this._coreRebukeT = Math.max(0, (this._coreRebukeT || 0) - dt);
+    if (core.hp / Math.max(1, core.maxHp) <= SIEGE.rebukePct && this._coreRebukeT <= 0) {
+      this._coreRebukeT = SIEGE.rebukeInterval;
+      this.areaDamage(core.pos, SIEGE.rebukeRadius, SIEGE.rebukeDamage + this.wave * 2, { color: 0xffd28a, element: 'lumen' });
+      this.fx.ring(core.pos, 0xffd28a, { r0: 0.8, r1: SIEGE.rebukeRadius, life: 0.7, opacity: 0.8 });
+      this.fx.burst(new THREE.Vector3(0, 2.4, 0), 0xffd28a, { count: 28, speed: 7, size: 0.28, life: 0.8, up: 3 });
+      this.engine.addShake(0.35);
+      this.audio.objectiveDanger?.(1);
+      this.ui.toast('SUNFORGE REBUKE · THE CORE PUSHES THE BREACH BACK', '#ffd98a');
+    }
 
     // Two audible integrity alarms, one for a cracked Sunforge and one for a dying one.
     const integrity = core.hp / Math.max(1, core.maxHp);
@@ -1001,16 +1157,24 @@ export class Game {
 
   spawnEnemy(type, opts = {}) {
     const plan = this.wavePlan || { hpMult: 1, dmgMult: 1, speedMult: 1, bossIndex: 0 };
+    const harrier = this.mode === 'escort' && !opts.elite && type === 'wisp'
+      && Math.random() < ESCORT.harrierChance;
     const e = this.enemies.spawn(type, {
-      hpMult: plan.hpMult,
-      dmgMult: plan.dmgMult,
-      speedMult: plan.speedMult,
+      hpMult: opts.hpMult ?? plan.hpMult,
+      dmgMult: opts.dmgMult ?? plan.dmgMult,
+      speedMult: opts.speedMult ?? plan.speedMult,
       bossIndex: opts.bossIndex ?? plan.bossIndex,
+      element: opts.element,
       elite: opts.elite,
+      breaker: opts.breaker,
+      harrier,
       angle: opts.angle,
       radius: opts.radius,
+      pos: opts.pos,
       laneAngle: opts.laneAngle,
     });
+    if (e?.harrier) e.name = 'Harrier Wisp';
+    if (e?.breaker) e.name = 'Breaker Brute';
     if (e?.isBoss) {
       this.ui.setBoss(e);
       this.audio.boss(e.bossIndex ?? plan.bossIndex ?? 0);
@@ -1028,13 +1192,28 @@ export class Game {
 
   /* ---------------- DAMAGE ---------------- */
   damageEnemy(enemy, amount, opts = {}) {
-    if (!enemy || enemy.dead || amount <= 0) return 0;
+    if (!enemy || enemy.dead || enemy.invisible || amount <= 0) return 0;
     let dmg = amount;
     const p = this.player;
     const attackers = opts.element ? [opts.element] : this.attackerElements();
     const elMult = enemy.element && attackers.length ? bestElementMult(attackers, enemy.element) : 1;
     const resonant = !opts.element && !!this.arenaElement && attackers.includes(this.arenaElement);
     dmg *= elMult * (resonant ? ELEMENT_MATCH.resonance : 1);
+    // Shooting a raider peels it off the reliquary for a moment. This is the
+    // player's active answer to a committed pack, without turning every melee
+    // enemy back into a player-chaser.
+    if (this.mode === 'escort' && this.caravan?.alive && !enemy.isBoss && !enemy.type.ranged
+      && !enemy.breaker && !enemy.harrier && Math.random() < ESCORT.provokeChance) {
+      const wasProvoked = (enemy.provokedUntil || 0) > this.time;
+      enemy.provokedUntil = this.time + ESCORT.provokeTime;
+      if (!wasProvoked) {
+        this.fx.ring(enemy.pos, 0xffd28a, { r0: 0.3, r1: 1.8, life: 0.3, opacity: 0.5 });
+      }
+    }
+    // In a hunt, clearing the court first leaves the warden exposed.
+    if (this.mode === 'hunt' && enemy.isBoss && this.huntEscortsRemaining <= 0) {
+      dmg *= 1 + HUNT.exposedBonus;
+    }
     const executeBonus = (p?.stats.execute || 0) + (p?.relicBonuses?.().execute || 0);
     if (opts.execute && enemy.hp / enemy.maxHp < 0.22) dmg = Math.max(dmg, enemy.hp);
     if (executeBonus > 0 && enemy.hp / enemy.maxHp < 0.35) dmg *= 1 + executeBonus;
@@ -1065,6 +1244,13 @@ export class Game {
   killEnemy(enemy) {
     if (enemy.dead) return;
     enemy.dead = true;
+    if (this.mode === 'hunt' && !enemy.isBoss && this.huntEscortsRemaining > 0) {
+      this.huntEscortsRemaining = Math.max(0, this.huntEscortsRemaining - 1);
+      if (this.huntEscortsRemaining === 0) {
+        this.ui.toast('THE COURT IS CLEAR · THE WARDEN IS EXPOSED', '#ffd98a');
+        this.fx.ring(enemy.pos, 0xffd98a, { r0: 0.4, r1: 4.5, life: 0.6, opacity: 0.65 });
+      }
+    }
     const mult = this.comboMult();
     this.kills++;
     this.combo++;
@@ -2323,6 +2509,9 @@ export class Game {
   }
 
   finishRun({ cause = 'player', victory = false, delay = 750 } = {}) {
+    // A death after a win must not leave the old victory flag behind: the
+    // results screen reads it to decide whether Ascend is legal.
+    this.victory = victory;
     this.state = 'gameover';
     this.audio.setIntensity(victory ? 0.6 : 0.1);
     const reached = this.wave;

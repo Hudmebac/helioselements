@@ -122,8 +122,8 @@ export const LORE = {
       kicker: 'The road',
       title: 'The Pilgrim Road',
       paragraphs: [
-        `Not every piece of the dawn stayed in the Sunforge. One reliquary was carried out before the Eclipse closed, and it has been walking ever since — five waystones, one long loop, no shelter.`,
-        `It only moves while someone is beside it and the road ahead is clear, and it dims when it is left alone. Melee raiders commit to it and strike the reliquary directly while spitters and wardens hunt the guardian. You are not escorting a box. You are escorting the last lit window on the road.`,
+        `Not every piece of the dawn stayed in the Sunforge. One reliquary was carried out before the Eclipse closed, and it has been walking ever since — six waystones, one long loop, no shelter.`,
+        `It advances while someone is beside it, and a contested road slows rather than stops it. Melee raiders commit to it and strike it directly, Breakers ignore the peel, and fast Harriers hunt the guardian instead. The eastern rift does not open at the end of the road: it answers with a warden siege. You are not escorting a box. You are escorting the last lit window on the road.`,
       ],
     },
     {
@@ -191,7 +191,7 @@ export const GUIDE = {
         `Pick a sigil on the mission screen. All six are viable; they differ in rhythm. Ember and Stone hit slowly and hard, Gale and Lumen hit fast and precise, Tide and Umbra trade damage for sustain.`,
         `Pick a mission. Sunforge Siege is the default and the best place to learn: there is a core to defend, so your mistakes are survivable for a while. Warden Duel is the opposite — one champion, no adds, nothing to hide behind.`,
         `Pick a difficulty. Solar is the balance point. Kindled is a gentler descent. Umbral and Hardcore unlock as you prove the run can be finished, and they pay more sunmarks for it.`,
-        `Then hold the line. A Siege run is ${SIEGE.goalWave} waves; a Blitz is ${BLITZ.goalWave} on a clock; a Caravan is one long road; a Duel is four champions.`,
+        `Then hold the line. A Siege run is ${SIEGE.goalWave} waves; a Blitz is ${BLITZ.goalWave} on a clock; a Caravan is a road that ends in a rift siege; a Hunt is four courts; a Duel is four champions.`,
       ],
     },
     {
@@ -267,6 +267,10 @@ export const GUIDE = {
         `Clearing waves, felling wardens and calling waves early all pay sun shards. Shards buy towers on the pedestals around the core (${keyLabel('KeyB')} opens the Forge) and upgrades for the towers you already own.`,
         `Hold ${keyLabel('KeyE')} near the core or a damaged tower to repair it by hand. It is free and it is slow, and standing still with your hands full is exactly what the horde wants. Mending takes both hands: neither weapon fires until you let go.`,
         `Towers hold; they do not win. In Sunfall Lanes only your own fire can break a Rift Gate, and in the Siege only your own fire kills the warden.`,
+        `Objectives now pay in drafts as well as shards: Sunforge Rites on waves 5, 10 and 15, a waystone bargain at every Caravan stone, a trophy after every Lanes gate and every felled Hunt or Duel champion, and a boon at each of the first two Ritual seals.`,
+        `Every wave carries a dominant element. The horde's badge, ground ring and halo show it before the first hit: your shots hit harder or softer against that element, and its attacks use the same wheel against your founding sigil.`,
+        `Wardens and crowned enemies now announce one element set piece: Cinder Eruption, Tidal Mend, Squall Sprint, Stone Slam, Solar Judgment, Nightfall or Void Pull. A warning names it two seconds before it starts; the ground ring is the tell, so move out of it or dash through it.`,
+        `Horde silhouettes are more readable at a glance: carapaces, mandibles, cores, pauldrons, muzzles and crowns separate regulars, crowned enemies and wardens without relying on the name plate alone.`,
       ],
     },
     {
@@ -306,8 +310,10 @@ export const GUIDE = {
         `Kill the Spitters first. Everything else has to walk to you.`,
         `Bank a level-up before a warden wave and open it after the first volley.`,
         `Do not spend every shard on new towers; a rank-2 tower you repair beats two rank-1 towers you do not.`,
-        `In the Caravan, the arrow above the reliquary points at the next checkpoint — the next unlit waystone, then the eastern rift — and the soft ground ring marks exactly where you have to stand. It tints red when the road is contested. Kill the melee raiders hammering the reliquary first; spitters and wardens are still yours to handle.`,
-        `In the Ritual, one sealed circle stays sealed — trade ground for time.`,
+        `In the Caravan, the arrow above the reliquary points at the next checkpoint — the next unlit waystone, then the eastern rift — and the soft ground ring marks exactly where you must stand. It tints red when the road is contested, but contested only slows the stone. Shoot a raider to peel it onto you for a moment; the fast Harrier wisps are already hunting you.`,
+        `In the Ritual, a sealed circle becomes a solar ward that burns the horde around it. The first two seals also open a boon, so sealing is a build step, not only a win condition.`,
+        `In Sunfall Lanes, every broken gate adds crossfire damage to the remaining gates and clears its lane with a backlash. In the Hunt, clear the court first: the last escort falling exposes the warden.`,
+        `In the Duel, dash through a champion's wind-up or charge for a Duelist's Read and +18 ultimate charge. Every champion felled makes the next round hit harder in your favour.`,
         `In the Blitz, the clock is fed by kills, so the last three enemies of a wave are worth more than the first ten.`,
         `A fusion at level three is worth more than four damage boons. Plan the draft around it.`,
         `If the Descent is biting, step back a rank. The records are kept per tier, not per pride.`,
@@ -376,7 +382,7 @@ export const FAQ = [
   },
   {
     q: 'How long is a run?',
-    a: 'A Sunforge Siege is twenty waves, roughly fifteen to twenty-five minutes. Blitz and Duel are shorter; a Caravan is one long road.',
+    a: 'A Sunforge Siege is twenty waves, roughly fifteen to twenty-five minutes. Blitz and Duel are shorter; a Caravan is a road and a rift siege, and a Hunt is four warden courts.',
   },
   {
     q: 'What carries between runs?',
@@ -412,6 +418,43 @@ export const FAQ = [
    CHANGELOG — newest first. Add an entry every release.
    ------------------------------------------------------------ */
 export const CHANGELOG = [
+  {
+    version: '1.13.0',
+    date: '2026-11-24',
+    title: 'Read the Silhouette',
+    items: [
+      'Refined every horde silhouette: crawler carapace, mandibles and tail; wisp core, shard ring and trailing shards; brute head, pauldrons, forearms and jaw; spitter muzzle, side pods and tendrils.',
+      'Mini-bosses gained a coloured mantle, a pulsing core, a six-point crown and a crown gem on top of their existing aura, so a crowned enemy reads before its health bar does.',
+      'Wardens gained secondary silhouettes: rift blades, colossus pauldrons and shoulder spikes, herald cages, a solar disc and embers, a tyrant crown and shoulders, and seraph glass feathers.',
+      'Crawler legs, back spikes and eyes are batch-drawn as instanced meshes; a 50-crawler live check fell from about 1,295 to 886 draw calls.',
+      'Mechanic set pieces now issue a larger two-second warning toast with the mechanic name and a warning ring, then reset the warning for the next rotation.',
+    ],
+  },
+  {
+    version: '1.12.0',
+    date: '2026-11-24',
+    title: 'The Wheel Answers',
+    items: [
+      'Every wave now has a dominant element, with a deliberate minority of adjacent elements. Enemy badges, ground rings and halos carry the colour and sigil, and enemy attacks use the same elemental advantage as the player\'s shots.',
+      'Wardens and crowned enemies gained element set pieces: Cinder Eruption, Tidal Mend, Squall Sprint, Stone Slam, Solar Judgment, Nightfall and Void Pull. Each has a ground tell and a real answer.',
+      'Boss volleys, charges and summons were spaced out so the set piece is the event, not another fan of shots.',
+      'Ascend is now gated on a living victorious guardian, and a death clears the old victory flag so the results screen can never offer a broken ascension. The results screen only hides after a successful ascend.',
+    ],
+  },
+  {
+    version: '1.11.0',
+    date: '2026-11-24',
+    title: 'The Long Road Answers',
+    items: [
+      'Solar Caravan rebuilt around six waystones: each stone wakes an ambush, offers a waystone bargain draft and mends the reliquary. A contested road now slows the stone instead of pinning it, and the last stretch is a rift siege against a warden. Breakers ignore the peel; Harriers hunt the guardian.',
+      'Sunforge Siege added a core rebuke below half integrity and Sunforge Rites at waves 5, 10 and 15. A wounded core now pushes the breach back on a long cadence.',
+      'Sunfall Lanes added crossfire: every broken gate makes the remaining gates take +18% damage, clears its lane with a backlash and opens a boon draft.',
+      'Warden Hunt now exposes the warden when the last escort falls (+18% damage), and every felled warden grants a trophy draft plus permanent Hunt Momentum (+12% damage, +8% speed).',
+      'Ember Ritual sealed circles became solar wards that pulse damage. The first two seals open a boon draft, so holding a circle is now part of the build.',
+      'Warden Duel added the Duelist\'s Read — dash through a champion\'s wind-up or charge for +18 ultimate charge — and Champion Tempo (+15% damage and a trophy draft after every champion).',
+      'Short missions now share a checkpoint boon cadence, so a run no longer ends before its draft can matter.',
+    ],
+  },
   {
     version: '1.10.1',
     date: '2026-11-24',
@@ -508,7 +551,7 @@ export const CHANGELOG = [
     date: '2026-11-24',
     title: 'Scars cost marks',
     items: [
-      'The Solar Caravan can be mended by hand. Hold E within 5.8 units of a damaged reliquary to restore 34 integrity per second; the repair channel silences both weapons, so every second of mending is a second not spent clearing the road. The repair prompt turns green and shows the caravan’s integrity.',
+      'The Solar Caravan can be mended by hand. Hold E within 5.8 units of a damaged reliquary to restore 30 integrity per second; the repair channel silences both weapons, so every second of mending is a second not spent clearing the road. The repair prompt turns green and shows the caravan’s integrity.',
       'Caravan damage now costs sunmarks. A run that brings the reliquary home above 90% integrity pays in full; below that the final payout slides down toward ×0.40 at zero integrity. The reliquary shatters at zero, ending the run — and the payout is cut to the floor.',
       'The Sunforge pays for the state of the hold. Core integrity above 80% pays in full, below it the final payout scales toward ×0.50. Every destroyed defense takes another 4% off, up to a 40% cut, so tower losses follow you to the results screen.',
       'Damage is visible before the result. The pause screen shows the final payout multiplier and defenses lost, the caravan HUD shows integrity and the current payout cut, and the results screen explains exactly how much integrity cost you.',
