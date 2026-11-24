@@ -3,7 +3,7 @@
    Periodic Horde, behaviours, bosses and the horde manager.
    ============================================================ */
 
-import { ENEMIES, BOSSES, ELEMENTS } from './data.js';
+import { ENEMIES, BOSSES, ELEMENTS, ESCORT } from './data.js';
 import { arenaClamp, arenaRadiusAt, glowTexture, shadowTexture, sigilTexture } from './engine.js';
 
 const shadowMat = new THREE.MeshBasicMaterial({
@@ -642,7 +642,8 @@ export class Enemy {
     if (target.kind !== 'player' && target.alive && this.attackCd <= 0 && this.chargeWind <= 0) {
       const reach = this.radius + (target.radius || 1) + 0.2;
       if (dist < reach) {
-        game.structures?.damage(target, this.damage, game);
+        if (target.kind === 'caravan') game.caravan?.damage(this.damage * ESCORT.attackDamageMult, game);
+        else game.structures?.damage(target, this.damage, game);
         this.attackCd = this.isBoss ? 1.1 : 0.9;
         game.fx.burst(new THREE.Vector3(this.pos.x, 1, this.pos.z), this.glow, { count: 7, speed: 3, size: 0.18, life: 0.35 });
       }
@@ -690,6 +691,13 @@ export class Enemy {
 
   _targetFor(game) {
     const playerTarget = { kind: 'player', pos: game.player.pos, radius: 0.85, alive: true };
+    const caravan = game.caravan;
+    if (caravan?.alive) {
+      // Melee raiders commit to the reliquary; ranged enemies and wardens keep
+      // hunting the guardian. The player cannot body-block raiders off it.
+      if (this.type.ranged || this.isBoss) return playerTarget;
+      return { kind: 'caravan', pos: caravan.pos, radius: caravan.radius, alive: true };
+    }
     if (!game.structures) return playerTarget;
 
     const structure = game.structures.nearestAlive(this.pos);

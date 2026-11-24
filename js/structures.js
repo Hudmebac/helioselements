@@ -961,7 +961,6 @@ export class Caravan {
     this.name = 'Solar Caravan';
     this.radius = 1.45;
     this.warnStep = 0;
-    this._hitCd = 0;
     this._flash = 0;
     this._t = 0;
 
@@ -1253,36 +1252,36 @@ export class Caravan {
     if (!this.escorted && !this.contested) {
       this.hp = Math.max(0, this.hp - this.decayRate * dt);
       if (this.hp <= 0) {
-        this.alive = false;
-        this.fx.burst(new THREE.Vector3(this.pos.x, 1.8, this.pos.z), 0x8dffc0, { count: 70, speed: 13, size: 0.4, life: 1.6, up: 5 });
-        this.fx.ring(this.pos, 0xff8a52, { r0: 0.5, r1: 12, life: 1.2, opacity: 0.8 });
-        game.audio?.objectiveDanger?.(2);
-        this.audio?.death?.();
-        game.onCaravanLost();
+        this._shatter(game);
         return;
       }
     }
 
-    // The horde tears at the reliquary whenever it is close enough.
-    this._hitCd -= dt;
-    if (foes > 0 && this._hitCd <= 0) {
-      this._hitCd = ESCORT.damageInterval;
-      const dmg = (ESCORT.damagePerEnemy + game.wave * ESCORT.waveDamage) * Math.min(6, foes);
-      this.hp = Math.max(0, this.hp - dmg);
-      this._flash = 0.14;
-      this.fx.number(new THREE.Vector3(this.pos.x, 2.8, this.pos.z), '-' + Math.round(dmg), '');
-      this.fx.ring(this.pos, 0xff7a52, { r0: 0.4, r1: 2.4, life: 0.35, opacity: 0.6 });
-      game.engine.addShake(0.1);
-      if (this.hp <= 0) {
-        this.alive = false;
-        this.fx.burst(new THREE.Vector3(this.pos.x, 1.8, this.pos.z), 0x8dffc0, { count: 70, speed: 13, size: 0.4, life: 1.6, up: 5 });
-        this.fx.ring(this.pos, 0xff8a52, { r0: 0.5, r1: 12, life: 1.2, opacity: 0.8 });
-        game.audio?.objectiveDanger?.(2);
-        this.audio?.death?.();
-        game.onCaravanLost();
-      }
-    }
     this._checkIntegrity(game);
+  }
+
+  /* Melee raiders strike the reliquary directly; the old proximity tick is
+     gone so every point of damage has an attacker behind it. */
+  damage(amount, game) {
+    if (!this.alive || amount <= 0) return 0;
+    const dealt = Math.min(this.hp, Math.max(1, amount));
+    this.hp -= dealt;
+    this._flash = 0.14;
+    this.fx.number(new THREE.Vector3(this.pos.x, 2.8, this.pos.z), '-' + Math.round(dealt), '');
+    this.fx.ring(this.pos, 0xff7a52, { r0: 0.4, r1: 2.4, life: 0.35, opacity: 0.6 });
+    game?.engine?.addShake?.(0.06);
+    if (this.hp <= 0) this._shatter(game);
+    return dealt;
+  }
+
+  _shatter(game) {
+    if (!this.alive) return;
+    this.alive = false;
+    this.fx.burst(new THREE.Vector3(this.pos.x, 1.8, this.pos.z), 0x8dffc0, { count: 70, speed: 13, size: 0.4, life: 1.6, up: 5 });
+    this.fx.ring(this.pos, 0xff8a52, { r0: 0.5, r1: 12, life: 1.2, opacity: 0.8 });
+    game?.audio?.objectiveDanger?.(2);
+    this.audio?.death?.();
+    game?.onCaravanLost?.();
   }
 
   _checkIntegrity(game) {

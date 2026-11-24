@@ -123,7 +123,7 @@ export const LORE = {
       title: 'The Pilgrim Road',
       paragraphs: [
         `Not every piece of the dawn stayed in the Sunforge. One reliquary was carried out before the Eclipse closed, and it has been walking ever since — five waystones, one long loop, no shelter.`,
-        `It only moves while someone is beside it and the road ahead is clear, and it dims when it is left alone. Every enemy that reaches it tears a little of the dawn out. You are not escorting a box. You are escorting the last lit window on the road.`,
+        `It only moves while someone is beside it and the road ahead is clear, and it dims when it is left alone. Melee raiders commit to it and strike the reliquary directly while spitters and wardens hunt the guardian. You are not escorting a box. You are escorting the last lit window on the road.`,
       ],
     },
     {
@@ -306,7 +306,7 @@ export const GUIDE = {
         `Kill the Spitters first. Everything else has to walk to you.`,
         `Bank a level-up before a warden wave and open it after the first volley.`,
         `Do not spend every shard on new towers; a rank-2 tower you repair beats two rank-1 towers you do not.`,
-        `In the Caravan, the arrow above the reliquary points at the next checkpoint — the next unlit waystone, then the eastern rift — and the soft ground ring marks exactly where you have to stand. It tints red when the road is contested. Clear the road it points down, never the road behind the reliquary.`,
+        `In the Caravan, the arrow above the reliquary points at the next checkpoint — the next unlit waystone, then the eastern rift — and the soft ground ring marks exactly where you have to stand. It tints red when the road is contested. Kill the melee raiders hammering the reliquary first; spitters and wardens are still yours to handle.`,
         `In the Ritual, one sealed circle stays sealed — trade ground for time.`,
         `In the Blitz, the clock is fed by kills, so the last three enemies of a wave are worth more than the first ten.`,
         `A fusion at level three is worth more than four damage boons. Plan the draft around it.`,

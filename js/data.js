@@ -957,12 +957,12 @@ export const MODES = {
   escort: {
     key: 'escort', name: 'Solar Caravan', kicker: 'The escort',
     tagline: 'Walk the light home.',
-    desc: 'A reliquary of dawn must be walked the length of the pilgrim road to the rift. It only moves while you are beside it and the road ahead is clear — and the horde tears at it whenever it gets close.',
+    desc: 'A reliquary of dawn must be walked the length of the pilgrim road to the rift. Melee raiders commit to it while spitters and wardens hunt you. It only moves while you are beside it and the road ahead is clear.',
     goal: 'Walk the reliquary home',
     steps: [
       'Stand within 6.5m of the reliquary to push it forward. Leave it and it stops, then starts to dim.',
-      'Clear the road: anything within 4m of the reliquary tears its integrity down. Hold E beside it to mend it, but repairing leaves both weapons silent.',
-      'It halts at five waystones until the ground around them is clear. Each one mends the reliquary and pays shards. Heavy damage cuts the final sunmark payout; at zero integrity the caravan is destroyed.',
+      'Melee raiders ignore you and attack the reliquary directly. Spitters and wardens still hunt you. Kill the raiders before they break it; standing on the reliquary does not pull them off.',
+      'It halts at five waystones until the ground around them is clear. Each one mends the reliquary and pays shards. Hold E beside it to mend it, but repairing leaves both weapons silent. Heavy damage cuts the final sunmark payout; at zero integrity the caravan is destroyed.',
     ],
     win: 'The reliquary reaches the eastern rift',
     fail: 'Reliquary integrity reaches zero',
@@ -1330,9 +1330,10 @@ export const ESCORT = {
   contestedRadius: 4.2,
   repairRate: 30,
   repairRadius: 5.8,
-  damageInterval: 0.9,
-  damagePerEnemy: 7,
-  waveDamage: 1.2,
+  // Escort enemies are meant to survive long enough to reach the reliquary;
+  // their direct attacks are paced below the old proximity tick.
+  enemyHpMult: 1.3,
+  attackDamageMult: 0.55,
   decay: 7,
   /* Integrity is the pay ledger. Above the safe line the run pays in full;
      below it every crack takes marks off the final purse. */

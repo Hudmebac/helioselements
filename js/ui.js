@@ -262,7 +262,7 @@ export class UI {
           </button>
           <button class="mode-card" data-mode="escort" style="--mc:#73e698">
             <span class="mode-ico">⛨</span>
-            <span class="mode-txt"><em>THE ESCORT</em><b>Solar Caravan</b><span>Walk a reliquary home while the horde tears at it.</span></span>
+            <span class="mode-txt"><em>THE ESCORT</em><b>Solar Caravan</b><span>Walk a reliquary home while melee raiders commit to it.</span></span>
             <span class="mode-tag">BEST <b data-best-escort>0</b></span>
           </button>
           <button class="mode-card" data-mode="ritual" style="--mc:#ffd166">
@@ -1666,7 +1666,7 @@ export class UI {
         lane: 'Three lanes feed the core. Tower the lane pads to hold it, then walk out to a Rift Gate and shoot it — towers cannot damage gates, only your fire, surges and ultimates can.',
         trial: 'No core. No defenses. Survive the endless horde and push your best wave.',
         hunt: 'No core and no walls. Four wardens arrive back to back — kill every one before the arena closes.',
-        escort: 'The reliquary only moves while you stand beside it and nothing is contesting it. Enemies close to it tear it apart; hold E beside it to mend it, but repairing leaves you unable to fire. Damage cuts the final sunmark payout and at zero integrity the caravan is destroyed. Clear the road, then walk it home.',
+        escort: 'The reliquary only moves while you stand beside it and nothing is contesting it. Melee raiders ignore you and attack it directly; spitters and wardens hunt you. Hold E beside it to mend it, but repairing leaves you unable to fire. Damage cuts the final sunmark payout and at zero integrity the caravan is destroyed. Kill the raiders, then walk it home.',
         ritual: 'Three ember circles ring the arena. Stand inside one to charge it; enemies inside stop the charge and drain it. Seal all three at once before the flame gutters out.',
         blitz: 'Every wave is on a clock. Kills and warden kills add time. Clear twelve waves before the sun sets — there are no breathers.',
         duel: 'Four crowned champions come alone, each far stronger than the last. No escorts, no walls — just the ring and your sigil.',
@@ -1959,7 +1959,7 @@ export class UI {
         <div class="section-label">The new missions</div>
         <p class="subnote" style="font-size:10.5px;line-height:1.8">
           <b>Solar Caravan</b> — the reliquary only advances while you are within ${ESCORT.escortRadius} units and no enemy is within ${ESCORT.contestedRadius} of it.
-          It has ${ESCORT.hp} integrity, takes escalating damage from every enemy crowding it, and bleeds ${ESCORT.decay} integrity per second while you are away.
+          It has ${ESCORT.hp} integrity. Melee raiders commit to it and strike it directly while spitters and wardens hunt you; it also bleeds ${ESCORT.decay} integrity per second while you are away.
           Hold <b>E</b> beside it to mend ${ESCORT.repairRate} integrity per second, but repair takes both hands and leaves you unable to fire. Above <b>${Math.round(ESCORT.revenueSafe * 100)}%</b> integrity the run pays full sunmarks; below it the final payout falls toward <b>×${ESCORT.revenueFloor.toFixed(2)}</b>, and at zero integrity the caravan is destroyed. Clear the road, mend when you can afford to stop shooting, then walk it the last stretch.<br><br>
           <b>Ember Ritual</b> — stand inside a circle for ${RITUAL.chargeTime}s to seal it (longer on harder tiers). Enemies inside contest it and drain the charge; an unattended circle bleeds ${Math.round(RITUAL.decay * 100)}% per second.
           Sealed circles stay sealed. Seal all ${RITUAL.shrineCount} and the ritual is complete.<br><br>

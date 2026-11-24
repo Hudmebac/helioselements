@@ -450,8 +450,8 @@ export class Game {
       this.ui.banner('THE HUNT BEGINS', 'FOUR WARDENS', 'No core. No walls. Kill them all');
       this.ui.toast('WARDENS COME BACK TO BACK · STAY MOBILE', '#ffb07a');
     } else if (this.mode === 'escort') {
-      this.ui.banner('WALK THE LIGHT HOME', 'SOLAR CARAVAN', 'Stay beside it · clear the road · it halts at waystones');
-      this.ui.toast('THE RELIQUARY ONLY MOVES WHILE YOU ARE BESIDE IT · CLEAR THE ENEMIES OFF IT', '#8dffc0');
+      this.ui.banner('WALK THE LIGHT HOME', 'SOLAR CARAVAN', 'Melee raiders hit it · stay beside it · it halts at waystones');
+      this.ui.toast('MELEE RAIDERS COMMIT TO THE RELIQUARY · SPITTERS AND WARDENS HUNT YOU', '#8dffc0');
     } else if (this.mode === 'ritual') {
       this.ui.banner('THREE CIRCLES OPEN', 'EMBER RITUAL', 'Stand in a circle · keep the horde off it');
       this.ui.toast('SEAL ALL THREE CIRCLES · CONTESTED CIRCLES LOSE CHARGE', '#ffd166');
@@ -705,6 +705,9 @@ export class Game {
     else if (this.mode === 'hunt') this.wavePlan = buildHuntWave(this.wave, this.pacts, diff, bonus);
     else if (this.mode === 'duel') this.wavePlan = buildDuelWave(this.wave, this.pacts, diff, bonus);
     else this.wavePlan = buildWave(this.wave, this.pacts, diff, bonus, this.arenaElement);
+    // The caravan is a moving objective, so its raiders need more health to
+    // survive the walk long enough to threaten the reliquary.
+    if (this.mode === 'escort') this.wavePlan.hpMult *= ESCORT.enemyHpMult;
     // The descent you carried in makes the horde a little tougher than the tier alone.
     const climb = this.descentMeta();
     if (climb.rank) {
@@ -740,10 +743,11 @@ export class Game {
       this.ui.banner(kicker, (boss.name || 'RIFT WARDEN').toUpperCase(), boss.title || 'THE RIFT STIRS');
       this.engine.pulseExposure(0.4);
     } else {
-      const titles = { siege: 'HOLD THE SUNFORGE', lane: 'DEFEND THE LANES', trial: 'HOLD THE ARENA' };
+      const titles = { siege: 'HOLD THE SUNFORGE', lane: 'DEFEND THE LANES', escort: 'SHIELD THE RELIQUARY', trial: 'HOLD THE ARENA' };
       const subs = {
         siege: this.wave % 5 === 4 ? 'A warden is coming' : 'The core must survive',
         lane: this.wave % 5 === 4 ? 'A warden marches a lane' : 'Break the gates. Hold the core',
+        escort: this.wave % 5 === 4 ? 'A warden is coming' : 'Melee raiders are committing to the reliquary',
         trial: 'Clear the horde',
       };
       this.ui.banner('WAVE ' + String(this.wave).padStart(2, '0'), titles[this.mode] || titles.trial, subs[this.mode] || subs.trial);
