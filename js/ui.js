@@ -2549,9 +2549,10 @@ export class UI {
       if (p.ward) loadout.push((WARDS[p.ward.key]?.name || 'WARD').split(' ')[0].toUpperCase() + ' R' + p.ward.rank);
     }
     const ranks = loadout.length ? '  ·  ' + loadout.join(' · ') : '';
+    const banked = game.swaps > 0 ? '  ·  ' + game.swaps + ' SWAP' + (game.swaps === 1 ? '' : 'S') + ' BANKED' : '';
     sub.textContent = (game.pendingLevels > 1
       ? game.pendingLevels + ' boons remain — choose one'
-      : 'The sun offers three paths. Take one.') + ranks;
+      : 'The sun offers three paths. Take one.') + ranks + banked;
     const grid = document.getElementById('boon-grid');
     grid.innerHTML = cards.map((c, i) => {
       const css = c.css || '#a9b6d6';

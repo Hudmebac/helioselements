@@ -26,6 +26,7 @@ export function defaultSave() {
     difficultyBest: { kindled: 0, solar: 0, umbral: 0, hardcore: 0 },
     difficultyWins: { kindled: 0, solar: 0, umbral: 0, hardcore: 0 },
     marks: 0,
+    swapBank: 0,
     achievements: {},
     rewards: {},
     codex: { relics: {}, boons: {} },
@@ -45,6 +46,7 @@ export function normalizeSave(input) {
       ...base,
       ...parsed,
       marks: Math.max(0, Math.floor(Number(parsed.marks) || 0)),
+      swapBank: Math.max(0, Math.floor(Number(parsed.swapBank) || 0)),
       achievements: { ...base.achievements, ...(parsed.achievements || {}) },
       rewards: { ...base.rewards, ...(parsed.rewards || {}) },
       codex: {

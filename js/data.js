@@ -3,12 +3,12 @@
    Elements, fusions, enemies, boons and wave composition.
    ============================================================ */
 
-export const VERSION = '1.9.4';
+export const VERSION = '1.9.5';
 
 /* Three camera stops, from the whole ring to the guardian's own eyes. */
 export const CAMERA_VIEWS = [
   { id: 'distant', name: 'Distant', label: 'DISTANT', icon: '▣', hint: 'The whole ring' },
-  { id: 'close', name: 'Close', label: 'CLOSE', icon: '◎', hint: 'Over the shoulder' },
+  { id: 'close', name: 'Close', label: 'CLOSE', icon: '◎', hint: 'Closer fixed angle' },
   { id: 'first', name: 'First person', label: 'FIRST PERSON', icon: '◉', hint: 'Cockpit view' },
 ];
 

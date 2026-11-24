@@ -200,7 +200,7 @@ export const GUIDE = {
         `You fire automatically at whatever is nearest, so your hands are for movement, timing and the three buttons that matter: Dash, Surge, Ultimate.`,
         'On a phone or tablet the same three buttons sit under your right thumb, with the Forge and a hold-to-repair button beside them, and a floating stick under the left. Drag anywhere in the lower-left of the arena and the stick appears under your thumb; release and it recentres. Begin Wave appears between waves, and pause lives in the top-right corner.',
         'On a desktop you can play one-handed as well: hold the left mouse button anywhere on the arena and drag. The same ring appears, the guardian follows the drag exactly as it follows a thumb, and letting go stops him. WASD and the mouse still work together, so you can steer with one and nudge with the other.',
-        'The camera has three stops: Distant, Close and First person. Scroll the mouse wheel down to pull in and up to pull back out, click the View pill in the top-right, or press V. On a phone or tablet, the View button under Pause shows the current stop and advances on each tap. First person is a cockpit view — the guardian’s body is hidden and a canopy frame and reticle sit over the arena. In first person the movement keys follow the view: W goes where you are looking, S backs away, and A/D strafe; Distant and Close keep their existing world-axis controls.',
+        'The camera has three stops: Distant, Close and First person. Scroll the mouse wheel up to pull in and down to pull back out, click the View pill in the top-right, or press V. On a phone or tablet, the View button under Pause shows the current stop and advances on each tap. Close is a fixed closer angle that follows your position but never rotates. First person is a cockpit view — the guardian’s body is hidden and a canopy frame and reticle sit over the arena. In first person W/S move forward and back along the view, while A/D turn the cockpit left and right; there is no strafing in the cockpit. Distant and Close keep their existing world-axis controls.',
       ],
       controls: true,
       note: `Every key can be rebound in Settings. The defaults are ${KEYBINDS.map(([k, v]) => k + ' for ' + v.toLowerCase()).slice(0, 4).join('; ')}. Settings → Interface → Touch controls (Auto, On, Off) decides whether the thumb layer appears; Auto turns it on for touch screens.`,
@@ -222,7 +222,7 @@ export const GUIDE = {
       body: [
         `Kills drop essence; essence levels you. Every level opens a draft of three boons — damage, tempo, projectiles, pierce, crit, lifesteal, movement, health, shields, thorns, orbs.`,
         `Boons stack up to their own limit, and the card tells you which rarity you are being offered: common, rare, epic, legendary. Some runs give you rerolls; spend them on a draft you cannot use.`,
-        `A draft you cannot use can be skipped with ${keyLabel('KeyS')} or the Skip button. Every skip banks one Swap; ${keyLabel('KeyX')} or the Swap button spends a banked skip on three fresh cards without giving up the level. Swap is disabled until you have skipped at least once, and the button always shows how many you hold.`,
+        `A draft you cannot use can be skipped with ${keyLabel('KeyS')} or the Skip button. Every skip banks one Swap; ${keyLabel('KeyX')} or the Swap button spends a banked skip on three fresh cards without giving up the level. Swap is disabled until you have skipped at least once, the button always shows how many you hold, and banked swaps are saved even if the run ends before you spend them.`,
         `You can store a level-up with ${keyLabel('KeyL')} and open it later, which is how you avoid drafting in the middle of a warden's charge.`,
       ],
     },
@@ -409,6 +409,17 @@ export const FAQ = [
    CHANGELOG — newest first. Add an entry every release.
    ------------------------------------------------------------ */
 export const CHANGELOG = [
+  {
+    version: '1.9.5',
+    date: '2026-11-24',
+    title: 'Turn the cockpit',
+    items: [
+      'First person turns instead of strafing: A/D and the arrow keys rotate the cockpit left and right, while W/S move forward and back along the view. Auto-aim keeps firing at the nearest target independently of the camera.',
+      'Close is now a fixed closer angle: it follows the guardian’s position but no longer swings around with movement or aim.',
+      'Mouse wheel direction is reversed to the usual convention: up pulls in toward First person, down pulls back out toward Distant.',
+      'Banked Swaps are saved. A Skip adds one swap to the save, the level-up header prints how many are banked, and the Swap button remains available on the next draft even after restarting a run.',
+    ],
+  },
   {
     version: '1.9.4',
     date: '2026-11-24',

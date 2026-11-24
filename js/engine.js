@@ -1338,30 +1338,29 @@ export class Engine {
       _lookNow.lerp(_look, Math.min(1, dt * 2));
       this.camera.lookAt(_lookNow);
     } else if (this.viewMode === 'first') {
-      // Eye height, looking where the auto-aim is pointing, with a little
-      // head bob so the cockpit feels alive.
-      const aim = opts.aim || _zero;
-      _aim.set(aim.x, 0, aim.z);
-      if (_aim.lengthSq() < 0.0001) _aim.set(vel.x, 0, vel.z);
-      if (_aim.lengthSq() < 0.0001) _aim.set(0, 0, 1);
-      _aim.normalize();
+      // Eye height, looking along the cockpit's own yaw, with a little head
+      // bob so the view feels alive. The guardian can turn independently of
+      // auto-aim instead of being locked to the nearest target.
+      const yaw = opts.lookYaw;
+      if (Number.isFinite(yaw)) {
+        _aim.set(Math.sin(yaw), 0, Math.cos(yaw));
+      } else {
+        const aim = opts.aim || _zero;
+        _aim.set(aim.x, 0, aim.z);
+        if (_aim.lengthSq() < 0.0001) _aim.set(vel.x, 0, vel.z);
+        if (_aim.lengthSq() < 0.0001) _aim.set(0, 0, 1);
+        _aim.normalize();
+      }
       _desired.set(target.x, 1.58 + Math.sin(this.time * 5.4) * 0.015, target.z);
       this.camera.position.lerp(_desired, 1 - Math.exp(-dt * 22));
       _look.set(target.x + _aim.x * 11, 1.44, target.z + _aim.z * 11);
       _lookNow.lerp(_look, 1 - Math.exp(-dt * 11));
       this.camera.lookAt(_lookNow);
     } else if (this.viewMode === 'close') {
-      const aim = opts.aim || _zero;
-      const speed = Math.hypot(vel.x, vel.z);
-      _aim.set(speed > 0.35 ? vel.x : aim.x, 0, speed > 0.35 ? vel.z : aim.z);
-      if (_aim.lengthSq() < 0.0001) _aim.set(0, 0, 1);
-      _aim.normalize();
-      _desired.set(
-        target.x - _aim.x * this.camBack * 0.6,
-        this.camHeight * 0.46,
-        target.z - _aim.z * this.camBack * 0.6
-      );
-      _look.set(target.x + _aim.x * 4.5, 1.25, target.z + _aim.z * 4.5);
+      // Close is a fixed, closer angle on the ring: it follows position but
+      // never rotates with the guardian or the auto-aim.
+      _desired.set(target.x, this.camHeight * 0.46, target.z + this.camBack * 0.6);
+      _look.set(target.x, 1.15, target.z);
       this.camera.position.lerp(_desired, 1 - Math.exp(-dt * 6.5));
       _lookNow.lerp(_look, 1 - Math.exp(-dt * 8));
       this.camera.lookAt(_lookNow);

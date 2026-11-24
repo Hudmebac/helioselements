@@ -9,6 +9,8 @@ import {
   WARDS, WARD_MAX_RANK, HIT_RNG,
 } from './data.js';
 
+const FIRST_PERSON_TURN = 2.6;
+
 export class Player {
   constructor(game, form) {
     this.game = game;
@@ -18,6 +20,7 @@ export class Player {
     this.vel = new THREE.Vector3();
     this.dir = new THREE.Vector3(0, 0, 1);
     this.aim = new THREE.Vector3(0, 0, 1);
+    this.lookYaw = 0;
     this.alive = true;
     this.invuln = 0;
     this.t = 0;
@@ -810,6 +813,11 @@ export class Player {
     this.queue.push({ t: delay, fn });
   }
 
+  syncFirstPersonLook() {
+    if (Math.hypot(this.aim.x, this.aim.z) < 0.001) return;
+    this.lookYaw = Math.atan2(this.aim.x, this.aim.z);
+  }
+
   update(dt) {
     if (!this.alive) return;
     const rb = this.relicBonuses();
@@ -828,25 +836,33 @@ export class Player {
 
     // movement
     const keys = this.game.keys;
-    let ix = this.game.touchMove?.x || 0;
-    let iz = this.game.touchMove?.z || 0;
-    if (this.game.isDown('up') || keys['ArrowUp']) iz -= 1;
-    if (this.game.isDown('down') || keys['ArrowDown']) iz += 1;
-    if (this.game.isDown('left') || keys['ArrowLeft']) ix -= 1;
-    if (this.game.isDown('right') || keys['ArrowRight']) ix += 1;
-    // In the cockpit the camera is the frame of reference: forward follows the
-    // way the guardian is looking, not the arena's fixed north. The over-
-    // shoulder and distant views keep their existing world axes.
-    if (this.game.viewMode === 'first' && (ix || iz)) {
-      const lookLen = Math.hypot(this.aim.x, this.aim.z) || 1;
-      const fx = this.aim.x / lookLen;
-      const fz = this.aim.z / lookLen;
-      const rx = -fz;
-      const rz = fx;
-      const side = ix;
-      const forward = -iz;
-      ix = rx * side + fx * forward;
-      iz = rz * side + fz * forward;
+    const firstPerson = this.game.viewMode === 'first';
+    const touchX = this.game.touchMove?.x || 0;
+    const touchZ = this.game.touchMove?.z || 0;
+    const up = this.game.isDown('up') || keys['ArrowUp'];
+    const down = this.game.isDown('down') || keys['ArrowDown'];
+    const left = this.game.isDown('left') || keys['ArrowLeft'];
+    const right = this.game.isDown('right') || keys['ArrowRight'];
+    let ix = 0, iz = 0;
+    if (firstPerson) {
+      // The cockpit turns instead of strafing. Horizontal input rotates the
+      // view; only W/S (and the stick's vertical axis) move forward or back.
+      const turn = (right ? 1 : 0) - (left ? 1 : 0) + touchX;
+      if (turn) {
+        this.lookYaw -= turn * FIRST_PERSON_TURN * dt;
+        if (this.lookYaw > Math.PI) this.lookYaw -= Math.PI * 2;
+        else if (this.lookYaw < -Math.PI) this.lookYaw += Math.PI * 2;
+      }
+      const forward = (up ? 1 : 0) - (down ? 1 : 0) - touchZ;
+      ix = Math.sin(this.lookYaw) * forward;
+      iz = Math.cos(this.lookYaw) * forward;
+    } else {
+      ix = touchX;
+      iz = touchZ;
+      if (up) iz -= 1;
+      if (down) iz += 1;
+      if (left) ix -= 1;
+      if (right) ix += 1;
     }
     const mag = Math.hypot(ix, iz);
     if (mag > 0) { ix /= mag; iz /= mag; }
@@ -892,9 +908,8 @@ export class Player {
       const lead = Math.min(0.5, dist / Math.max(6, this.form.stats.projSpeed || 15));
       this.aim.set(dx + (target.vx || 0) * lead, 0, dz + (target.vz || 0) * lead).normalize();
     } else if (mag > 0 && this.game.viewMode !== 'first') {
-      // In first person the view stays where it was looking when the last
-      // target fell; letting it chase the movement vector would turn a strafe
-      // into a slow spiral.
+      // In first person auto-aim holds its last line while the cockpit turns
+      // independently, so a turn never feeds back into the movement vector.
       this.aim.copy(this.dir);
     }
 

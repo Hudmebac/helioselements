@@ -289,7 +289,7 @@ export class Game {
     this._onKeyUp = (e) => { this.keys[e.code] = false; };
     this._onBlur = () => { this.keys = {}; };
 
-    // The wheel is a camera control during a run: down pulls in, up pulls out.
+    // The wheel is a camera control during a run: up pulls in, down pulls out.
     this._onWheel = (e) => {
       if (this.state !== 'playing' || e.ctrlKey) return;
       const step = e.deltaMode === 1 ? e.deltaY * 16 : e.deltaY;
@@ -299,7 +299,7 @@ export class Game {
       this._wheelAcc += step;
       if (now < this._wheelAt) return;
       if (Math.abs(this._wheelAcc) < 24) return;
-      const dir = this._wheelAcc > 0 ? 1 : -1;
+      const dir = this._wheelAcc > 0 ? -1 : 1;
       this._wheelAcc = 0;
       this._wheelAt = now + 260;
       this.cycleView(dir, false);
@@ -329,7 +329,7 @@ export class Game {
     this.runDescent = this.descentRank();
     this.relicChoiceCount = 3 + (this.save.rewards?.relic_choice ? 1 : 0) + (diff.relicChoices || 0);
     this.rerolls = (this.save.rewards?.boon_reroll ? 1 : 0) + (diff.rerolls || 0);
-    this.swaps = 0;
+    this.swaps = Math.max(0, Math.floor(this.save.swapBank || 0));
     this.starterKey = formKey;
     const modeMeta = MODES[this.mode];
     this.arenaElement = ARENAS[modeMeta.arena]?.element || null;
@@ -1475,8 +1475,10 @@ export class Game {
   skipCard() {
     if (this.state !== 'levelup') return false;
     this.swaps++;
+    this.save.swapBank = this.swaps;
+    persist(this.save);
     this.audio.ui();
-    this.ui.toast('DRAFT SKIPPED · SWAP BANKED (' + this.swaps + ')', '#9fe8ff');
+    this.ui.toast('DRAFT SKIPPED · SWAP BANKED (' + this.swaps + ') · READY NEXT DRAFT', '#9fe8ff');
     this._afterDraft();
     return true;
   }
@@ -1484,6 +1486,8 @@ export class Game {
   swapCards() {
     if (this.state !== 'levelup' || this.swaps <= 0) return false;
     this.swaps--;
+    this.save.swapBank = this.swaps;
+    persist(this.save);
     const before = this.cards.map(c => [c.kind, c.id || c.weaponKey || c.wardKey || c.elementKey || c.piece || c.name].join(':')).sort().join('|');
     for (let i = 0; i < 4; i++) {
       this.cards = this.rollCards();
@@ -2382,6 +2386,7 @@ export class Game {
       target: this.player ? this.player.pos : null,
       velocity: this.player ? this.player.vel : null,
       aim: this.player ? this.player.aim : null,
+      lookYaw: this.player ? this.player.lookYaw : 0,
     };
   }
 
@@ -2398,12 +2403,14 @@ export class Game {
     this.ui?.setView?.(view.id);
     this.touch?.syncView?.();
     document.body.classList.toggle('view-first', view.id === 'first');
+    if (changed && view.id === 'first') this.player?.syncFirstPersonLook?.();
     this._applyViewVisibility();
     if (changed && !opts.silent) {
       this.audio.ui();
-      const hint = view.id === 'first'
-        ? 'COCKPIT VIEW · SCROLL DOWN FOR DISTANT, UP FOR CLOSE'
-        : 'VIEW · ' + view.name.toUpperCase() + ' · ' + view.hint.toUpperCase();
+      const wheelHint = view.id === 'distant' ? 'SCROLL UP FOR CLOSE'
+        : view.id === 'close' ? 'SCROLL UP FOR FIRST PERSON · DOWN FOR DISTANT'
+        : 'SCROLL DOWN FOR CLOSE';
+      const hint = 'VIEW · ' + view.name.toUpperCase() + ' · ' + wheelHint;
       this.ui?.toast(hint, view.id === 'first' ? '#ffe0a3' : '#ffd98a');
     }
     return true;

@@ -1,6 +1,6 @@
 <div align="center">
 
-<sub>B R O W S E R &nbsp; R O G U E L I T E &nbsp; · &nbsp; v 1 . 9 . 4</sub>
+<sub>B R O W S E R &nbsp; R O G U E L I T E &nbsp; · &nbsp; v 1 . 9 . 5</sub>
 
 # ☀ HELIOS ELEMENTS
 
@@ -15,7 +15,7 @@ One tab, no install, no account — a 3D roguelite that runs where you already a
 
 <br/>
 
-<img src="https://img.shields.io/badge/version-1.9.4-f5c26b?style=flat-square&labelColor=141726" alt="version 1.9.4">
+<img src="https://img.shields.io/badge/version-1.9.5-f5c26b?style=flat-square&labelColor=141726" alt="version 1.9.5">
 <img src="https://img.shields.io/badge/touch-ready-67ecff?style=flat-square&labelColor=141726" alt="touch ready">
 <img src="https://img.shields.io/badge/modes-8-67ecff?style=flat-square&labelColor=141726" alt="8 modes">
 <img src="https://img.shields.io/badge/engine-Three.js-8a5cff?style=flat-square&labelColor=141726" alt="Three.js">
@@ -150,9 +150,9 @@ Every run opens on an **empty arena** and begins on its own after **three second
 
 You can also play with the mouse alone: **hold the left mouse button anywhere on the arena and drag** — the same floating ring as on a phone appears, the guardian follows the drag, and releasing stops him. It combines with WASD, so you can steer with the keys and nudge with the mouse.
 
-**Camera:** scroll the mouse wheel down to pull in through **Distant → Close → First person**, and up to pull back out. The **View** pill in the top-right does the same with a click, or press <kbd>V</kbd>. First person puts you at the guardian's eye line behind a cockpit canopy and reticle; the arena, enemies and auto-aim stay exactly as they were. In first person the movement keys follow the view — **W** goes where you look, **S** backs away and **A/D** strafe — while Distant and Close keep their existing world-axis controls. The choice is remembered between runs.
+**Camera:** scroll the mouse wheel **up** to pull in through **Distant → Close → First person**, and **down** to pull back out. The **View** pill in the top-right does the same with a click, or press <kbd>V</kbd>. Close is a fixed closer angle on the ring: it follows your position but never rotates with you. First person puts you at the guardian's eye line behind a cockpit canopy and reticle; the arena, enemies and auto-aim stay exactly as they were. In first person **W/S** move forward and back along the cockpit's view, while **A/D** turn the view left and right instead of strafing. The choice is remembered between runs.
 
-**Drafts:** every card can be passed over. **Skip** banks one **Swap** and moves on without a pick; **Swap** spends a banked skip for three fresh cards without losing the level. Swap stays disabled until you have skipped, and its button shows how many you hold. Rank cards wear a gold **RANK UP** line and print the **R1 → R2** step under the piece name. Mending is two-handed — holding <kbd>E</kbd> on a damaged structure silences both weapons until you let go.
+**Drafts:** every card can be passed over. **Skip** banks one **Swap** and moves on without a pick; **Swap** spends a banked skip for three fresh cards without losing the level. Swap stays disabled until you have skipped, its button shows how many you hold, and the bank survives the end of a run until you spend it. Rank cards wear a gold **RANK UP** line and print the **R1 → R2** step under the piece name. Mending is two-handed — holding <kbd>E</kbd> on a damaged structure silences both weapons until you let go.
 
 | Keys | Action |
 |:---|:---|
@@ -300,6 +300,16 @@ The **Play** button at the top of this README points at the game, and `/site/` r
 ## Changelog
 
 <details open>
+<summary><b>v1.9.5 — Turn the cockpit</b></summary>
+
+- **First-person turning:** **A/D** and the arrow keys rotate the cockpit left and right instead of strafing. **W/S** still move along the view, and the arena's auto-aim keeps firing independently.
+- **Fixed Close camera:** Close is now a stable, closer angle that follows your position without rotating with movement or aim.
+- **Wheel direction:** mouse wheel **up** zooms in and **down** zooms out, matching the usual direction.
+- **Banked Swaps persist:** a Skip banks a Swap in the save, so the Swap button is there on the next draft and even after a restart; the level-up screen also prints how many are banked.
+
+</details>
+
+<details>
 <summary><b>v1.9.4 — Scars cost marks</b></summary>
 
 - **Mend the caravan by hand:** hold **E** within **5.8m** of a damaged reliquary to restore **34 integrity/s**. Repairing silences both weapons, so every second of mending is a second not spent clearing the road. The repair prompt turns green and shows its integrity.
@@ -425,6 +435,6 @@ The **Play** button at the top of this README points at the game, and `/site/` r
 <br/>
 
 **Built with** Three.js (MIT) · Cinzel & Inter (OFL) · everything else hand-built — renderer, audio synthesis, UI and lore.<br/>
-<sub>Helios Elements v1.9.4 · no install, no account, no telemetry.</sub>
+<sub>Helios Elements v1.9.5 · no install, no account, no telemetry.</sub>
 
 </div>
