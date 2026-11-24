@@ -411,6 +411,15 @@ export const FAQ = [
    ------------------------------------------------------------ */
 export const CHANGELOG = [
   {
+    version: '1.9.11',
+    date: '2026-11-24',
+    title: 'Recover the lost step',
+    items: [
+      'Saves created before the reversible Step Back fix now recover one lost Descent rank on load. A save sitting at Descent 3 with no record of 4 will allow Step Up to 4 again.',
+      'The recovery is a one-time migration: the save is marked once processed, so it cannot keep granting free ranks. This also covers saves that v1.9.10 had already normalised to a best of 3.',
+    ],
+  },
+  {
     version: '1.9.10',
     date: '2026-11-24',
     title: 'Step back up',

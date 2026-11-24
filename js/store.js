@@ -24,6 +24,7 @@ export function defaultSave() {
     difficulty: 'solar',
     descent: 0,
     descentBest: 0,
+    descentRecovery: 1,
     difficultyBest: { kindled: 0, solar: 0, umbral: 0, hardcore: 0 },
     difficultyWins: { kindled: 0, solar: 0, umbral: 0, hardcore: 0 },
     marks: 0,
@@ -43,6 +44,17 @@ export function defaultSave() {
 export function normalizeSave(input) {
   const base = defaultSave();
   const parsed = input && typeof input === 'object' && !Array.isArray(input) ? input : {};
+  const descent = Math.max(0, Math.min(DESCENT.max, Math.floor(Number(parsed.descent) || 0)));
+  const storedBest = Math.max(
+    descent,
+    Math.min(DESCENT.max, Math.floor(Number(parsed.descentBest) || 0))
+  );
+  // Older Step Back behavior could erase a rank without recording the rank left
+  // behind. Recover one step once, then mark the save so the grant cannot repeat.
+  const migrated = Number(parsed.descentRecovery) >= 1;
+  const recoveredBest = migrated
+    ? storedBest
+    : Math.min(DESCENT.max, Math.max(storedBest, descent > 0 ? descent + 1 : descent));
   return {
       ...base,
       ...parsed,
@@ -65,14 +77,9 @@ export function normalizeSave(input) {
       skillWins: Math.max(0, Math.floor(Number(parsed.skillWins) || 0)),
       bestSkill: Math.max(0, Math.floor(Number(parsed.bestSkill) || 0)),
       difficulty: normalizeDifficulty(parsed.difficulty),
-      descent: Math.max(0, Math.min(DESCENT.max, Math.floor(Number(parsed.descent) || 0))),
-      descentBest: Math.max(
-        0,
-        Math.min(DESCENT.max, Math.max(
-          Math.floor(Number(parsed.descentBest) || 0),
-          Math.floor(Number(parsed.descent) || 0)
-        ))
-      ),
+      descent,
+      descentBest: recoveredBest,
+      descentRecovery: 1,
       difficultyBest: { ...base.difficultyBest, ...(parsed.difficultyBest || {}) },
       difficultyWins: { ...base.difficultyWins, ...(parsed.difficultyWins || {}) },
       seenWelcome: !!parsed.seenWelcome,

@@ -15,7 +15,7 @@ One tab, no install, no account — a 3D roguelite that runs where you already a
 
 <br/>
 
-<img src="https://img.shields.io/badge/version-1.9.10-f5c26b?style=flat-square&labelColor=141726" alt="version 1.9.10">
+<img src="https://img.shields.io/badge/version-1.9.11-f5c26b?style=flat-square&labelColor=141726" alt="version 1.9.11">
 <img src="https://img.shields.io/badge/touch-ready-67ecff?style=flat-square&labelColor=141726" alt="touch ready">
 <img src="https://img.shields.io/badge/modes-8-67ecff?style=flat-square&labelColor=141726" alt="8 modes">
 <img src="https://img.shields.io/badge/engine-Three.js-8a5cff?style=flat-square&labelColor=141726" alt="Three.js">
@@ -304,6 +304,14 @@ The **Play** button at the top of this README points at the game, and `/site/` r
 ## Changelog
 
 <details open>
+<summary><b>v1.9.11 — Recover the lost step</b></summary>
+
+- **Existing saves fixed:** a save already sitting at Descent 3 with no record of Descent 4 now recovers that lost rank on load. The recovery is one-time and marked in the save, so it cannot keep adding ranks.
+- **Saved after the first fix:** this also covers saves that had already been normalised to `descentBest: 3` by v1.9.10.
+
+</details>
+
+<details>
 <summary><b>v1.9.10 — Step back up</b></summary>
 
 - **Reversible Descent:** the menu now remembers the deepest Descent rank you have earned. If you step back from 4 to 3 — or all the way to 0 — **Step Up** returns you to the rank you left, but never beyond your highest earned rank.
@@ -482,6 +490,6 @@ The **Play** button at the top of this README points at the game, and `/site/` r
 <br/>
 
 **Built with** Three.js (MIT) · Cinzel & Inter (OFL) · everything else hand-built — renderer, audio synthesis, UI and lore.<br/>
-<sub>Helios Elements v1.9.10 · no install, no account, no telemetry.</sub>
+<sub>Helios Elements v1.9.11 · no install, no account, no telemetry.</sub>
 
 </div>
