@@ -806,7 +806,6 @@ export class UI {
         return;
       }
       if (el.dataset.relic !== undefined) {
-        this.audio.ui();
         this.game.chooseRelic(parseInt(el.dataset.relic, 10));
         return;
       }
@@ -854,7 +853,6 @@ export class UI {
         return;
       }
       if (el.dataset.card !== undefined) {
-        this.audio.ui();
         this.game.chooseCard(parseInt(el.dataset.card, 10));
         return;
       }

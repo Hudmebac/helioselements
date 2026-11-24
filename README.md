@@ -15,7 +15,7 @@ One tab, no install, no account — a 3D roguelite that runs where you already a
 
 <br/>
 
-<img src="https://img.shields.io/badge/version-1.10.0-f5c26b?style=flat-square&labelColor=141726" alt="version 1.10.0">
+<img src="https://img.shields.io/badge/version-1.10.1-f5c26b?style=flat-square&labelColor=141726" alt="version 1.10.1">
 <img src="https://img.shields.io/badge/touch-ready-67ecff?style=flat-square&labelColor=141726" alt="touch ready">
 <img src="https://img.shields.io/badge/modes-8-67ecff?style=flat-square&labelColor=141726" alt="8 modes">
 <img src="https://img.shields.io/badge/engine-Three.js-8a5cff?style=flat-square&labelColor=141726" alt="Three.js">
@@ -306,6 +306,16 @@ The **Play** button at the top of this README points at the game, and `/site/` r
 ## Changelog
 
 <details open>
+<summary><b>v1.10.1 — Read the Rift</b></summary>
+
+- **Six wardens, six arrivals:** each named warden gets its own motif, and crowned sub-bosses announce themselves before they close. Waystones, ritual seals, broken gates and failing objectives all resolve with their own cues instead of one generic chime.
+- **Drafts sound like drafts:** level-up and relic choices now have distinct open and pick sounds, so taking a reward never sounds like a menu click.
+- **Six silhouettes:** the Rift Warden, Ashen Colossus, Void Herald, Helios Unbound, Cinder Tyrant and Stormglass Seraph each have a distinct body, crown or wings, a brighter core and a thin elemental rim that carries down to crowned and regular enemies.
+- **Cockpit clarity:** the glass keeps the centre clear and sharp while the frame darkens the edges, with a brighter reticle, instrument panel and less double vignette over the arena.
+
+</details>
+
+<details>
 <summary><b>v1.10.0 — The Periodic Horde</b></summary>
 
 - **The Bestiary is now the Periodic Horde:** a proper field table of every mote, crowned sub-boss and named warden, grouped by threat order. Each entry has a clear role, threat rating, combat pattern, tell, base stats and the elements that counter it.
@@ -501,6 +511,6 @@ The **Play** button at the top of this README points at the game, and `/site/` r
 <br/>
 
 **Built with** Three.js (MIT) · Cinzel & Inter (OFL) · everything else hand-built — renderer, audio synthesis, UI and lore.<br/>
-<sub>Helios Elements v1.10.0 · no install, no account, no telemetry.</sub>
+<sub>Helios Elements v1.10.1 · no install, no account, no telemetry.</sub>
 
 </div>

@@ -375,7 +375,7 @@ export class Structures {
     const hex = new THREE.Color(gate.lane.css).getHex();
     this.fx.burst(new THREE.Vector3(gate.pos.x, 2, gate.pos.z), hex, { count: 60, speed: 12, size: 0.4, life: 1.4, up: 5 });
     this.fx.ring(gate.pos, hex, { r0: 1, r1: 12, life: 1.2, opacity: 0.85 });
-    this.audio?.death?.();
+    this.audio?.gateBreak?.();
     game.engine.addShake(0.9);
     game.engine.pulseExposure(0.4);
     this.scene.remove(gate.group);
@@ -1256,6 +1256,7 @@ export class Caravan {
         this.alive = false;
         this.fx.burst(new THREE.Vector3(this.pos.x, 1.8, this.pos.z), 0x8dffc0, { count: 70, speed: 13, size: 0.4, life: 1.6, up: 5 });
         this.fx.ring(this.pos, 0xff8a52, { r0: 0.5, r1: 12, life: 1.2, opacity: 0.8 });
+        game.audio?.objectiveDanger?.(2);
         this.audio?.death?.();
         game.onCaravanLost();
         return;
@@ -1276,6 +1277,7 @@ export class Caravan {
         this.alive = false;
         this.fx.burst(new THREE.Vector3(this.pos.x, 1.8, this.pos.z), 0x8dffc0, { count: 70, speed: 13, size: 0.4, life: 1.6, up: 5 });
         this.fx.ring(this.pos, 0xff8a52, { r0: 0.5, r1: 12, life: 1.2, opacity: 0.8 });
+        game.audio?.objectiveDanger?.(2);
         this.audio?.death?.();
         game.onCaravanLost();
       }
@@ -1288,11 +1290,13 @@ export class Caravan {
     const ratio = this.hp / Math.max(1, this.maxHp);
     if (ratio < 0.33 && this.warnStep < 2) {
       this.warnStep = 2;
+      game.audio?.objectiveDanger?.(2);
       game.ui?.toast('RELIQUARY CRITICAL — HOLD E TO MEND OR LOSE THE RUN', '#ff5a3a');
       game.engine.addShake(0.5);
       game.fx.flash('hit');
     } else if (ratio < 0.66 && this.warnStep < 1) {
       this.warnStep = 1;
+      game.audio?.objectiveDanger?.(1);
       game.ui?.toast('RELIQUARY CRACKING — HOLD E TO MEND · DAMAGE CUTS THE FINAL PAYOUT', '#ff8a52');
     }
   }

@@ -161,7 +161,8 @@ export class Enemy {
       roughness: 0.5, metalness: 0.35, flatShading: true,
     });
     this.bodyMat = bodyMat;
-    this.baseEmissive = 0.5;
+    this.baseEmissive = this.isBoss ? 0.7 : this.miniBoss ? 0.62 : 0.5;
+    bodyMat.emissiveIntensity = this.baseEmissive;
 
     const accentMat = new THREE.MeshBasicMaterial({ color: this.glow, toneMapped: false });
     this.accentMat = accentMat;
@@ -262,44 +263,139 @@ export class Enemy {
       pupil.position.set(0, 0.1, 0.63);
       group.add(pupil);
     } else {
-      // boss — a rift-carved obelisk
-      const body = new THREE.Mesh(geo('boss', () => new THREE.CylinderGeometry(0.55, 1.0, 3.2, 6)), bodyMat);
-      body.position.y = 1.2;
+      // boss — every warden has its own silhouette so the name on the banner
+      // matches the shape in the arena.
+      const bossKind = ((this.bossIndex % BOSSES.length) + BOSSES.length) % BOSSES.length;
+      let body;
+      let coreY = 1.6;
+      let ringRadius = 1.35;
+      let haloScale = 8;
+
+      if (bossKind === 1) { // Ashen Colossus — broad stone shoulders and furnace horns
+        body = new THREE.Mesh(geo('bossColossus', () => new THREE.DodecahedronGeometry(1.05, 1)), bodyMat);
+        body.scale.set(1.5, 1.05, 1.2);
+        body.position.y = 1.15;
+        for (const side of [-1, 1]) {
+          const horn = new THREE.Mesh(geo('bossColossusHorn', () => new THREE.ConeGeometry(0.3, 1.45, 5)), accentMat);
+          horn.position.set(side * 1.18, 1.95, 0.02);
+          horn.rotation.z = side * -0.72;
+          group.add(horn);
+        }
+        coreY = 1.35;
+        ringRadius = 1.85;
+        haloScale = 9.5;
+      } else if (bossKind === 2) { // Void Herald — a floating octahedron inside a cage of shards
+        body = new THREE.Mesh(geo('bossHerald', () => new THREE.OctahedronGeometry(1.0, 1)), bodyMat);
+        body.scale.set(1.12, 1.42, 1.12);
+        body.position.y = 1.65;
+        for (let i = 0; i < 3; i++) {
+          const a = (i / 3) * Math.PI * 2;
+          const shard = new THREE.Mesh(geo('bossHeraldShard', () => new THREE.ConeGeometry(0.17, 1.7, 3)), accentMat);
+          shard.position.set(Math.cos(a) * 0.9, 2.05, Math.sin(a) * 0.9);
+          shard.rotation.z = Math.cos(a) * -0.28;
+          shard.rotation.x = Math.sin(a) * 0.28;
+          group.add(shard);
+        }
+        coreY = 1.65;
+        ringRadius = 1.55;
+        haloScale = 8.5;
+      } else if (bossKind === 3) { // Helios Unbound — a sun-spire with a crown of rays
+        body = new THREE.Mesh(geo('bossUnbound', () => new THREE.ConeGeometry(0.72, 3.9, 6)), bodyMat);
+        body.position.y = 1.78;
+        for (let i = 0; i < 8; i++) {
+          const a = (i / 8) * Math.PI * 2;
+          const ray = new THREE.Mesh(geo('bossUnboundRay', () => new THREE.ConeGeometry(0.1, 1.0, 4)), accentMat);
+          ray.position.set(Math.cos(a) * 0.92, 3.02 + (i % 2) * 0.12, Math.sin(a) * 0.92);
+          ray.rotation.z = Math.cos(a) * -0.92;
+          ray.rotation.x = Math.sin(a) * 0.92;
+          group.add(ray);
+        }
+        coreY = 1.95;
+        ringRadius = 1.6;
+        haloScale = 9;
+      } else if (bossKind === 4) { // Cinder Tyrant — a blocky iron king with a square crown
+        body = new THREE.Mesh(geo('bossTyrant', () => new THREE.BoxGeometry(1.35, 2.8, 1.25)), bodyMat);
+        body.position.y = 1.3;
+        for (const side of [-1, 1]) {
+          for (const front of [-1, 1]) {
+            const horn = new THREE.Mesh(geo('bossTyrantHorn', () => new THREE.BoxGeometry(0.24, 0.95, 0.24)), accentMat);
+            horn.position.set(side * 0.58, 2.58, front * 0.38);
+            horn.rotation.z = side * -0.18;
+            group.add(horn);
+          }
+        }
+        coreY = 1.55;
+        ringRadius = 1.45;
+        haloScale = 8.5;
+      } else if (bossKind === 5) { // Stormglass Seraph — a tall diamond with glass wings
+        body = new THREE.Mesh(geo('bossSeraph', () => new THREE.OctahedronGeometry(0.9, 0)), bodyMat);
+        body.scale.set(0.9, 1.8, 0.9);
+        body.position.y = 1.6;
+        for (const side of [-1, 1]) {
+          const wing = new THREE.Mesh(geo('bossSeraphWing', () => new THREE.ConeGeometry(0.55, 1.95, 4)), accentMat);
+          wing.scale.set(0.38, 1, 1.25);
+          wing.position.set(side * 1.05, 1.82, -0.05);
+          wing.rotation.z = side * 0.68;
+          wing.rotation.x = 0.18;
+          group.add(wing);
+        }
+        coreY = 1.7;
+        ringRadius = 1.55;
+        haloScale = 9;
+      } else { // Rift Warden — the original rift-carved obelisk
+        body = new THREE.Mesh(geo('boss', () => new THREE.CylinderGeometry(0.55, 1.0, 3.2, 6)), bodyMat);
+        body.position.y = 1.2;
+        for (let i = 0; i < 6; i++) {
+          const a = (i / 6) * Math.PI * 2;
+          const spike = new THREE.Mesh(geo('bossSpike', () => new THREE.ConeGeometry(0.13, 1.1, 4)), accentMat);
+          spike.position.set(Math.cos(a) * 0.72, 2.7, Math.sin(a) * 0.72);
+          spike.rotation.z = Math.cos(a) * -0.35;
+          spike.rotation.x = Math.sin(a) * 0.35;
+          group.add(spike);
+        }
+      }
       group.add(body);
       this.body = body;
-      const crownMat = this.accentMat;
-      for (let i = 0; i < 6; i++) {
-        const a = (i / 6) * Math.PI * 2;
-        const spike = new THREE.Mesh(geo('bossSpike', () => new THREE.ConeGeometry(0.13, 1.1, 4)), crownMat);
-        spike.position.set(Math.cos(a) * 0.72, 2.7, Math.sin(a) * 0.72);
-        spike.rotation.z = Math.cos(a) * -0.35;
-        spike.rotation.x = Math.sin(a) * 0.35;
-        group.add(spike);
-      }
+
       const core = new THREE.Mesh(geo('bossCore', () => new THREE.SphereGeometry(0.34, 16, 12)), new THREE.MeshBasicMaterial({ color: 0xffffff, toneMapped: false }));
-      core.position.y = 1.6;
+      core.position.y = coreY;
       group.add(core);
       this.bossCore = core;
       for (let i = 0; i < 2; i++) {
         const ring = new THREE.Mesh(
-          geo('bossRing' + i, () => new THREE.TorusGeometry(1.35 + i * 0.3, 0.045, 6, 40)),
+          geo('bossRing' + i, () => new THREE.TorusGeometry(1, 0.045, 6, 40)),
           new THREE.MeshBasicMaterial({ color: i ? this.color : this.glow, transparent: true, opacity: 0.6, toneMapped: false })
         );
-        ring.position.y = 1.5 + i * 0.5;
+        ring.scale.setScalar(ringRadius + i * 0.3);
+        ring.position.y = coreY - 0.1 + i * 0.5;
         ring.rotation.x = Math.PI / (2 + i);
         group.add(ring);
         if (i === 0) this.bossRingA = ring; else this.bossRingB = ring;
       }
       const halo = new THREE.Sprite(new THREE.SpriteMaterial({
-        map: glowTexture('rgba(255,255,255,.9)', 'rgba(220,170,255,.3)', 'rgba(150,80,255,0)'),
+        map: glowTexture('rgba(255,255,255,.85)', 'rgba(255,255,255,.18)', 'rgba(255,255,255,0)'),
         color: this.glow, transparent: true, opacity: 0.6,
         blending: THREE.AdditiveBlending, depthWrite: false, toneMapped: false,
       }));
-      halo.scale.set(8, 8, 1);
-      halo.position.y = 1.4;
+      halo.scale.set(haloScale, haloScale, 1);
+      halo.position.y = coreY - 0.1;
       group.add(halo);
       this.halo = halo;
     }
+
+    // A thin additive rim separates every silhouette from the arena. It is
+    // deliberately strongest on wardens and crowned enemies.
+    const rimMat = new THREE.MeshBasicMaterial({
+      color: this.glow, side: THREE.BackSide, transparent: true,
+      opacity: this.isBoss ? 0.2 : this.miniBoss ? 0.15 : 0.08,
+      blending: THREE.AdditiveBlending, depthWrite: false, toneMapped: false,
+    });
+    const rim = new THREE.Mesh(this.body.geometry, rimMat);
+    rim.position.copy(this.body.position);
+    rim.scale.copy(this.body.scale).multiplyScalar(this.isBoss ? 1.075 : 1.05);
+    rim.renderOrder = 2;
+    group.add(rim);
+    this.rimMat = rimMat;
 
     // Orbiting shards and a lit heart: every creature carries its element with it.
     const orbGeo = geo('enemyShard', () => new THREE.TetrahedronGeometry(0.1, 0));
@@ -738,6 +834,7 @@ export class Enemy {
   dispose() {
     if (this.bodyMat) this.bodyMat.dispose();
     if (this.accentMat) this.accentMat.dispose();
+    if (this.rimMat) this.rimMat.dispose();
     if (this.miniAura) this.miniAura.material.dispose();
   }
 }

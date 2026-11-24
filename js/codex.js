@@ -413,6 +413,18 @@ export const FAQ = [
    ------------------------------------------------------------ */
 export const CHANGELOG = [
   {
+    version: '1.10.1',
+    date: '2026-11-24',
+    title: 'Read the Rift',
+    items: [
+      'Each of the six wardens now arrives on its own motif: a violet tear, a furnace exhale, a hollow bell, a solar chord, a hot-iron crown and snapping glass wings. Crowned sub-bosses also announce themselves.',
+      'Objectives have their own language: waystones, ritual seals and broken gates each resolve differently, while the Sunforge and Reliquary raise distinct alarms as their integrity falls.',
+      'Level-up and relic drafts now sound different on open and on pick, so a reward choice never sounds like a menu click.',
+      'Wardens are no longer one obelisk in six colours. The Rift Warden, Ashen Colossus, Void Herald, Helios Unbound, Cinder Tyrant and Stormglass Seraph each have a distinct body, crown or wings, with a stronger core and a thin elemental rim on bosses, crowned enemies and regulars.',
+      'The cockpit glass now keeps the centre clear and sharp while darkening the edges, with a brighter reticle and instrument panel and less double vignette over the arena.',
+    ],
+  },
+  {
     version: '1.10.0',
     date: '2026-11-24',
     title: 'The Periodic Horde',

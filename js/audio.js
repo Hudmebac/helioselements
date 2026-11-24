@@ -230,10 +230,104 @@ export class AudioSystem {
     this.tone({ freq: 392, dur: 0.5, type: 'sine', vol: 0.06, delay: 0.12, verb: 0.4 });
   }
 
-  boss() {
-    this.tone({ freq: 72, dur: 1.6, type: 'sawtooth', vol: 0.16, glide: 52, verb: 0.6 });
-    this.tone({ freq: 145, dur: 1.2, type: 'square', vol: 0.05, glide: 110, delay: 0.1, verb: 0.5 });
-    this.noise({ dur: 1.4, vol: 0.08, type: 'lowpass', freq: 300, verb: 0.5 });
+  /* Six wardens, six arrival motifs. The shared low pressure stays, but the
+     interval, timbre and tail tell you which door just opened. */
+  boss(index = 0) {
+    const cues = [
+      [ // Rift Warden — a violet wound tearing open
+        { freq: 72, dur: 1.6, type: 'sawtooth', vol: 0.16, glide: 52, verb: 0.6 },
+        { freq: 145, dur: 1.2, type: 'square', vol: 0.05, glide: 110, delay: 0.1, verb: 0.5 },
+        { freq: 430, dur: 0.9, type: 'sine', vol: 0.045, glide: 70, delay: 0.2, verb: 0.7 },
+        { dur: 1.4, vol: 0.08, type: 'lowpass', freq: 300, verb: 0.5 },
+      ],
+      [ // Ashen Colossus — stone shoulders and a furnace exhale
+        { freq: 58, dur: 1.9, type: 'sawtooth', vol: 0.17, glide: 38, verb: 0.55 },
+        { freq: 116, dur: 1.5, type: 'triangle', vol: 0.08, glide: 58, delay: 0.16, verb: 0.5 },
+        { freq: 232, dur: 0.9, type: 'square', vol: 0.035, glide: 174, delay: 0.3, verb: 0.4 },
+        { dur: 1.7, vol: 0.10, type: 'lowpass', freq: 220, verb: 0.55 },
+      ],
+      [ // Void Herald — a hollow bell across the quiet
+        { freq: 96, dur: 1.8, type: 'sine', vol: 0.11, glide: 48, verb: 0.85 },
+        { freq: 384, dur: 1.7, type: 'sine', vol: 0.06, glide: 96, delay: 0.08, verb: 0.9 },
+        { freq: 576, dur: 1.2, type: 'triangle', vol: 0.035, glide: 144, delay: 0.24, verb: 0.8 },
+        { dur: 1.3, vol: 0.06, type: 'bandpass', freq: 520, q: 1.4, verb: 0.7 },
+      ],
+      [ // Helios Unbound — the sun remembers, and it is loud
+        { freq: 132, dur: 1.7, type: 'triangle', vol: 0.13, glide: 264, verb: 0.8 },
+        { freq: 264, dur: 1.5, type: 'sine', vol: 0.09, glide: 528, delay: 0.09, verb: 0.85 },
+        { freq: 528, dur: 1.3, type: 'sine', vol: 0.07, glide: 1056, delay: 0.2, verb: 0.9 },
+        { dur: 1.1, vol: 0.07, type: 'highpass', freq: 2600, delay: 0.12, verb: 0.6 },
+      ],
+      [ // Cinder Tyrant — a crown dragged across hot iron
+        { freq: 64, dur: 1.6, type: 'sawtooth', vol: 0.16, glide: 44, verb: 0.55 },
+        { freq: 128, dur: 1.2, type: 'square', vol: 0.06, glide: 96, delay: 0.12, verb: 0.45 },
+        { freq: 512, dur: 0.7, type: 'sawtooth', vol: 0.04, glide: 384, delay: 0.28, verb: 0.45 },
+        { dur: 1.4, vol: 0.09, type: 'bandpass', freq: 680, q: 1.1, verb: 0.5 },
+      ],
+      [ // Stormglass Seraph — glass wings snapping open
+        { freq: 220, dur: 1.2, type: 'triangle', vol: 0.11, glide: 660, verb: 0.65 },
+        { freq: 440, dur: 1.0, type: 'sine', vol: 0.07, glide: 1320, delay: 0.1, verb: 0.75 },
+        { freq: 880, dur: 0.8, type: 'sine', vol: 0.045, glide: 1760, delay: 0.2, verb: 0.8 },
+        { dur: 1.2, vol: 0.08, type: 'highpass', freq: 1900, verb: 0.6 },
+      ],
+    ];
+    const cue = cues[((index % cues.length) + cues.length) % cues.length] || cues[0];
+    const noise = cue[cue.length - 1];
+    for (let i = 0; i < cue.length - 1; i++) this.tone(cue[i]);
+    this.noise(noise);
+  }
+
+  crowned() {
+    this.tone({ freq: 196, dur: 0.5, type: 'triangle', vol: 0.065, glide: 392, verb: 0.35 });
+    this.tone({ freq: 587.33, dur: 0.42, type: 'sine', vol: 0.045, glide: 880, delay: 0.06, verb: 0.5 });
+    this.noise({ dur: 0.45, vol: 0.045, type: 'bandpass', freq: 1500, q: 1.2, verb: 0.35 });
+  }
+
+  waystone() {
+    [392, 523.25, 659.25].forEach((f, i) => {
+      this.tone({ freq: f, dur: 0.55, type: 'triangle', vol: 0.06, delay: i * 0.08, verb: 0.55 });
+    });
+    this.tone({ freq: 98, dur: 0.7, type: 'sine', vol: 0.07, glide: 147, verb: 0.4 });
+  }
+
+  ritualSeal() {
+    [523.25, 783.99, 1046.5, 1567.98].forEach((f, i) => {
+      this.tone({ freq: f, dur: 1.0, type: 'sine', vol: 0.055, delay: i * 0.07, verb: 0.8 });
+    });
+    this.tone({ freq: 130.81, dur: 0.9, type: 'triangle', vol: 0.08, glide: 196, verb: 0.55 });
+  }
+
+  gateBreak() {
+    this.noise({ dur: 0.65, vol: 0.13, type: 'highpass', freq: 1500, verb: 0.45 });
+    this.tone({ freq: 148, dur: 0.7, type: 'sawtooth', vol: 0.11, glide: 74, verb: 0.5 });
+    this.tone({ freq: 296, dur: 0.45, type: 'square', vol: 0.05, glide: 148, delay: 0.06, verb: 0.4 });
+  }
+
+  objectiveDanger(step = 1) {
+    const base = step >= 2 ? 146.83 : 196;
+    this.tone({ freq: base, dur: 0.34, type: 'square', vol: 0.065, glide: base * 0.72, verb: 0.25 });
+    this.tone({ freq: base, dur: 0.34, type: 'square', vol: 0.05, glide: base * 0.72, delay: 0.4, verb: 0.25 });
+    this.tone({ freq: base * 2, dur: 0.2, type: 'sine', vol: 0.025, delay: 0.02 });
+  }
+
+  draftPick() {
+    this.tone({ freq: 740, dur: 0.14, type: 'triangle', vol: 0.075, glide: 988, verb: 0.3 });
+    this.tone({ freq: 1480, dur: 0.18, type: 'sine', vol: 0.04, delay: 0.05, verb: 0.45 });
+    this.tone({ freq: 196, dur: 0.22, type: 'sine', vol: 0.05, glide: 294, delay: 0.02, verb: 0.3 });
+  }
+
+  relicOpen() {
+    this.tone({ freq: 196, dur: 0.75, type: 'triangle', vol: 0.08, glide: 392, verb: 0.55 });
+    this.tone({ freq: 784, dur: 0.8, type: 'sine', vol: 0.04, glide: 1174.66, delay: 0.08, verb: 0.75 });
+    this.tone({ freq: 1568, dur: 0.55, type: 'sine', vol: 0.022, delay: 0.18, verb: 0.8 });
+    this.noise({ dur: 0.5, vol: 0.035, type: 'bandpass', freq: 2200, q: 1.8, verb: 0.5 });
+  }
+
+  relicPick() {
+    [523.25, 783.99, 1046.5].forEach((f, i) => {
+      this.tone({ freq: f, dur: 0.45, type: 'sine', vol: 0.06, delay: i * 0.06, verb: 0.65 });
+    });
+    this.tone({ freq: 261.63, dur: 0.55, type: 'triangle', vol: 0.055, glide: 392, verb: 0.4 });
   }
 
   fusion() {

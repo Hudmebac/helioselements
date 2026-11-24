@@ -379,6 +379,7 @@ export class Game {
     this.coreThreat = 0;
     this.coreGuard = false;
     this.coreLastLight = false;
+    this._coreAlarmStep = 0;
 
     this.victory = false;
     this.ascension = 0;
@@ -573,6 +574,7 @@ export class Game {
     this._deathHandled = false;
     this._lastStandUsed = false;
     this._gateHinted = {};
+    this._coreAlarmStep = 0;
     this.state = 'playing';
     this.phase = 'ready';
     this.readyTimer = READY_DELAY + 0.8;
@@ -736,7 +738,6 @@ export class Game {
       const boss = BOSSES[this.wavePlan.bossIndex % BOSSES.length];
       const kicker = this.mode === 'hunt' ? 'WARDEN ' + this.wave + ' OF ' + HUNT.goalWave : 'BOSS WAVE';
       this.ui.banner(kicker, (boss.name || 'RIFT WARDEN').toUpperCase(), boss.title || 'THE RIFT STIRS');
-      this.audio.boss();
       this.engine.pulseExposure(0.4);
     } else {
       const titles = { siege: 'HOLD THE SUNFORGE', lane: 'DEFEND THE LANES', trial: 'HOLD THE ARENA' };
@@ -867,7 +868,7 @@ export class Game {
     this.shards += ESCORT.waystoneShards;
     if (c) c.hp = Math.min(c.maxHp, c.hp + c.maxHp * ESCORT.waystoneHeal);
     this.player?.gainCharge(15);
-    this.audio.objective();
+    this.audio.waystone();
     this.ui.banner('WAYSTONE ' + (index + 1) + ' / ' + total, 'THE ROAD IS CLEAR', '+' + ESCORT.waystoneShards + ' shards · the reliquary is mended');
     this.ui.toast('IT MOVES AGAIN · STAY BESIDE THE RELIQUARY', '#8dffc0');
   }
@@ -890,6 +891,7 @@ export class Game {
     this.player?.gainCharge(20);
     this.gainXp(40 + this.wave * 6);
     const sealed = this.ritual?.shrines.filter(s => s.sealed).length || 0;
+    this.audio.ritualSeal();
     this.ui.banner('CIRCLE SEALED', 'THE EMBER GROWS', sealed + ' / ' + RITUAL.shrineCount + ' circles held');
   }
 
@@ -906,7 +908,6 @@ export class Game {
     this.player?.heal(this.player.maxHp * 0.1);
     // Rift Siphon — every broken gate feeds your sigil for the rest of the run.
     if (this.player) this.player.stats.damageMult *= 1 + LANE.siphon;
-    this.audio.fusion();
     if (this.mode === 'lane' && left === 0) {
       this.onVictory();
       return;
@@ -945,6 +946,14 @@ export class Game {
     this.coreGuard = Math.hypot(p.pos.x - core.pos.x, p.pos.z - core.pos.z) <= SIEGE.aegisRadius;
     this.coreLastLight = core.hp / core.maxHp <= SIEGE.lastLightPct;
     if (this.coreGuard && this.coreLastLight) p.gainCharge(SIEGE.lastLightCharge * dt);
+
+    // Two audible integrity alarms, one for a cracked Sunforge and one for a dying one.
+    const integrity = core.hp / Math.max(1, core.maxHp);
+    const alarm = integrity <= 0.25 ? 2 : integrity <= 0.5 ? 1 : 0;
+    if (alarm > (this._coreAlarmStep || 0)) {
+      this._coreAlarmStep = alarm;
+      this.audio.objectiveDanger(alarm);
+    }
 
     // Hardcore's one comeback: the Sunforge refuses to go out quietly.
     const stand = this.difficultyMeta().lastStand;
@@ -998,7 +1007,12 @@ export class Game {
       radius: opts.radius,
       laneAngle: opts.laneAngle,
     });
-    if (e?.isBoss) this.ui.setBoss(e);
+    if (e?.isBoss) {
+      this.ui.setBoss(e);
+      this.audio.boss(e.bossIndex ?? plan.bossIndex ?? 0);
+    } else if (e?.miniBoss) {
+      this.audio.crowned();
+    }
     return e;
   }
 
@@ -1210,6 +1224,7 @@ export class Game {
     this.state = 'relic';
     this.relicDraft = { source, cards };
     this.noteRelicSeen(cards);
+    this.audio.relicOpen();
     this.ui.showRelicDraft(this, this.relicDraft);
   }
 
@@ -1286,6 +1301,7 @@ export class Game {
     this.equipRelic(card);
     this.relicDraft = null;
     this.state = this.relicReturnState;
+    this.audio.relicPick();
     this.ui.hideRelic();
     if (this.state === 'forge') {
       this.ui.showForge(this);
@@ -1958,7 +1974,7 @@ export class Game {
       this.applyBoon(card);
     }
     this.player.syncRelicVitals();
-    this.audio.ui();
+    this.audio.draftPick();
     this._afterDraft();
   }
 
